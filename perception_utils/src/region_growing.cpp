@@ -1,35 +1,69 @@
-#include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
-// PCL specific includes
-#include <pcl/ros/conversions.h>
-#include <pcl/point_cloud.h>
+#include <iostream>
+#include <vector>
 #include <pcl/point_types.h>
-
-ros::Publisher pub;
-
-void 
-cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
-{
-  // ... do data processing
-
-  sensor_msgs::PointCloud2 output;
-  // Publish the data
-  // pub.publish (output);
-}
+#include <pcl/io/pcd_io.h>
+#include <pcl/search/search.h>
+#include <pcl/search/kdtree.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/segmentation/region_growing.h>
 
 int
 main (int argc, char** argv)
 {
-  // Initialize ROS
-  ros::init (argc, argv, "my_pcl_tutorial");
-  ros::NodeHandle nh;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+  if ( pcl::io::loadPCDFile <pcl::PointXYZ> ("region_growing_tutorial.pcd", *cloud) == -1)
+  {
+    std::cout << "Cloud reading failed." << std::endl;
+    return (-1);
+  }
 
-  // // Create a ROS subscriber for the input point cloud
-  // ros::Subscriber sub = nh.subscribe ("input", 1, cloud_cb);
+  pcl::search::Search<pcl::PointXYZ>::Ptr tree = boost::shared_ptr<pcl::search::Search<pcl::PointXYZ> > (new pcl::search::KdTree<pcl::PointXYZ>);
+  pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
+  pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normal_estimator;
+  normal_estimator.setSearchMethod (tree);
+  normal_estimator.setInputCloud (cloud);
+  normal_estimator.setKSearch (50);
+  normal_estimator.compute (*normals);
 
-  // // Create a ROS publisher for the output point cloud
-  // pub = nh.advertise<sensor_msgs::PointCloud2> ("output", 1);
+  pcl::IndicesPtr indices (new std::vector <int>);
+  pcl::PassThrough<pcl::PointXYZ> pass;
+  pass.setInputCloud (cloud);
+  pass.setFilterFieldName ("z");
+  pass.setFilterLimits (0.0, 1.0);
+  pass.filter (*indices);
 
-  // Spin
-  ros::spin ();
+  pcl::RegionGrowing<pcl::PointXYZ, pcl::Normal> reg;
+  reg.setMinClusterSize (50);
+  reg.setMaxClusterSize (1000000);
+  reg.setSearchMethod (tree);
+  reg.setNumberOfNeighbours (30);
+  reg.setInputCloud (cloud);
+  reg.setInputNormals (normals);
+  reg.setSmoothnessThreshold (3.0 / 180.0 * M_PI);
+  reg.setCurvatureThreshold (1.0);
+
+  std::vector <pcl::PointIndices> clusters;
+  reg.extract (clusters);
+
+  std::cout << "Number of clusters is equal to " << clusters.size () << std::endl;
+  std::cout << "First cluster has " << clusters[0].indices.size () << " points." << endl;
+  std::cout << "These are the indices of the points of the initial" <<
+    std::endl << "cloud that belong to the first cluster:" << std::endl;
+  int counter = 0;
+  while (counter < 5 || counter > clusters[0].indices.size ())
+  {
+    std::cout << clusters[0].indices[counter] << std::endl;
+    counter++;
+  }
+
+  pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = reg.getColoredCloud ();
+  pcl::visualization::CloudViewer viewer ("Cluster viewer");
+  viewer.showCloud(colored_cloud);
+  while (!viewer.wasStopped ())
+  {
+  }
+
+  return (0);
 }

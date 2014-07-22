@@ -82,7 +82,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES perception_utils
 #  CATKIN_DEPENDS pcl_conversions pcl_ros roscpp sensor_msgs std_msgs
 #  DEPENDS system_lib
@@ -94,7 +94,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+ include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
@@ -106,6 +106,10 @@ include_directories(
 
 ## Declare a cpp executable
 add_executable(region_growing src/region_growing.cpp)
+add_executable(downsample_cloud
+	src/downsample_cloud.cpp
+	src/basic_io_pcd.cpp
+)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -113,6 +117,10 @@ add_executable(region_growing src/region_growing.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(region_growing
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(downsample_cloud
   ${catkin_LIBRARIES}
 )
 
