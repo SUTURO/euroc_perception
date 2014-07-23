@@ -10,7 +10,14 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  pcl_ros
+  image_transport
 )
+
+find_package(PCL REQUIRED)
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -84,8 +91,8 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES table_from_depth_img
-#  CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs
-#  DEPENDS system_lib
+  CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs
+  DEPENDS opencv pcl
 )
 
 ###########
@@ -105,16 +112,18 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-# add_executable(table_from_depth_img_node src/table_from_depth_img_node.cpp)
+add_executable(calc_pc_from_img_and_depth src/calc_pc_from_img_and_depth.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(table_from_depth_img_node table_from_depth_img_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(table_from_depth_img_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(calc_pc_from_img_and_depth
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBS}
+  ${PCL_LIBRARIES}
+)
 
 #############
 ## Install ##
