@@ -1,25 +1,24 @@
 #include "ros/ros.h"
+
 #include <boost/signals2/mutex.hpp>
 #include <boost/date_time.hpp>
 #include <boost/thread.hpp>
 #include <boost/asio.hpp>
+
 #include <dynamic_reconfigure/server.h>
 #include <pcl_ros/point_cloud.h>
 #include <sensor_msgs/PointCloud.h>
-
-#include "suturo_perception.h"
-#include "perceived_object.h"
-#include "point.h"
-#include "publisher_helper.h"
-#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
+
+#include <cv_bridge/cv_bridge.h>
+#include <opencv/highgui.h>
+#include "opencv2/imgproc/imgproc.hpp"
+
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
-#include "suturo_perception_utils.h"
-#include <sensor_msgs/Image.h>
-#include "opencv2/imgproc/imgproc.hpp"
 
 namespace enc = sensor_msgs::image_encodings;
 
