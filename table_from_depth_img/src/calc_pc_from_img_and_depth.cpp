@@ -20,6 +20,8 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
+#include <tf/transform_broadcaster.h>
+
 namespace enc = sensor_msgs::image_encodings;
 
 //Declare a string with the name of the window that we will create using OpenCV where processed images will be displayed.
@@ -91,9 +93,12 @@ void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
 	//
 	cv_bridge::CvImagePtr img_ptr;
 	img_ptr = cv_bridge::toCvCopy(inputImage, enc::BGR8);
+	std::cout << "Received rgb image" << std::endl;
 
 	cv_bridge::CvImagePtr depth_ptr;
 	depth_ptr = cv_bridge::toCvCopy(depthImage, enc::TYPE_32FC1);
+	std::cout << "Received depth image" << std::endl;
+	
 
 	cv::Mat resized_img;
 	cv::Mat resized_depth;
@@ -110,7 +115,7 @@ void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
   
   sensor_msgs::PointCloud2 pub_message;
   pcl::toROSMsg(*cloud_out, pub_message );
-  pub_message.header.frame_id = "head_mount_kinect_rgb_optical_frame";
+  pub_message.header.frame_id = "/";
   pub_message.header.stamp = depthImage->header.stamp;
   pub_cloud.publish(pub_message);
 }
@@ -120,8 +125,8 @@ int main (int argc, char** argv)
 	ros::init(argc, argv, "calc_pc_from_img_and_depth");
 	ros::NodeHandle n;
 
-  message_filters::Subscriber<sensor_msgs::Image> depth_sub(n, "/head_mount_kinect_rgb/depth/image_raw", 1);
-  message_filters::Subscriber<sensor_msgs::Image> image_sub(n, "/head_mount_kinect/rgb/image_raw", 1);
+  message_filters::Subscriber<sensor_msgs::Image> depth_sub(n, "/euroc_interface_node/cameras/scene_depth_cam", 1);
+  message_filters::Subscriber<sensor_msgs::Image> image_sub(n, "/euroc_interface_node/cameras/scene_rgb_cam", 1);
 
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> MySyncPolicy;
   message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), depth_sub, image_sub);
