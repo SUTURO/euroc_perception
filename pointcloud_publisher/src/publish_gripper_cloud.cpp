@@ -1,5 +1,7 @@
 #include "ros/ros.h"
 
+#include "perception_utils/logger.h"
+
 #include <boost/signals2/mutex.hpp>
 #include <boost/date_time.hpp>
 #include <boost/thread.hpp>
@@ -20,6 +22,8 @@
 #include <message_filters/sync_policies/approximate_time.h>
 
 namespace enc = sensor_msgs::image_encodings;
+
+perception_utils::Logger logger("publish_gripper_cloud");
 
 ros::Publisher pub_cloud;
 
@@ -83,6 +87,8 @@ const cv::Mat &rgb_image)
 void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
 		const sensor_msgs::ImageConstPtr& inputImage)
 {
+  boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
+	
 	cv_bridge::CvImagePtr img_ptr;
 	img_ptr = cv_bridge::toCvCopy(inputImage, enc::BGR8);
 
@@ -103,11 +109,14 @@ void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
   pub_message.header.frame_id = "/";
   pub_message.header.stamp = depthImage->header.stamp;
   pub_cloud.publish(pub_message);
+	
+  boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
+  logger.logTime(s, e, "generate gripper pointcloud");
 }
 
 int main (int argc, char** argv)
 {
-	ros::init(argc, argv, "publish_scene_cloud");
+	ros::init(argc, argv, "publish_gripper_cloud");
 	ros::NodeHandle n;
 
   message_filters::Subscriber<sensor_msgs::Image> depth_sub(n, "/euroc_interface_node/cameras/tcp_depth_cam", 1);
