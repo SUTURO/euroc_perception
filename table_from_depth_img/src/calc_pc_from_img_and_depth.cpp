@@ -29,6 +29,8 @@ static const char WINDOW[] = "Depth Image";
 
 ros::Publisher pub_cloud;
 
+int cloud_idx = 0;
+
 // Thanks for Jan for the code
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr depth_project(const cv::Mat &depth_image_in,
 const cv::Mat &rgb_image)
@@ -109,7 +111,14 @@ void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out = 
     depth_project(resized_depth, resized_img);
 
-
+	// write pcd
+  pcl::PCDWriter writer;
+  std::stringstream ss;
+  ss << "euroc_cloud_" << cloud_idx << ".pcd";
+	cloud_idx++;
+  writer.write(ss.str(), *cloud_out);
+  std::cerr << "Saved " << cloud_out->points.size () << " data points to " << ss.str().c_str() << std::endl;
+	
 	// cv::imshow(WINDOW, img_ptr->image);
   // cv::waitKey(3);
   
@@ -137,7 +146,7 @@ int main (int argc, char** argv)
 	cv::namedWindow(WINDOW, CV_WINDOW_AUTOSIZE);
 	cv::destroyWindow(WINDOW);
 
-  pub_cloud = n.advertise<sensor_msgs::PointCloud2> ("/suturo/halfsized_cloud", 1);
+  pub_cloud = n.advertise<sensor_msgs::PointCloud2> ("/suturo/euroc_scene_cloud", 1);
 
 
 	ros::Rate loop_rate(10);

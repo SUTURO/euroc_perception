@@ -12,12 +12,18 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   pcl_ros
   image_transport
+  perception_utils
 )
 
 find_package(PCL REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
+
+# enable openmp
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
+SET(CMAKE_BUILD_TYPE Release)	# Mandatory for openmp!
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -91,7 +97,7 @@ add_definitions(${PCL_DEFINITIONS})
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES table_from_depth_img
-  CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs
+  CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils
   DEPENDS opencv pcl
 )
 
