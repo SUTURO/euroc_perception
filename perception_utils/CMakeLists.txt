@@ -83,10 +83,22 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES perception_utils
-#  CATKIN_DEPENDS pcl_conversions pcl_ros roscpp sensor_msgs std_msgs
-#  DEPENDS system_lib
+  LIBRARIES perception_utils
+  CATKIN_DEPENDS pcl_conversions pcl_ros roscpp sensor_msgs std_msgs
+  DEPENDS system_lib
 )
+
+# pcl
+find_package(PCL REQUIRED)
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
+# boost
+set(Boost_USE_STATIC_LIBS OFF) 
+set(Boost_USE_MULTITHREADED ON)  
+set(Boost_USE_STATIC_RUNTIME OFF) 
+find_package(Boost 1.48.0 COMPONENTS thread) 
 
 ###########
 ## Build ##
@@ -94,35 +106,37 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
- include_directories(include)
 include_directories(
+	include
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
+link_directories(${Boost_LIBRARY_DIRS})
+
 ## Declare a cpp library
-# add_library(perception_utils
-#   src/${PROJECT_NAME}/perception_utils.cpp
-# )
+add_library(perception_utils src/point_cloud_operations.cpp src/logger.cpp)
+target_link_libraries(perception_utils ${PCL_LIBRARIES} ${Boost_LIBRARIES} ${catkin_LIBRARIES})      
 
 ## Declare a cpp executable
 add_executable(region_growing src/region_growing.cpp)
+target_link_libraries(region_growing
+  ${catkin_LIBRARIES}
+)
+
+## Declare a cpp executable
 add_executable(downsample_cloud
 	src/downsample_cloud.cpp
 	src/basic_io_pcd.cpp
+)
+target_link_libraries(downsample_cloud
+  ${catkin_LIBRARIES}
 )
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(perception_utils_node perception_utils_generate_messages_cpp)
 
-## Specify libraries to link a library or executable target against
-target_link_libraries(region_growing
-  ${catkin_LIBRARIES}
-)
-
-target_link_libraries(downsample_cloud
-  ${catkin_LIBRARIES}
-)
 
 #############
 ## Install ##
