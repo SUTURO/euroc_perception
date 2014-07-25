@@ -112,7 +112,7 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
-link_directories(${Boost_LIBRARY_DIRS})
+link_directories(${Boost_LIBRARY_DIRS} ${PCL_LIBRARIES})
 
 ## Declare a cpp library
 add_library(perception_utils src/point_cloud_operations.cpp src/logger.cpp)
