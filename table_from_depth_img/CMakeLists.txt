@@ -97,7 +97,7 @@ SET(CMAKE_BUILD_TYPE Release)	# Mandatory for openmp!
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES table_from_depth_img
-  CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils
+  CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils suturo_perception_msgs
   DEPENDS opencv pcl
 )
 
@@ -109,6 +109,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  src
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -119,6 +120,7 @@ include_directories(
 
 ## Declare a cpp executable
 add_executable(calc_pc_from_img_and_depth src/calc_pc_from_img_and_depth.cpp)
+add_executable(extract_table src/main.cpp src/table_from_depth_img_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -126,6 +128,12 @@ add_executable(calc_pc_from_img_and_depth src/calc_pc_from_img_and_depth.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(calc_pc_from_img_and_depth
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBS}
+  ${PCL_LIBRARIES}
+)
+
+target_link_libraries(extract_table
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}

@@ -1,6 +1,6 @@
 #include "ros/ros.h"
 #include <ros/package.h>
-#include "table_from_depth_image_node.h"
+#include "table_from_depth_img_node.h"
 
 
 int main (int argc, char** argv)
