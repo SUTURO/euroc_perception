@@ -106,7 +106,7 @@ void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
   
   sensor_msgs::PointCloud2 pub_message;
   pcl::toROSMsg(*cloud_out, pub_message );
-  pub_message.header.frame_id = "/";
+  pub_message.header.frame_id = "tdepth";
   pub_message.header.stamp = depthImage->header.stamp;
   pub_cloud.publish(pub_message);
 	
