@@ -85,7 +85,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES perception_utils
   CATKIN_DEPENDS pcl_conversions pcl_ros roscpp sensor_msgs std_msgs
-  DEPENDS system_lib
+  DEPENDS system_lib pcl
 )
 
 # pcl
@@ -121,7 +121,8 @@ target_link_libraries(perception_utils ${PCL_LIBRARIES} ${Boost_LIBRARIES} ${cat
 ## Declare a cpp executable
 add_executable(region_growing src/region_growing.cpp)
 target_link_libraries(region_growing
-  ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES} 
+  ${PCL_LIBRARIES}
 )
 
 ## Declare a cpp executable
@@ -131,6 +132,7 @@ add_executable(downsample_cloud
 )
 target_link_libraries(downsample_cloud
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 
 ## Add cmake target dependencies of the executable/library
