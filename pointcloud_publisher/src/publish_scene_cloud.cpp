@@ -6,6 +6,7 @@
 #include <boost/date_time.hpp>
 #include <boost/thread.hpp>
 #include <boost/asio.hpp>
+#include <boost/format.hpp>
 
 #include <dynamic_reconfigure/server.h>
 #include <pcl_ros/point_cloud.h>
@@ -21,6 +22,9 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
+#include <cmath>
+#define PI 3.14159265
+
 namespace enc = sensor_msgs::image_encodings;
 
 perception_utils::Logger logger("publish_scene_cloud");
@@ -29,56 +33,87 @@ ros::Publisher pub_cloud;
 
 int cloud_idx = 0;
 
-// Thanks for Jan for the code
+//   scene_depth_cam:
+//     camera:
+//       horizontal_fov: 1.047
+//       image: {height: 480, width: 640}
+//     relative_pose:
+//       from: scene_rgb_cam
+//       pose: [0.0, -0.04, 0.0, 0, 0, 0]
+//     update_rate: 30
+//   scene_rgb_cam:
+//     camera:
+//       horizontal_fov: 1.047
+//       image: {height: 480, width: 640}
+//     pose: [0.2, 0.02, 0, 0, 0, 0]
+//     update_rate: 30
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr depth_project(const cv::Mat &depth_image_in,
 const cv::Mat &rgb_image)
 {
- cv::Mat depth_image;
- if (depth_image_in.type() == CV_16U)
-   depth_image_in.convertTo(depth_image, CV_32F, 0.001, 0.0);
- else
-   depth_image = depth_image_in;
+	cv::Mat depth_image;
+	if (depth_image_in.type() == CV_16U)
+		depth_image_in.convertTo(depth_image, CV_32F, 0.001, 0.0);
+	else
+		depth_image = depth_image_in;
 
- pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
- // TODO cloud->header.stamp = time;
- cloud->height = depth_image.rows;
- cloud->width = depth_image.cols;
- cloud->is_dense = false;
- cloud->points.resize(cloud->height * cloud->width);
- register const float
-     constant = 1.0f / (0.8203125 * cloud->width),
-     bad_point = std::numeric_limits<float>::quiet_NaN();
- register const int
-     centerX = (cloud->width >> 1),
-     centerY = (cloud->height >> 1);
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+	// TODO cloud->header.stamp = time;
+	cloud->height = depth_image.rows;
+	cloud->width = depth_image.cols;
+	cloud->is_dense = false;
+	cloud->points.resize(cloud->height * cloud->width);
+	register const float
+			//constant = 1.0f / (0.8203125 * cloud->width),
+			constant = 1.0f / (0.817109 * cloud->width),
+			bad_point = std::numeric_limits<float>::quiet_NaN();
+	register const int
+			centerX = (cloud->width >> 1),
+			centerY = (cloud->height >> 1);
+	
+	
+	register const double fov_h = 1.047; // TODO: get this from the yaml description
+	register const double fov_v = 2.0 * atan( tan( fov_h / 2.0 ) * ((double)depth_image.rows / (double)depth_image.cols) );
+	register const double h = tan(fov_h / 2.0);
+	register const double v = tan(fov_v / 2.0);
+	
+	logger.logInfo((boost::format("fov_h = %s, fov_v = %s, h = %s, v = %s") % fov_h % fov_v % h % v).str());
 
-#pragma omp parallel for
- for (int y = 0; y < depth_image.rows; ++y)
- {
-   register pcl::PointXYZRGB *pPt = &cloud->points[y * depth_image.cols];
-   register const float *pDepth = depth_image.ptr<float>(y), v = (y - centerY) * constant;
-   register const cv::Vec3b *pBGR = rgb_image.ptr<cv::Vec3b>(y);
+	#pragma omp parallel for
+	for (int y = 0; y < depth_image.rows; ++y)
+	{
+		register pcl::PointXYZRGB *pPt = &cloud->points[y * depth_image.cols];
+		register const float *pDepth = depth_image.ptr<float>(y);
+		//register const float v = (y - centerY) * constant;
+		register const cv::Vec3b *pBGR = rgb_image.ptr<cv::Vec3b>(y);
 
-   for (register int u = -centerX; u < centerX; ++u, ++pPt, ++pDepth, ++pBGR)
-   {
-     pPt->r = pBGR->val[2];
-     pPt->g = pBGR->val[1];
-     pPt->b = pBGR->val[0];
+		//for (register int u = -centerX; u < centerX; ++u, ++pPt, ++pDepth, ++pBGR)
+		for (register int col = 0; col < cloud->width; col++, ++pPt, ++pDepth, ++pBGR)
+		{
+			pPt->r = pBGR->val[2];
+			pPt->g = pBGR->val[1];
+			pPt->b = pBGR->val[0];
 
-     register const float depth = *pDepth;
-     // Check for invalid measurements
-     if (isnan(depth) || depth == 0)
-     {
-       // not valid
-       pPt->x = pPt->y = pPt->z = bad_point;
-       continue;
-     }
-     pPt->z = depth;
-     pPt->x = u * depth * constant;
-     pPt->y = v * depth;
-   }
- }
- return cloud;
+			register const float depth = *pDepth;
+			// Check for invalid measurements
+			if (isnan(depth) || depth == 0)
+			{
+				// not valid
+				pPt->x = pPt->y = pPt->z = bad_point;
+				continue;
+			}
+ 			//pPt->x = depth;
+ 			//pPt->z = u * depth * constant;
+ 			//pPt->y = v * depth;
+			
+			pPt->x = depth;
+ 			pPt->y = depth * (h - 2.0*h * (double)((double)col / (double)cloud->width));
+ 			pPt->z = depth * (v - 2.0*v * (double)((double)y / (double)cloud->height));
+			//pPt->y = depth * (h - 2.0*h * (col / depth_image.cols));
+			//pPt->z = depth * (v - 2.0*v * (y / depth_image.rows));
+			
+		}
+	}
+	return cloud;
 }
 
 /*
@@ -112,6 +147,14 @@ void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
 	
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
   logger.logTime(s, e, "generate scene pointcloud");
+	
+	// write pcd
+  pcl::PCDWriter writer;
+  std::stringstream ss;
+  ss << "euroc_cloud_" << cloud_idx << ".pcd";
+	cloud_idx++;
+  writer.write(ss.str(), *cloud_out);
+  std::cerr << "Saved " << cloud_out->points.size () << " data points to " << ss.str().c_str() << std::endl;
 }
 
 int main (int argc, char** argv)
