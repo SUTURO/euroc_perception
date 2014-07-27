@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(table_from_depth_img)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   euroc_c2_msgs
@@ -16,10 +13,13 @@ find_package(catkin REQUIRED COMPONENTS
   suturo_perception_msgs
 )
 
+find_package(Boost REQUIRED COMPONENTS system program_options thread)
+
 find_package(PCL REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
+# removed because of: http://www.pcl-users.org/Error-creating-object-Voxelgrid-on-Turtlebot-td4031990.html
+#link_directories(${PCL_LIBRARY_DIRS})
+#add_definitions(${PCL_DEFINITIONS})
 
 # enable openmp
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
@@ -49,9 +49,11 @@ target_link_libraries(calc_pc_from_img_and_depth
 add_executable(extract_table src/main.cpp src/table_from_depth_img_node.cpp)
 target_link_libraries(extract_table
   ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES} 
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
 )
+add_dependencies(extract_table perception_msgs)
 
 add_executable(table_client src/table_client.cpp)
 target_link_libraries(table_client
@@ -59,4 +61,5 @@ target_link_libraries(table_client
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
 )
+add_dependencies(table_client perception_msgs)
 

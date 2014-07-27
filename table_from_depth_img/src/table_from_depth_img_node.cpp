@@ -4,26 +4,59 @@
 
 #include <pcl/filters/passthrough.h>
 
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
 using namespace perception_utils;
 
-TableFromDepthImageNode::TableFromDepthImageNode(ros::NodeHandle &n, std::string depthTopic) : 
+TableFromDepthImageNode::TableFromDepthImageNode(ros::NodeHandle &n, std::string imageTopic, std::string depthTopic) : 
   nodeHandle_(n), 
+  imageTopic_(imageTopic),
   cloudTopic_(depthTopic)
 {
 	logger = perception_utils::Logger("TableFromDepthImageNode");
-  clusterService = nodeHandle_.advertiseService("/suturo/GetTable", 
+  clusterService_ = nodeHandle_.advertiseService("/suturo/GetTable", 
     &TableFromDepthImageNode::getTable, this);
+	int idx_ = 0;
 }
 
 bool
 TableFromDepthImageNode::getTable(suturo_perception_msgs::GetTable::Request &req, suturo_perception_msgs::GetTable::Response &res)
 {
+	res.something = idx_;
+	idx_++;
+	
+	message_filters::Subscriber<sensor_msgs::Image> image_sub(nodeHandle_, imageTopic_, 1);
+  message_filters::Subscriber<sensor_msgs::PointCloud2> pc_sub(nodeHandle_, cloudTopic_, 1);
+  typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> MySyncPolicy;
+  message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), image_sub, pc_sub);
+
+  sync.registerCallback(boost::bind(&TableFromDepthImageNode::receive_image_and_cloud,this, _1, _2));
+	
+	logger.logInfo("Waiting for processed cloud");
+  ros::Rate r(20); // 20 hz
+  // cancel service call, if no cloud is received after 10s
+  boost::posix_time::ptime cancelTime = boost::posix_time::second_clock::local_time() + boost::posix_time::seconds(10);
+	processing_ = true;
+  while(processing_)
+  {
+    if(boost::posix_time::second_clock::local_time() >= cancelTime)
+    {
+      processing_ = false;
+			logger.logError("No sensor data available. Aborting.");
+			return false;
+		}
+    ros::spinOnce();
+    r.sleep();
+  }
 
   return true;
 }
 
 void
-TableFromDepthImageNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
+TableFromDepthImageNode::receive_image_and_cloud(const sensor_msgs::ImageConstPtr& inputImage, const sensor_msgs::PointCloud2ConstPtr& inputCloud)
 {
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
 	
@@ -71,6 +104,11 @@ TableFromDepthImageNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& i
   pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
   PointCloudOperations::fitPlanarModel(cloud_filtered, inliers, coefficients, planeMaxIterations, planeDistanceThreshold);
   logger.logInfo((boost::format("Table inlier count: %s") % inliers->indices.size ()).str());
+	logger.logInfo((boost::format("pcl::ModelCoefficients: %s") % coefficients->values.size()).str());
+	for (int i = 0; i < coefficients->values.size(); i++)
+	{
+		logger.logInfo((boost::format("  %s") % coefficients->values[i]).str());
+	}
   
   // Extract the plane as a PointCloud from the calculated inliers
   PointCloudOperations::extractInliersFromPointCloud(cloud_filtered, inliers, cloud_plane, false);
@@ -93,4 +131,6 @@ TableFromDepthImageNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& i
 
   e = boost::posix_time::microsec_clock::local_time();
   logger.logTime(s, e, "table from pointcloud");
+	
+	processing_ = false;
 }
