@@ -1,6 +1,7 @@
 #include "ros/ros.h"
 
 #include "perception_utils/logger.h"
+#include "perception_utils/publisher_helper.h"
 
 #include <boost/signals2/mutex.hpp>
 #include <boost/date_time.hpp>
@@ -8,8 +9,8 @@
 #include <boost/asio.hpp>
 #include <boost/format.hpp>
 
-#include <dynamic_reconfigure/server.h>
 #include <pcl_ros/point_cloud.h>
+
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
@@ -23,15 +24,21 @@
 #include <message_filters/sync_policies/approximate_time.h>
 
 #include <cmath>
-#define PI 3.14159265
 
 namespace enc = sensor_msgs::image_encodings;
 
 perception_utils::Logger logger("publish_scene_cloud");
 
-ros::Publisher pub_cloud;
+
+std::string publish_cloud_topic = "/suturo/euroc_scene_cloud";
+std::string publish_cloud_frame = "sdepth";
+std::string publish_image_topic = "/suturo/euroc_scene_image";
+std::string publish_image_frame = "simg";
 
 int cloud_idx = 0;
+
+ros::Publisher cloud_publisher;
+ros::Publisher image_publisher;
 
 //   scene_depth_cam:
 //     camera:
@@ -76,7 +83,7 @@ const cv::Mat &rgb_image)
 	register const double h = tan(fov_h / 2.0);
 	register const double v = tan(fov_v / 2.0);
 	
-	logger.logInfo((boost::format("fov_h = %s, fov_v = %s, h = %s, v = %s") % fov_h % fov_v % h % v).str());
+	//logger.logInfo((boost::format("fov_h = %s, fov_v = %s, h = %s, v = %s") % fov_h % fov_v % h % v).str());
 
 	register const int offset = 8;
 	
@@ -128,7 +135,8 @@ const cv::Mat &rgb_image)
  * Receive callback for the /camera/depth_registered/points subscription
  */
 void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
-		const sensor_msgs::ImageConstPtr& inputImage)
+		const sensor_msgs::ImageConstPtr& inputImage,
+		perception_utils::PublisherHelper& publisher)
 {
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
 	
@@ -150,8 +158,17 @@ void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
   sensor_msgs::PointCloud2 pub_message;
   pcl::toROSMsg(*cloud_out, pub_message );
   pub_message.header.frame_id = "sdepth";
-  pub_message.header.stamp = depthImage->header.stamp;
-  pub_cloud.publish(pub_message);
+  pub_message.header.stamp = inputImage->header.stamp;
+  cloud_publisher.publish(pub_message);
+	
+	std::string encoding="bgr8";
+	cv_bridge::CvImage cv_img;
+  cv_img.header.stamp = ros::Time::now();
+  cv_img.header.frame_id = publish_image_frame;
+  cv_img.encoding = encoding;
+  cv_img.image = resized_img;
+  image_publisher.publish(cv_img.toImageMsg());
+	
 	
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
   logger.logTime(s, e, "generate scene pointcloud");
@@ -171,6 +188,7 @@ int main (int argc, char** argv)
 {
 	ros::init(argc, argv, "publish_scene_cloud");
 	ros::NodeHandle n;
+	perception_utils::PublisherHelper publisher(n);
 
   message_filters::Subscriber<sensor_msgs::Image> depth_sub(n, "/euroc_interface_node/cameras/scene_depth_cam", 1);
   message_filters::Subscriber<sensor_msgs::Image> image_sub(n, "/euroc_interface_node/cameras/scene_rgb_cam", 1);
@@ -178,9 +196,12 @@ int main (int argc, char** argv)
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> MySyncPolicy;
   message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), depth_sub, image_sub);
 
-  sync.registerCallback(boost::bind(&receive_depth_and_rgb_image, _1, _2));
+  sync.registerCallback(boost::bind(&receive_depth_and_rgb_image, _1, _2, publisher));
 
-  pub_cloud = n.advertise<sensor_msgs::PointCloud2> ("/suturo/euroc_scene_cloud", 1);
+  cloud_publisher = n.advertise<sensor_msgs::PointCloud2> ("/suturo/euroc_scene_cloud", 1);
+  image_publisher = n.advertise<sensor_msgs::Image> ("/suturo/euroc_scene_image", 1);
+	//publisher.advertise<sensor_msgs::PointCloud2>(publish_cloud_topic);
+	//publisher.advertise<sensor_msgs::Image>(publish_image_topic);
 
 	ros::Rate loop_rate(10);
 	while (ros::ok())

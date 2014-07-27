@@ -4,6 +4,7 @@ project(perception_utils)
 find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   pcl_ros
+  cv_bridge
   roscpp
   sensor_msgs
   std_msgs
@@ -22,11 +23,14 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF) 
 find_package(Boost 1.48.0 COMPONENTS thread) 
 
+# include opencv
+find_package(OpenCV REQUIRED)
+
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES perception_utils
-  CATKIN_DEPENDS pcl_conversions pcl_ros roscpp sensor_msgs std_msgs
-  DEPENDS system_lib pcl
+  CATKIN_DEPENDS pcl_conversions pcl_ros cv_bridge roscpp sensor_msgs std_msgs
+  DEPENDS opencv pcl
 )
 
 ###########
@@ -39,8 +43,8 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
-add_library(perception_utils src/point_cloud_operations.cpp src/logger.cpp)
-target_link_libraries(perception_utils ${PCL_LIBRARIES} ${Boost_LIBRARIES} ${catkin_LIBRARIES})      
+add_library(perception_utils src/point_cloud_operations.cpp src/logger.cpp src/publisher_helper.cpp)
+target_link_libraries(perception_utils ${PCL_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV_LIBS} ${catkin_LIBRARIES})      
 
 ## Declare a cpp executable
 add_executable(region_growing src/region_growing.cpp)

@@ -28,12 +28,14 @@ TableFromDepthImageNode::getTable(suturo_perception_msgs::GetTable::Request &req
 	res.something = idx_;
 	idx_++;
 	
-	message_filters::Subscriber<sensor_msgs::Image> image_sub(nodeHandle_, imageTopic_, 1);
-  message_filters::Subscriber<sensor_msgs::PointCloud2> pc_sub(nodeHandle_, cloudTopic_, 1);
-  typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> MySyncPolicy;
-  message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), image_sub, pc_sub);
-
-  sync.registerCallback(boost::bind(&TableFromDepthImageNode::receive_image_and_cloud,this, _1, _2));
+// 	message_filters::Subscriber<sensor_msgs::Image> image_sub(nodeHandle_, imageTopic_, 1);
+//   message_filters::Subscriber<sensor_msgs::PointCloud2> pc_sub(nodeHandle_, cloudTopic_, 1);
+// 	pc_sub.registerCallback(TableFromDepthImageNode::receive_cloud);
+	ros::Subscriber pc_sub_ros = nodeHandle_.subscribe(cloudTopic_, 1, &TableFromDepthImageNode::receive_cloud);
+//   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> MySyncPolicy;
+//   message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), image_sub, pc_sub);
+// 
+//   sync.registerCallback(boost::bind(&TableFromDepthImageNode::receive_image_and_cloud,this, _1, _2));
 	
 	logger.logInfo("Waiting for processed cloud");
   ros::Rate r(20); // 20 hz
@@ -56,8 +58,9 @@ TableFromDepthImageNode::getTable(suturo_perception_msgs::GetTable::Request &req
 }
 
 void
-TableFromDepthImageNode::receive_image_and_cloud(const sensor_msgs::ImageConstPtr& inputImage, const sensor_msgs::PointCloud2ConstPtr& inputCloud)
+TableFromDepthImageNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
 {
+	logger.logInfo("image and cloud incoming...");
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
 	
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZRGB>());
