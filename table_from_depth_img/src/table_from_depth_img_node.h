@@ -12,15 +12,18 @@
 class TableFromDepthImageNode
 {
   public:
-    TableFromDepthImageNode(ros::NodeHandle &nodeHandle, std::string depthTopic);
+    TableFromDepthImageNode(ros::NodeHandle &nodeHandle, std::string imageTopic, std::string depthTopic);
     bool getTable(suturo_perception_msgs::GetTable::Request &req, suturo_perception_msgs::GetTable::Response &res);
 
-    void receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud);
+    void receive_image_and_cloud(const sensor_msgs::ImageConstPtr& inputImage, const sensor_msgs::PointCloud2ConstPtr& inputCloud);
   private:
     ros::NodeHandle nodeHandle_;
-    ros::ServiceServer clusterService;
+    ros::ServiceServer clusterService_;
+		std::string imageTopic_;
     std::string cloudTopic_;
 		perception_utils::Logger logger;
+		int idx_;
+		bool processing_;
 };
 
 #endif // TABLE_FROM_DEPTH_IMAGE_NODE_H

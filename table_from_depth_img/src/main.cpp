@@ -8,10 +8,12 @@ int main (int argc, char** argv)
   ros::init(argc, argv, "table_from_depth_image_node");
   ros::NodeHandle nh;
 
+	std::string imageTopic = "/euroc_interface_node/cameras/scene_rgb_cam";
   std::string cloudTopic = "/suturo/euroc_scene_cloud";
+  ROS_INFO("Image topic is: %s", imageTopic.c_str());
   ROS_INFO("Cloud topic is: %s", cloudTopic.c_str());
 
-  TableFromDepthImageNode node(nh, cloudTopic);
+  TableFromDepthImageNode node(nh, imageTopic, cloudTopic);
 
   ROS_INFO("                    _____ ");
   ROS_INFO("                   |     | ");

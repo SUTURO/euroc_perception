@@ -157,12 +157,14 @@ void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
   logger.logTime(s, e, "generate scene pointcloud");
 	
 	// write pcd
+	/*
   pcl::PCDWriter writer;
   std::stringstream ss;
   ss << "euroc_cloud_" << cloud_idx << ".pcd";
 	cloud_idx++;
   writer.write(ss.str(), *cloud_out);
   std::cerr << "Saved " << cloud_out->points.size () << " data points to " << ss.str().c_str() << std::endl;
+	*/
 }
 
 int main (int argc, char** argv)
