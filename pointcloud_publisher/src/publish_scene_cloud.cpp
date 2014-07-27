@@ -78,6 +78,8 @@ const cv::Mat &rgb_image)
 	
 	logger.logInfo((boost::format("fov_h = %s, fov_v = %s, h = %s, v = %s") % fov_h % fov_v % h % v).str());
 
+	register const int offset = 8;
+	
 	#pragma omp parallel for
 	for (int y = 0; y < depth_image.rows; ++y)
 	{
@@ -85,9 +87,11 @@ const cv::Mat &rgb_image)
 		register const float *pDepth = depth_image.ptr<float>(y);
 		//register const float v = (y - centerY) * constant;
 		register const cv::Vec3b *pBGR = rgb_image.ptr<cv::Vec3b>(y);
+		
+		pBGR += offset;
 
 		//for (register int u = -centerX; u < centerX; ++u, ++pPt, ++pDepth, ++pBGR)
-		for (register int col = 0; col < cloud->width; col++, ++pPt, ++pDepth, ++pBGR)
+		for (register int col = 0; col < cloud->width; col++, ++pPt, ++pDepth)
 		{
 			pPt->r = pBGR->val[2];
 			pPt->g = pBGR->val[1];
@@ -111,6 +115,10 @@ const cv::Mat &rgb_image)
 			//pPt->y = depth * (h - 2.0*h * (col / depth_image.cols));
 			//pPt->z = depth * (v - 2.0*v * (y / depth_image.rows));
 			
+			if (cloud->width - col >= offset)
+			{
+				++pBGR;
+			}
 		}
 	}
 	return cloud;
