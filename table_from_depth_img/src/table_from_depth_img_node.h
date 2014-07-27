@@ -15,7 +15,7 @@ class TableFromDepthImageNode
     TableFromDepthImageNode(ros::NodeHandle &nodeHandle, std::string imageTopic, std::string depthTopic);
     bool getTable(suturo_perception_msgs::GetTable::Request &req, suturo_perception_msgs::GetTable::Response &res);
 
-    void receive_image_and_cloud(const sensor_msgs::ImageConstPtr& inputImage, const sensor_msgs::PointCloud2ConstPtr& inputCloud);
+    void receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud);
   private:
     ros::NodeHandle nodeHandle_;
     ros::ServiceServer clusterService_;

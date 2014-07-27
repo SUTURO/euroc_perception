@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="table_from_depth_img" name="extract_table" type="extract_table" output="screen"></node>
+</launch>
