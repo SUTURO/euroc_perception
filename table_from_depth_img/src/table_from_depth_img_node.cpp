@@ -28,14 +28,7 @@ TableFromDepthImageNode::getTable(suturo_perception_msgs::GetTable::Request &req
 	res.something = idx_;
 	idx_++;
 	
-// 	message_filters::Subscriber<sensor_msgs::Image> image_sub(nodeHandle_, imageTopic_, 1);
-//   message_filters::Subscriber<sensor_msgs::PointCloud2> pc_sub(nodeHandle_, cloudTopic_, 1);
-// 	pc_sub.registerCallback(TableFromDepthImageNode::receive_cloud);
-	ros::Subscriber pc_sub_ros = nodeHandle_.subscribe(cloudTopic_, 1, &TableFromDepthImageNode::receive_cloud);
-//   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> MySyncPolicy;
-//   message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), image_sub, pc_sub);
-// 
-//   sync.registerCallback(boost::bind(&TableFromDepthImageNode::receive_image_and_cloud,this, _1, _2));
+	ros::Subscriber sub = nodeHandle_.subscribe<sensor_msgs::PointCloud2>(cloudTopic_, 1, boost::bind(&TableFromDepthImageNode::receive_cloud,this, _1));
 	
 	logger.logInfo("Waiting for processed cloud");
   ros::Rate r(20); // 20 hz
