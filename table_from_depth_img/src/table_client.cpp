@@ -21,6 +21,13 @@ int main(int argc, char **argv)
     {
       ROS_INFO("Table Service call successful");
       ROS_INFO("something: %ld", (long int)tableSrv.response.something);
+			std::vector<shape_msgs::Plane> planes = (std::vector<shape_msgs::Plane>)tableSrv.response.table.planes;
+			ROS_INFO("table plane count: %d", planes.size());
+			for (int i = 0; i < planes.size(); i++)
+			{
+				shape_msgs::Plane plane = planes.at(i);
+				ROS_INFO("table coefficients: %f, %f, %f, %f", plane.coef[0],plane.coef[1],plane.coef[2],plane.coef[3]);
+			}
 
       ROS_INFO_STREAM("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
     }
