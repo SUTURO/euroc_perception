@@ -80,6 +80,79 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateBox(double size_x, double size_y,
       pt_idx++;
     }
   }
+  output_cloud->points.resize(pt_idx);
+  output_cloud->width = output_cloud->points.size();
+  output_cloud->height = 1;
+  return output_cloud;
+}
+
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateCylinder(double length, double radius, int total_points)
+{
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+
+  double cylinder_circle_area = 2 * M_PI * radius * radius; 
+  double cylinder_mantle_area = 2 * M_PI * radius * length; 
+  double cylinder_area = cylinder_circle_area + cylinder_mantle_area;
+
+  double circle_ratio = (cylinder_circle_area / cylinder_area)/2;
+  double mantle_ratio = (cylinder_mantle_area / cylinder_area);
+
+  std::cout << circle_ratio << " " << mantle_ratio << std::endl;
+
+  int points_per_circle = circle_ratio * total_points;
+  int points_for_mantle = total_points - points_per_circle*2;
+  std::cout << points_per_circle << " " << points_for_mantle << std::endl;
+
+  output_cloud->resize(total_points*2); 
+  output_cloud->width = output_cloud->points.size();
+  output_cloud->height = 1;
+
+  // // Write circles 
+  int pt_idx = 0;
+  double raster_size = 0;
+  raster_size = sqrt( cylinder_area / total_points);
+
+  for(double x = -radius; x <= radius; x+= raster_size)
+  {
+    for(double y = -radius; y <= radius; y+= raster_size)
+    {
+      if(sqrt(x*x + y*y) <= radius)
+      {
+        output_cloud->points[pt_idx].x = x;
+        output_cloud->points[pt_idx].y = y;
+        output_cloud->points[pt_idx].z = length/2;
+        pt_idx++;
+        output_cloud->points[pt_idx].x = x;
+        output_cloud->points[pt_idx].y = y;
+        output_cloud->points[pt_idx].z = -length/2;
+        pt_idx++;
+      } 
+    }
+  }
+
+  // Write the mantle
+  for(double z = -length/2 + raster_size; z<=length/2; z+= raster_size)
+  {
+    for(double x = -radius; x <= radius; x+= raster_size)
+    {
+      for(double y = -radius; y <= radius; y+= raster_size)
+      {
+        double dist = sqrt(x*x + y*y);
+        if(dist <= radius && dist > radius*0.95)
+        {
+          output_cloud->points[pt_idx].x = x;
+          output_cloud->points[pt_idx].y = y;
+          output_cloud->points[pt_idx].z = z;
+          pt_idx++;
+        } 
+      }
+    }
+  }
+
+
+  output_cloud->points.resize(pt_idx);
+  output_cloud->width = output_cloud->points.size();
+  output_cloud->height = 1;
   return output_cloud;
 }
 
@@ -99,7 +172,8 @@ main (int argc, char** argv)
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
-  output_cloud = generateBox(0.5, 0.5, 0.5, 10000);
+  // output_cloud = generateBox(0.5, 0.5, 0.5, 10000);
+  output_cloud = generateCylinder(0.3, 0.2, 10000);
 
   // write pcd
   pcl::PCDWriter writer;
