@@ -24,6 +24,8 @@ class TableFromDepthImageNode
 		perception_utils::Logger logger;
 		int idx_;
 		bool processing_;
+		
+		pcl::ModelCoefficients::Ptr coefficients_;
 };
 
 #endif // TABLE_FROM_DEPTH_IMAGE_NODE_H

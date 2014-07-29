@@ -46,6 +46,20 @@ TableFromDepthImageNode::getTable(suturo_perception_msgs::GetTable::Request &req
     ros::spinOnce();
     r.sleep();
   }
+  
+  if (coefficients_->values.size() != 4)
+	{
+		logger.logError("coefficients_.size() != 4");
+		return false;
+	}
+	shape_msgs::Plane plane;
+	for (int i = 0; i < 4; i++)
+	{
+		plane.coef[i] = coefficients_->values.at(i);
+	}
+  moveit_msgs::CollisionObject table_msg;
+	table_msg.planes.push_back(plane);
+  res.table = table_msg;
 
   return true;
 }
@@ -105,6 +119,7 @@ TableFromDepthImageNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& i
 	{
 		logger.logInfo((boost::format("  %s") % coefficients->values[i]).str());
 	}
+	coefficients_ = coefficients;
   
   // Extract the plane as a PointCloud from the calculated inliers
   PointCloudOperations::extractInliersFromPointCloud(cloud_filtered, inliers, cloud_plane, false);
