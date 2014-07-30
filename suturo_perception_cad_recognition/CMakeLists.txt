@@ -112,6 +112,7 @@ add_library(suturo_perception_pancake_pose
 
 ## Declare a cpp executable
 add_executable(cad_recognition src/cad_recognition.cpp)
+add_executable(convert_ply_to_pcd src/convert_ply_to_pcd.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -127,6 +128,10 @@ target_link_libraries(cad_recognition
    ${catkin_LIBRARIES}
    ${Boost_LIBRARIES}
 	 suturo_perception_pancake_pose
+)
+
+target_link_libraries(convert_ply_to_pcd
+   ${catkin_LIBRARIES}
 )
 
 
