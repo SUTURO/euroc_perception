@@ -1,0 +1,11 @@
+This program tries to fit a cuboid to a given pointcloud.
+It will look for planes on the given object, so make sure you pass a segmented, cuboid-formed object
+to this program to get proper results.
+
+How to run:
+rosrun suturo_perception_match_cuboid match_cuboid my_pcd_file.pcd
+You can find some test pcd files in the directory test_data/
+
+The real world dimensions of the test objects are:
+Teabox: 12,1cm x 7,5 cm x 6,6cm
+You can take these dimensions and compare them to the calculated values from this program

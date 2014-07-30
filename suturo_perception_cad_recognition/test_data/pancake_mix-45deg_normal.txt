@@ -1,0 +1,1 @@
+Estimated normal of the table: 0.00955363 0.695283 0.718673 -0.917607
