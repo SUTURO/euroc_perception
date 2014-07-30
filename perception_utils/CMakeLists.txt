@@ -46,6 +46,9 @@ include_directories(
 add_library(perception_utils src/point_cloud_operations.cpp src/logger.cpp src/publisher_helper.cpp)
 target_link_libraries(perception_utils ${PCL_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV_LIBS} ${catkin_LIBRARIES})      
 
+add_library(threadsafe_hull src/threadsafe_hull.cpp)
+target_link_libraries(threadsafe_hull ${catkin_LIBRARIES})      
+
 ## Declare a cpp executable
 add_executable(region_growing src/region_growing.cpp)
 target_link_libraries(region_growing
