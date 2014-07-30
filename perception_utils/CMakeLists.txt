@@ -49,8 +49,16 @@ target_link_libraries(perception_utils ${PCL_LIBRARIES} ${Boost_LIBRARIES} ${Ope
 add_library(threadsafe_hull src/threadsafe_hull.cpp)
 target_link_libraries(threadsafe_hull ${catkin_LIBRARIES})      
 
+add_executable(get_min_max_3d 
+	src/basic_io_pcd.cpp
+  src/get_min_max_3d.cpp)
+target_link_libraries(get_min_max_3d ${catkin_LIBRARIES})      
+
 ## Declare a cpp executable
-add_executable(region_growing src/region_growing.cpp)
+add_executable(region_growing 
+  src/region_growing.cpp
+  src/basic_io_pcd.cpp)
+
 target_link_libraries(region_growing
   ${catkin_LIBRARIES} 
   ${PCL_LIBRARIES}
