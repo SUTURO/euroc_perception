@@ -63,7 +63,7 @@ void
 
   pcl::VoxelGrid <pcl::PointXYZRGB> vg;
   vg.setInputCloud(cloud_in);
-  vg.setLeafSize(downsampleLeafSize,downsampleLeafSize,downsampleLeafSize);
+  vg.setLeafSize(0.01f,0.01f,0.01f);
   vg.filter(*cloud_out);
 
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();

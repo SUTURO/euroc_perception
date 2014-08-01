@@ -53,7 +53,7 @@ target_link_libraries(extract_table
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
 )
-add_dependencies(extract_table perception_msgs)
+add_dependencies(extract_table suturo_perception_msgs)
 
 add_executable(table_client src/table_client.cpp)
 target_link_libraries(table_client
@@ -61,5 +61,5 @@ target_link_libraries(table_client
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
 )
-add_dependencies(table_client perception_msgs)
+add_dependencies(table_client suturo_perception_msgs)
 
