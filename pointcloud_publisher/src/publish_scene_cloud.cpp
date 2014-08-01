@@ -149,8 +149,8 @@ void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
 	cv::Mat resized_img;
 	cv::Mat resized_depth;
 
-  cv::resize( depth_ptr->image, resized_depth, cv::Size(), 0.5, 0.5, cv::INTER_AREA );
-  cv::resize( img_ptr->image, resized_img, cv::Size(), 0.5, 0.5, cv::INTER_AREA );
+  cv::resize( depth_ptr->image, resized_depth, cv::Size(), 1.0, 1.0, cv::INTER_AREA );
+  cv::resize( img_ptr->image, resized_img, cv::Size(), 1.0, 1.0, cv::INTER_AREA );
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out = 
     depth_project(resized_depth, resized_img);
