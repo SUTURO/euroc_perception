@@ -104,10 +104,14 @@ TableFromDepthImageNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& i
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
   logger.logTime(s, e, "z-filter");
 
+  logger.logInfo((boost::format("PointCloud after z-filter: %s data points") % cloud_filtered->points.size()).str());
+
   //voxelizing cloud
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_downsampled (new pcl::PointCloud<pcl::PointXYZRGB>());
   PointCloudOperations::downsample(cloud_filtered, cloud_downsampled, downsampleLeafSize);
   cloud_filtered = cloud_downsampled; // Use the downsampled cloud now
+
+  logger.logInfo((boost::format("PointCloud after downsample: %s data points") % cloud_filtered->points.size()).str());
 
   // Find the biggest table plane in the scene
   pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);

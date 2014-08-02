@@ -1,5 +1,5 @@
 <launch>
   <include file="$(find pointcloud_publisher)/launch/run_pointcloud_publisher.launch"></include>
 
-  <node pkg="suturo_scene_node" name="suturo_scene_node" type="suturo_scene_node" output="screen"></node>
+  <node pkg="suturo_perception_scene_node" name="suturo_perception_scene_node" type="suturo_perception_scene_node" output="screen"></node>
 </launch>

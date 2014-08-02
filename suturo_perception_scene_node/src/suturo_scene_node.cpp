@@ -19,25 +19,25 @@ SuturoSceneNode::SuturoSceneNode(ros::NodeHandle &n, std::string imageTopic, std
   imageTopic_(imageTopic),
   cloudTopic_(depthTopic)
 {
-	logger = perception_utils::Logger("TableFromDepthImageNode");
+	logger = perception_utils::Logger("SuturoPerceptionSceneNode");
   clusterService_ = nodeHandle_.advertiseService("/suturo/GetScene", 
     &SuturoSceneNode::getScene, this);
-	int idx_ = 0;
+	idx_ = 0;
 
   // Set default parameters
-  float zAxisFilterMin = 0.0;
-  float zAxisFilterMax = 1.5;
-  float downsampleLeafSize = 0.001;
-  int planeMaxIterations = 1000;
-  double planeDistanceThreshold = 0.01;
-  double ecClusterTolerance = 0.02; // 2cm
-  int ecMinClusterSize = 6000;
-  int ecMaxClusterSize = 200000;  
-  double prismZMin = 0.02;
-  double prismZMax = 0.50; // cutoff 50 cm above plane
-  double ecObjClusterTolerance = 0.03; // 3cm
-  int ecObjMinClusterSize = 100;
-  int ecObjMaxClusterSize = 25000;
+  zAxisFilterMin = 0.0f;
+  zAxisFilterMax = 1.5f;
+  downsampleLeafSize = 0.01f; // [pcl::VoxelGrid::applyFilter] Leaf size is too small for the input dataset. Integer indices would overflow
+  planeMaxIterations = 1000;
+  planeDistanceThreshold = 0.01f; 
+  ecClusterTolerance = 0.02f; // 2cm
+  ecMinClusterSize = 1000;
+  ecMaxClusterSize = 200000;  
+  prismZMin = 0.001f;
+  prismZMax = 0.50f; // cutoff 50 cm above plane
+  ecObjClusterTolerance = 0.05f; // 3cm
+  ecObjMinClusterSize = 10;
+  ecObjMaxClusterSize = 25000;
 }
 
 bool
@@ -272,11 +272,10 @@ SuturoSceneNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputClou
     pcl::PCDWriter writer;
     std::stringstream ss;
     ss << "euroc_cloud_" << idx_ << "_" << ex << ".pcd";
-    idx_++;
     writer.write(ss.str(), *(extractedObjects[ex]));
     std::cerr << "Saved " << extractedObjects[ex]->points.size () << " data points to " << ss.str().c_str() << std::endl;
   }
 
-	
+  idx_++;
 	processing_ = false;
 }
