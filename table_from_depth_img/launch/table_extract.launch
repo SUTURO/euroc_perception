@@ -1,3 +1,5 @@
 <launch>
+  <include file="$(find pointcloud_publisher)/launch/run_pointcloud_publisher.launch"></include>
+
   <node pkg="table_from_depth_img" name="extract_table" type="extract_table" output="screen"></node>
 </launch>

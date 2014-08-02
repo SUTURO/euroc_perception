@@ -61,9 +61,10 @@ void
   Logger logger("point_cloud_operations");
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
 
+  logger.logInfo((boost::format("downsampling with leaf size of %s") % downsampleLeafSize).str());
   pcl::VoxelGrid <pcl::PointXYZRGB> vg;
   vg.setInputCloud(cloud_in);
-  vg.setLeafSize(0.01f,0.01f,0.01f);
+  vg.setLeafSize(downsampleLeafSize,downsampleLeafSize,downsampleLeafSize);
   vg.filter(*cloud_out);
 
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
@@ -89,6 +90,7 @@ void
     return;
   }
 
+  logger.logInfo((boost::format("Setting up SACSegmentation: planeMaxIterations: %s, planeDistanceThreshold: %s, input cloud size: %s") % planeMaxIterations % planeDistanceThreshold % cloud_in->points.size()).str());
   pcl::SACSegmentation<pcl::PointXYZRGB> seg;
   seg.setModelType(pcl::SACMODEL_PLANE); // TODO: parameterize
   seg.setMethodType(pcl::SAC_RANSAC);    // TODO: parameterize
