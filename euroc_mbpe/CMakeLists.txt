@@ -105,6 +105,7 @@ include_directories(
 
 ## Declare a cpp executable
 add_executable(generate_pc_model src/generate_pc_model.cpp)
+add_executable(correspondence_transform src/correspondence_transform.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -113,6 +114,13 @@ add_executable(generate_pc_model src/generate_pc_model.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(generate_pc_model
   ${catkin_LIBRARIES}
+)
+
+target_link_libraries(correspondence_transform
+  ${catkin_LIBRARIES}
+  ${VTK_LIBRARIES}
+	${PCL_LIBRARIES}
+	libvtkFiltering.so
 )
 
 #############
