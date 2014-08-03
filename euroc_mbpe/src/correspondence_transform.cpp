@@ -11,10 +11,34 @@
 #include <pcl/common/common_headers.h>
 #include <pcl/common/transforms.h>
 #include <Eigen/Dense>
+#include <Eigen/Core>
+#include <Eigen/SVD>
 
 typedef Eigen::Matrix< float, 6, 1 > 	Vector6f;
 typedef Eigen::Matrix< float, 12, 1 > 	Vector12f;
 
+// template<typename _Matrix_Type_>
+// _Matrix_Type_ pseudoInverse(const _Matrix_Type_ &a, double epsilon = std::numeric_limits<double>::epsilon())
+// {
+// 	Eigen::JacobiSVD< _Matrix_Type_ > svd(a ,Eigen::ComputeThinU | Eigen::ComputeThinV);
+// 	double tolerance = epsilon * std::max(a.cols(), a.rows()) *svd.singularValues().array().abs()(0);
+// 	return svd.matrixV() *  (svd.singularValues().array().abs() > tolerance).select(svd.singularValues().array().inverse(), 0).matrix().asDiagonal() * svd.matrixU().adjoint();
+// }
+
+// template<typename _Matrix_Type_>
+// bool pseudoInverse(const _Matrix_Type_ &a, _Matrix_Type_ &result, double epsilon = std::numeric_limits<typename _Matrix_Type_::Scalar>::epsilon())
+// {
+//   if(a.rows()<a.cols())
+//       return false;
+// 
+//   Eigen::JacobiSVD< _Matrix_Type_ > svd = a.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
+// 
+//   typename _Matrix_Type_::Scalar tolerance = epsilon * std::max(a.cols(), a.rows()) * svd.singularValues().array().abs().maxCoeff();
+//   
+//   result = svd.matrixV() * _Matrix_Type_( (svd.singularValues().array().abs() > tolerance).select(svd.singularValues().
+//       array().inverse(), 0) ).asDiagonal() * svd.matrixU().adjoint();
+// }
+// 
 Vector12f getVectorFromPointCloud4(pcl::PointCloud<pcl::PointXYZ>::Ptr p)
 {
   if(p->points.size() != 4)
@@ -23,12 +47,16 @@ Vector12f getVectorFromPointCloud4(pcl::PointCloud<pcl::PointXYZ>::Ptr p)
     return Eigen::Matrix< float, 12, 1 >::Zero();
   }
 
+  // for(int i = 0; i < p->points.size(); i++)
+  // {
+  //   std::cout <<  p->points[i].x << " " << p->points[i].y << " " << p->points[i].z << std::endl;
+  // }
   Vector12f result = Eigen::Matrix< float, 12, 1 >::Zero();
-  for(int i=1; i<=4; i++)
+  for(int i=0; i<4; i++)
   {
-    result[0*i] = p->points[i-1].x;
-    result[1*i] = p->points[i-1].y;
-    result[2*i] = p->points[i-1].z;
+    result[0+(i*3)] = p->points[i].x;
+    result[1+(i*3)] = p->points[i].y;
+    result[2+(i*3)] = p->points[i].z;
   }
   return result;
 }
@@ -89,10 +117,9 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr transformVariedPose(pcl::PointCloud<pcl::Poi
   // Transform the points with a slight change of param1 ...
   pcl::PointCloud<pcl::PointXYZ>::Ptr pts_param1 (new pcl::PointCloud<pcl::PointXYZ>);
   Vector6f varied_vector = Vector6f::Zero();
-  // varied_vector[0] = varied_vector[1] = varied_vector[2] = varied_vector[3] = varied_vector[4] = varied_vector[5] = 0;
-  varied_vector[0] = e;
+  varied_vector[variation_idx] = e;
   Vector6f pose_varied = pose + varied_vector;    
-  pcl::transformPointCloud(*cloud, *pts_param1, getRotationMatrixFromPose(pose) );
+  pcl::transformPointCloud(*cloud, *pts_param1, getRotationMatrixFromPose(pose_varied) );
   return pts_param1;
 }
 
@@ -133,40 +160,60 @@ int main(int argc, const char *argv[])
   // Observed points in Vector format
   Vector12f y0;
   y0 = getVectorFromPointCloud4(observed_correspondences);
+  std::cout << "y0:" << std::endl << y0 << std::endl;
   // Define a small variation that will be used to calculate the
   // effect of varyiing the different parameters of the pose
-  double e = 0.00001;
-  Eigen::Matrix< float, 3, 6 > jacobian = Eigen::Matrix< float, 3, 6 >::Zero();
+  double e = 0.0001;
+  Eigen::Matrix< float, 12, 6 > jacobian = Eigen::Matrix< float, 12, 6 >::Zero();
 
-  Vector6f pose_varied;
-  Vector6f varied_vector;
-
-  for(int i=0; i<200; i++)
+  for(int i=0; i<3; i++)
   {
     // Where will the points of the model be with the given pose?
     // This will be the basis for our error calculation
     pcl::PointCloud<pcl::PointXYZ>::Ptr predicted_model_pts (new pcl::PointCloud<pcl::PointXYZ>);
     // Calculate the model points w.r.t the current pose estimation
     pcl::transformPointCloud(*model_correspondences, *predicted_model_pts, getRotationMatrixFromPose(x) );
-    Vector12f y = getVectorFromPointCloud4(predicted_model_pts);
+    Eigen::Matrix< float, 12, 1 > y = getVectorFromPointCloud4(predicted_model_pts);
+    std::cout << "y: " << std::endl << y << std::endl;
 
 
     // Transform the points with a slight change of the parameters
     pcl::PointCloud<pcl::PointXYZ>::Ptr changed_pointcloud (new pcl::PointCloud<pcl::PointXYZ>);
     for(int idx=0;idx<6;idx++)
     {
-      changed_pointcloud = transformVariedPose(model_correspondences, x, 0, e);
+      changed_pointcloud = transformVariedPose(model_correspondences, x, idx, e);
       Vector12f pts_after_variation = getVectorFromPointCloud4(changed_pointcloud);
       // ... and write these points in the jacobian column per column
       for(int j=0;j<12;j++)
       {
-        jacobian(j,0) = pts_after_variation[j];
+        jacobian(j,idx) = (pts_after_variation[j] - y[j]) / e;
       }
     }
+    // Get the delta between the observed points
+    // and the predicted points w.r.t to the current pose
+    Vector12f deltay = y0 - y;
+    std::cout << "Residual: " << deltay.norm() << std::endl;
+    std::cout << "deltay: " << std::endl << deltay << std::endl;
+    // TODO CALCULATE THE (Moore-Penrose) pseudo inverse 
+    // http://eigen.tuxfamily.org/index.php?title=FAQ#Is_there_a_method_to_compute_the_.28Moore-Penrose.29_pseudo_inverse_.3F 
+    // std::cout << pseudoInverse(jacobian);
+    Vector6f deltax;
+    // Vector6f deltax = pseudoInverse(jacobian) * deltay;
+    Eigen::JacobiSVD<Eigen::MatrixXf> svd(jacobian, Eigen::ComputeThinU | Eigen::ComputeThinV); 
+    Eigen::Matrix<float,6,12> pinv = svd.solve(Eigen::Matrix<float,12,12>::Identity());
+    std::cout << "pinv: " << std::endl << pinv << std::endl;
+    std::cout << (jacobian * pinv) << std::endl;
+    std::cout << "deltax: " << std::endl << deltax << std::endl;
 
-
-
+    if( abs( (deltax.norm() / x.norm()) < 1e-6 ) )
+    {
+      // change in transformation is nearly zero .... 
+      break;
+    }
+    // Update estimate
+    x = x + deltax;
   }
+  std::cout << "Final pose estimation: " << std::endl << x << std::endl;
 
   
   pcl::visualization::PCLVisualizer viewer;
