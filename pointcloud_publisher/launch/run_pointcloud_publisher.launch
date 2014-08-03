@@ -1,4 +1,4 @@
 <launch>
-  <node pkg="pointcloud_publisher" name="publish_scene_cloud" type="publish_scene_cloud" output="screen"></node>
-  <!-- <node pkg="pointcloud_publisher" name="publish_gripper_cloud" type="publish_gripper_cloud" output="screen"></node> -->
+<node pkg="pointcloud_publisher" name="publish_pointcloud_scene" type="publish_pointcloud" output="screen" args="-c scene"></node>
+<node pkg="pointcloud_publisher" name="publish_pointcloud_tcp" type="publish_pointcloud" output="screen" args="-c tcp"></node>
 </launch>

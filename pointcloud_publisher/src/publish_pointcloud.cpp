@@ -172,11 +172,13 @@ int main (int argc, char** argv)
     ;
 
     po::positional_options_description p;
+    // po::store(po::command_line_parser(argc, argv).
+    // options(desc).positional(p).run(), vm); 
     po::store(po::command_line_parser(argc, argv).
-    options(desc).positional(p).run(), vm); 
+    options(desc).allow_unregistered().run(), vm); // Allow unknown parameters 
 
     if (vm.count("help")) {
-      std::cout << "Usage: calc_pc_from_img_and_depth -c camera_name [-v]" << std::endl << std::endl;
+      std::cout << "Usage: publish_pointcloud -c camera_name [-v]" << std::endl << std::endl;
       std::cout << desc << "\n";
       return 1;
     }
@@ -192,7 +194,7 @@ int main (int argc, char** argv)
   }
   catch(std::exception& e)
   {
-    std::cout << "Usage: Usage: calc_pc_from_img_and_depth -c camera_name [-v]" << std::endl << std::endl;
+    std::cout << "Usage: Usage: publish_pointcloud -c camera_name [-v]" << std::endl << std::endl;
     std::cerr << "Error: " << e.what() << "\n";
     return false;
   }
@@ -226,7 +228,7 @@ int main (int argc, char** argv)
 
   // Construct node name
   std::stringstream ss;
-  ss << "calc_pc_from_img_and_depth" << "_" << desired_cam;
+  ss << "publish_pointcloud" << "_" << desired_cam;
 	ros::init(argc, argv, ss.str());
 	ros::NodeHandle n;
 

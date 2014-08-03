@@ -45,3 +45,10 @@ target_link_libraries(publish_gripper_cloud
   ${PCL_LIBRARIES}
 )
 
+add_executable(publish_pointcloud src/publish_pointcloud.cpp)
+target_link_libraries(publish_pointcloud
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBS}
+  ${PCL_LIBRARIES}
+)
+

@@ -46,13 +46,6 @@ target_link_libraries(calc_pc_from_img_and_depth
   ${PCL_LIBRARIES}
 )
 
-add_executable(calc_pc_from_img_and_depth_annex_approved src/calc_pc_from_img_and_depth_annex_approved.cpp)
-target_link_libraries(calc_pc_from_img_and_depth_annex_approved
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBS}
-  ${PCL_LIBRARIES}
-)
-
 add_executable(extract_table src/main.cpp src/table_from_depth_img_node.cpp)
 target_link_libraries(extract_table
   ${catkin_LIBRARIES}
