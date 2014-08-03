@@ -4,6 +4,7 @@
 #include "ros/ros.h"
 
 #include "perception_utils/logger.h"
+#include "perception_utils/pipeline_object.hpp"
 #include "suturo_perception_msgs/GetScene.h"
 
 #include <pcl_ros/point_cloud.h>
@@ -26,6 +27,7 @@ class SuturoSceneNode
 		int idx_;
 		bool processing_;
 		
+		std::vector<suturo_perception::PipelineObject> pipelineObjects_;
 		pcl::ModelCoefficients::Ptr coefficients_; 
     
     // Set default parameters

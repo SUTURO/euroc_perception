@@ -26,8 +26,10 @@
 #include <cmath>
 
 namespace enc = sensor_msgs::image_encodings;
+using namespace suturo_perception;
 
-perception_utils::Logger logger("publish_scene_cloud");
+
+Logger logger("publish_scene_cloud");
 
 
 std::string publish_cloud_topic = "/suturo/euroc_scene_cloud";
@@ -136,7 +138,7 @@ const cv::Mat &rgb_image)
  */
 void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
 		const sensor_msgs::ImageConstPtr& inputImage,
-		perception_utils::PublisherHelper& publisher)
+		PublisherHelper& publisher)
 {
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
 	
