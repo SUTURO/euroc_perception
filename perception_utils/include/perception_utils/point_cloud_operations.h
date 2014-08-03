@@ -37,7 +37,7 @@
 #include "perception_utils/logger.h"
 // #include "roi.h"
 
-namespace perception_utils
+namespace suturo_perception
 {
   /**
    * This class represents methods for general purpose

@@ -13,6 +13,7 @@
 #include <moveit_msgs/CollisionObject.h>
 
 using namespace perception_utils;
+using namespace suturo_perception;
 
 SuturoSceneNode::SuturoSceneNode(ros::NodeHandle &n, std::string imageTopic, std::string depthTopic) : 
   nodeHandle_(n), 
@@ -275,6 +276,47 @@ SuturoSceneNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputClou
     writer.write(ss.str(), *(extractedObjects[ex]));
     std::cerr << "Saved " << extractedObjects[ex]->points.size () << " data points to " << ss.str().c_str() << std::endl;
   }
+  
+  pipelineObjects_.clear();
+  for (int i = 0; i < extractedObjects.size(); i++)
+  {
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr it = extractedObjects.at(i);
+    logger.logInfo((boost::format("Transform cluster %s into a message. \
+                    Cluster has %s points") % i % it->points.size()).str());
+
+    if(it->points.size()==0)
+    {
+      logger.logError("Cluster cloud is empty. Skipping ...");
+      i++;
+      continue;
+    }
+
+    if(it->points.size()<50)
+    {
+      logger.logError("Cluster cloud has less than 50 points. Skipping ...");
+      i++;
+      continue;
+    }
+    
+    // Calculate the volume of each cluster
+    // Create a convex hull around the cluster and calculate the total volume
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_points (new pcl::PointCloud<pcl::PointXYZRGB> ());
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr obj_points_from_hull (new pcl::PointCloud<pcl::PointXYZRGB> ());
+
+    pcl::ConvexHull<pcl::PointXYZRGB> hull;
+    hull.setInputCloud(it);
+    hull.setDimension(3);
+    hull.setComputeAreaVolume(calculateHullVolume_); // This creates alot of output, but it's necessary for getTotalVolume() ....
+    hull.reconstruct (*hull_points);
+
+    // Centroid calulcation
+    Eigen::Vector4f centroid;
+    pcl::compute3DCentroid (*hull_points, centroid);  
+
+    logger.logInfo((boost::format("Centroid: %s, %s, %s") % centroid[0] % centroid[1] % centroid[2]).str());
+		
+		
+	}
 
   idx_++;
 	processing_ = false;

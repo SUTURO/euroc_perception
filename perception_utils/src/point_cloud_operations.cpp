@@ -1,6 +1,6 @@
 #include "perception_utils/point_cloud_operations.h"
 
-using namespace perception_utils;
+using namespace suturo_perception;
 
 /*
  * Remove NaNs from given pointcloud. 
