@@ -9,14 +9,14 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
-using namespace perception_utils;
+using namespace suturo_perception;
 
 TableFromDepthImageNode::TableFromDepthImageNode(ros::NodeHandle &n, std::string imageTopic, std::string depthTopic) : 
   nodeHandle_(n), 
   imageTopic_(imageTopic),
   cloudTopic_(depthTopic)
 {
-	logger = perception_utils::Logger("TableFromDepthImageNode");
+	logger = Logger("TableFromDepthImageNode");
   clusterService_ = nodeHandle_.advertiseService("/suturo/GetTable", 
     &TableFromDepthImageNode::getTable, this);
 	int idx_ = 0;

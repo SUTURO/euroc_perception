@@ -21,7 +21,7 @@ class TableFromDepthImageNode
     ros::ServiceServer clusterService_;
 		std::string imageTopic_;
     std::string cloudTopic_;
-		perception_utils::Logger logger;
+		suturo_perception::Logger logger;
 		int idx_;
 		bool processing_;
 		

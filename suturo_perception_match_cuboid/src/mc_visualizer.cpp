@@ -23,7 +23,7 @@
 #include <boost/format.hpp>
 #include <suturo_perception_match_cuboid/detected_plane.h>
 #include <suturo_perception_match_cuboid/cuboid_matcher.h>
-#include <suturo_perception_match_cuboid/cuboid.h>
+#include <perception_utils/cuboid.hpp>
 #include <pcl/ModelCoefficients.h>
 
 #define MIN_ANGLE 5 // the minimum angle offset between to norm vectors

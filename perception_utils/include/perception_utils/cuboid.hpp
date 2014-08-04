@@ -1,6 +1,9 @@
 #ifndef CUBOID_H
 #define CUBOID_H
 
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+
 // This cuboid will be defined by its three edge lengths.
 class Cuboid
 {

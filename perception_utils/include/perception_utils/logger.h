@@ -11,7 +11,7 @@
 
 
 
-namespace perception_utils
+namespace suturo_perception
 {
   class Logger
   {

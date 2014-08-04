@@ -26,8 +26,10 @@
 #include <cmath>
 
 namespace enc = sensor_msgs::image_encodings;
+using namespace suturo_perception;
 
-perception_utils::Logger logger("publish_scene_cloud");
+
+Logger logger("publish_scene_cloud");
 
 
 std::string publish_cloud_topic = "/suturo/euroc_scene_cloud";
@@ -135,8 +137,7 @@ const cv::Mat &rgb_image)
  * Receive callback for the /camera/depth_registered/points subscription
  */
 void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
-		const sensor_msgs::ImageConstPtr& inputImage,
-		perception_utils::PublisherHelper& publisher)
+		const sensor_msgs::ImageConstPtr& inputImage)
 {
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
 	
@@ -188,7 +189,6 @@ int main (int argc, char** argv)
 {
 	ros::init(argc, argv, "publish_scene_cloud");
 	ros::NodeHandle n;
-	perception_utils::PublisherHelper publisher(n);
 
   message_filters::Subscriber<sensor_msgs::Image> depth_sub(n, "/euroc_interface_node/cameras/scene_depth_cam", 1);
   message_filters::Subscriber<sensor_msgs::Image> image_sub(n, "/euroc_interface_node/cameras/scene_rgb_cam", 1);
@@ -196,7 +196,7 @@ int main (int argc, char** argv)
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> MySyncPolicy;
   message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), depth_sub, image_sub);
 
-  sync.registerCallback(boost::bind(&receive_depth_and_rgb_image, _1, _2, publisher));
+  sync.registerCallback(boost::bind(&receive_depth_and_rgb_image, _1, _2));
 
   cloud_publisher = n.advertise<sensor_msgs::PointCloud2> ("/suturo/euroc_scene_cloud", 1);
   image_publisher = n.advertise<sensor_msgs::Image> ("/suturo/euroc_scene_image", 1);

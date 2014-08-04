@@ -12,14 +12,14 @@
 #include <shape_msgs/Plane.h>
 #include <moveit_msgs/CollisionObject.h>
 
-using namespace perception_utils;
+using namespace suturo_perception;
 
 SuturoSceneNode::SuturoSceneNode(ros::NodeHandle &n, std::string imageTopic, std::string depthTopic) : 
   nodeHandle_(n), 
   imageTopic_(imageTopic),
   cloudTopic_(depthTopic)
 {
-	logger = perception_utils::Logger("SuturoPerceptionSceneNode");
+	logger = Logger("SuturoPerceptionSceneNode");
   clusterService_ = nodeHandle_.advertiseService("/suturo/GetScene", 
     &SuturoSceneNode::getScene, this);
 	idx_ = 0;
@@ -65,6 +65,7 @@ SuturoSceneNode::getScene(suturo_perception_msgs::GetScene::Request &req, suturo
     r.sleep();
   }
   
+  /*
   if (coefficients_->values.size() != 4)
 	{
 		logger.logError("coefficients_.size() != 4");
@@ -78,6 +79,12 @@ SuturoSceneNode::getScene(suturo_perception_msgs::GetScene::Request &req, suturo
   moveit_msgs::CollisionObject table_msg;
 	table_msg.planes.push_back(plane);
   //res.table = table_msg;
+  */
+
+  for (int i = 0; i < pipelineObjects_.size(); i++)
+  {
+    res.objects.push_back(pipelineObjects_[i]->toEurocObject());
+  }
 
   return true;
 }
@@ -275,6 +282,58 @@ SuturoSceneNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputClou
     writer.write(ss.str(), *(extractedObjects[ex]));
     std::cerr << "Saved " << extractedObjects[ex]->points.size () << " data points to " << ss.str().c_str() << std::endl;
   }
+  
+  pipelineObjects_.clear();
+  for (int i = 0; i < extractedObjects.size(); i++)
+  {
+    PipelineObject::Ptr pipelineObject(new PipelineObject);
+
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr it = extractedObjects.at(i);
+    logger.logInfo((boost::format("Transform cluster %s into a message. \
+                    Cluster has %s points") % i % it->points.size()).str());
+
+    if(it->points.size()==0)
+    {
+      logger.logError("Cluster cloud is empty. Skipping ...");
+      i++;
+      continue;
+    }
+
+    if(it->points.size()<50)
+    {
+      logger.logError("Cluster cloud has less than 50 points. Skipping ...");
+      i++;
+      continue;
+    }
+
+    pipelineObject->set_pointCloud(it);
+    
+    // Calculate the volume of each cluster
+    // Create a convex hull around the cluster and calculate the total volume
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_points (new pcl::PointCloud<pcl::PointXYZRGB> ());
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr obj_points_from_hull (new pcl::PointCloud<pcl::PointXYZRGB> ());
+
+    pcl::ConvexHull<pcl::PointXYZRGB> hull;
+    hull.setInputCloud(it);
+    hull.setDimension(3);
+    hull.setComputeAreaVolume(true); // This creates alot of output, but it's necessary for getTotalVolume() ....
+    hull.reconstruct (*hull_points);
+
+    // Centroid calulcation
+    Eigen::Vector4f centroid;
+    pcl::compute3DCentroid (*hull_points, centroid);  
+
+    logger.logInfo((boost::format("Centroid: %s, %s, %s") % centroid[0] % centroid[1] % centroid[2]).str());
+
+		Point centroid_point;
+    centroid_point.x = centroid[0];
+    centroid_point.y = centroid[1];
+    centroid_point.z = centroid[2];
+    pipelineObject->set_c_centroid(centroid_point);
+		
+    pipelineObjects_.push_back(pipelineObject);
+	}
+
 
   idx_++;
 	processing_ = false;

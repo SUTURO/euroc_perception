@@ -1,6 +1,6 @@
 #include "perception_utils/logger.h"
 
-using namespace perception_utils;
+using namespace suturo_perception;
 
 Logger::Logger(std::string m) : module(m){}
 

@@ -20,6 +20,8 @@ int main(int argc, char **argv)
     if (clusterClient.call(sceneSrv))
     {
       ROS_INFO("Scene Service call successful");
+			ROS_INFO(" id = %d", sceneSrv.response.id);
+			ROS_INFO(" number of detected objects = %d", sceneSrv.response.objects.size());
       ROS_INFO_STREAM("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
     }
     else
