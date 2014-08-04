@@ -23,7 +23,7 @@
 #include <pcl/registration/distances.h>
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include <suturo_perception_match_cuboid/detected_plane.h>
-#include <suturo_perception_match_cuboid/cuboid.h>
+#include <perception_utils/cuboid.hpp>
 #include <boost/thread.hpp>
 #include <perception_utils/threadsafe_hull.h>
 

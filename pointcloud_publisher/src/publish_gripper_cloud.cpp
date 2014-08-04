@@ -23,7 +23,9 @@
 
 namespace enc = sensor_msgs::image_encodings;
 
-perception_utils::Logger logger("publish_gripper_cloud");
+using namespace suturo_perception;
+
+Logger logger("publish_gripper_cloud");
 
 ros::Publisher pub_cloud;
 
