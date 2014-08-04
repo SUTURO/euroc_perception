@@ -165,8 +165,8 @@ int main(int argc, const char *argv[])
   // effect of varyiing the different parameters of the pose
   double e = 0.0001;
   Eigen::Matrix< float, 12, 6 > jacobian = Eigen::Matrix< float, 12, 6 >::Zero();
-
-  for(int i=0; i<3; i++)
+  int iterations;
+  for(iterations=0; iterations<20; iterations++)
   {
     // Where will the points of the model be with the given pose?
     // This will be the basis for our error calculation
@@ -198,11 +198,20 @@ int main(int argc, const char *argv[])
     // http://eigen.tuxfamily.org/index.php?title=FAQ#Is_there_a_method_to_compute_the_.28Moore-Penrose.29_pseudo_inverse_.3F 
     // std::cout << pseudoInverse(jacobian);
     Vector6f deltax;
-    // Vector6f deltax = pseudoInverse(jacobian) * deltay;
-    Eigen::JacobiSVD<Eigen::MatrixXf> svd(jacobian, Eigen::ComputeThinU | Eigen::ComputeThinV); 
-    Eigen::Matrix<float,6,12> pinv = svd.solve(Eigen::Matrix<float,12,12>::Identity());
-    std::cout << "pinv: " << std::endl << pinv << std::endl;
-    std::cout << (jacobian * pinv) << std::endl;
+    // std::cout << "Jacobian" << std::endl;
+    // std::cout << jacobian << std::endl;
+    // std::cout << "Jacobian^t" << std::endl;
+    // std::cout << jacobian.transpose() << std::endl;
+    // std::cout << "j^tj" << std::endl;
+    // std::cout << jacobian.transpose() * jacobian << std::endl;
+    // std::cout << "inv(j^t * j)" << std::endl;
+    // std::cout << (jacobian.transpose() * jacobian).inverse() << std::endl;
+    // std::cout << "inv(j^t * j) * J^t" << std::endl;
+    // std::cout << (jacobian.transpose() * jacobian).inverse() * jacobian.transpose() << std::endl;
+    // std::cout << "Should be nearly J" << std::endl;
+    Eigen::Matrix<float,6,12> pinv = (jacobian.transpose() * jacobian).inverse() * jacobian.transpose();
+    std::cout << (jacobian * pinv * jacobian) << std::endl;
+    deltax = pinv * deltay;
     std::cout << "deltax: " << std::endl << deltax << std::endl;
 
     if( abs( (deltax.norm() / x.norm()) < 1e-6 ) )
@@ -210,10 +219,10 @@ int main(int argc, const char *argv[])
       // change in transformation is nearly zero .... 
       break;
     }
-    // Update estimate
+    // Update pose estimate
     x = x + deltax;
   }
-  std::cout << "Final pose estimation: " << std::endl << x << std::endl;
+  std::cout << "Final pose estimation after " << iterations << " iterations: " << std::endl << x << std::endl;
 
   
   pcl::visualization::PCLVisualizer viewer;
