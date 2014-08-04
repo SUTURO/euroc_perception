@@ -23,11 +23,11 @@ class SuturoSceneNode
     ros::ServiceServer clusterService_;
 		std::string imageTopic_;
     std::string cloudTopic_;
-		perception_utils::Logger logger;
+    suturo_perception::Logger logger;
 		int idx_;
 		bool processing_;
 		
-		std::vector<suturo_perception::PipelineObject> pipelineObjects_;
+		std::vector<suturo_perception::PipelineObject::Ptr> pipelineObjects_;
 		pcl::ModelCoefficients::Ptr coefficients_; 
     
     // Set default parameters

@@ -8,7 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
-  suturo_perception_match_cuboid
+  suturo_perception_msgs
 )
 
 # pcl
@@ -30,7 +30,7 @@ find_package(OpenCV REQUIRED)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES perception_utils
-  CATKIN_DEPENDS pcl_conversions pcl_ros cv_bridge roscpp sensor_msgs std_msgs suturo_perception_match_cuboid
+  CATKIN_DEPENDS pcl_conversions pcl_ros cv_bridge roscpp sensor_msgs std_msgs suturo_perception_msgs
   DEPENDS opencv pcl
 )
 
@@ -56,6 +56,7 @@ set(perception_utils_files
 
 add_library(perception_utils ${perception_utils_files})
 target_link_libraries(perception_utils ${PCL_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV_LIBS} ${catkin_LIBRARIES})      
+add_dependencies(perception_utils suturo_perception_msgs)
 
 add_library(threadsafe_hull src/threadsafe_hull.cpp)
 target_link_libraries(threadsafe_hull ${catkin_LIBRARIES})      

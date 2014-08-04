@@ -4,14 +4,17 @@
 #include <pcl/point_types.h>
 #include <boost/signals2/mutex.hpp>
 #include <boost/thread.hpp>
-#include <suturo_perception_match_cuboid/cuboid.h>
+#include <perception_utils/cuboid.hpp>
 #include <perception_utils/point.hpp>
+#include <suturo_perception_msgs/EurocObject.h>
 
 namespace suturo_perception
 {
   class PipelineObject
   {
     public:
+      typedef boost::shared_ptr<PipelineObject> Ptr;
+
       PipelineObject() : mutex(new boost::signals2::mutex()) {
         c_id = -1;
         c_centroid.x = -1;
@@ -82,6 +85,20 @@ namespace suturo_perception
         boost::lock_guard<boost::signals2::mutex> lock(*mutex);
         c_cuboid = value;
       };
+
+      suturo_perception_msgs::EurocObject toEurocObject()
+      {
+        suturo_perception_msgs::EurocObject obj;
+        obj.c_id = get_c_id();
+        obj.frame_id = "";
+        Point centroid = get_c_centroid();
+        obj.c_centroid.x = centroid.x;
+        obj.c_centroid.y = centroid.y;
+        obj.c_centroid.z = centroid.z;
+        obj.c_type = suturo_perception_msgs::EurocObject::UNKNOWN; 
+        // TODO: cuboid
+        return obj;
+      }
     
     private:
       int c_id;
