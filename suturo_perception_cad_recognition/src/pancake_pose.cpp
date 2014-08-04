@@ -238,7 +238,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PancakePose::execute()
 
   // Use ICP for the final alignment
   pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
-  icp.setInputCloud(_upwards_object);
+  icp.setInputSource(_upwards_object);
   icp.setInputTarget(_upwards_model);
   icp.setEuclideanFitnessEpsilon (0.000001f);
   // icp.setMaxCorrespondenceDistance (0.55);
