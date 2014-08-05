@@ -11,6 +11,7 @@
 
 #include <shape_msgs/Plane.h>
 #include <moveit_msgs/CollisionObject.h>
+#include <visualization_msgs/Marker.h>
 
 using namespace suturo_perception;
 
@@ -23,6 +24,9 @@ SuturoSceneNode::SuturoSceneNode(ros::NodeHandle &n, std::string imageTopic, std
   clusterService_ = nodeHandle_.advertiseService("/suturo/GetScene", 
     &SuturoSceneNode::getScene, this);
 	idx_ = 0;
+
+  markerPublisher_ = nodeHandle_.advertise<visualization_msgs::Marker>("/suturo/cuboid_markers", 0);
+  maxMarkerId_ = 0;
 
   // Set default parameters
   zAxisFilterMin = 0.0f;
@@ -38,6 +42,51 @@ SuturoSceneNode::SuturoSceneNode(ros::NodeHandle &n, std::string imageTopic, std
   ecObjClusterTolerance = 0.05f; // 3cm
   ecObjMinClusterSize = 10;
   ecObjMaxClusterSize = 25000;
+}
+
+void SuturoSceneNode::publish_marker(std::vector<PipelineObject::Ptr> objects)
+{
+  logger.logInfo("Publishing centroid marker");
+
+  for (int i = 0; i < maxMarkerId_; i++)
+  {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "/sdepth"; // TODO: more dynamic?
+    marker.header.stamp = ros::Time();
+    marker.ns = "suturo_perception";
+    marker.id = i;
+    marker.action = visualization_msgs::Marker::DELETE;
+    markerPublisher_.publish(marker);
+  }
+
+  for (int i = 0; i < objects.size(); i++)
+  {
+    PipelineObject::Ptr obj = objects[i];
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "/sdepth"; // TODO: more dynamic?
+    marker.header.stamp = ros::Time();
+    marker.ns = "suturo_perception";
+    marker.id = i;
+    marker.type = visualization_msgs::Marker::SPHERE;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = obj->get_c_centroid().x;
+    marker.pose.position.y = obj->get_c_centroid().y;
+    marker.pose.position.z = obj->get_c_centroid().z;
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 0.0;
+    marker.scale.x = 0.1;
+    marker.scale.y = 0.1;
+    marker.scale.z = 0.1;
+    marker.color.a = 1.0;
+    marker.color.r = 0.0;
+    marker.color.g = 1.0;
+    marker.color.b = 0.0;
+    markerPublisher_.publish(marker);
+  }
+
+  maxMarkerId_ = objects.size();
 }
 
 bool
@@ -64,6 +113,7 @@ SuturoSceneNode::getScene(suturo_perception_msgs::GetScene::Request &req, suturo
     ros::spinOnce();
     r.sleep();
   }
+  logger.logInfo("done with segmentation, starting pipeline");
   
   /*
   if (coefficients_->values.size() != 4)
@@ -81,10 +131,20 @@ SuturoSceneNode::getScene(suturo_perception_msgs::GetScene::Request &req, suturo
   //res.table = table_msg;
   */
 
+  logger.logInfo("done with perception pipeline, sending result");
   for (int i = 0; i < pipelineObjects_.size(); i++)
   {
+    logger.logInfo("sending object");
+    if (pipelineObjects_.at(i) == NULL)
+    {
+      logger.logError("pipeline object is NULL! investigate this!");
+      continue;
+    }
     res.objects.push_back(pipelineObjects_[i]->toEurocObject());
   }
+
+  logger.logInfo("results sent, publishing markers");
+  publish_marker(pipelineObjects_);
 
   return true;
 }
@@ -186,6 +246,11 @@ void
 SuturoSceneNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
 {
 	logger.logInfo("image and cloud incoming...");
+  if (!processing_)
+  {
+    logger.logInfo("processing_ == false, aborting...");
+    return;
+  }
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
 	
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZRGB>());

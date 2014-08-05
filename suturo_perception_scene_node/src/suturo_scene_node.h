@@ -26,6 +26,10 @@ class SuturoSceneNode
     suturo_perception::Logger logger;
 		int idx_;
 		bool processing_;
+
+    ros::Publisher markerPublisher_;
+    int maxMarkerId_;
+    void publish_marker(std::vector<suturo_perception::PipelineObject::Ptr> objects);
 		
 		std::vector<suturo_perception::PipelineObject::Ptr> pipelineObjects_;
 		pcl::ModelCoefficients::Ptr coefficients_; 

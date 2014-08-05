@@ -6,6 +6,7 @@
 #include <boost/thread.hpp>
 #include <perception_utils/cuboid.hpp>
 #include <perception_utils/point.hpp>
+#include <perception_utils/logger.h>
 #include <suturo_perception_msgs/EurocObject.h>
 
 namespace suturo_perception
@@ -26,6 +27,7 @@ namespace suturo_perception
         c_cuboid.length3 = -1;
         c_cuboid.volume = -1;
 
+        logger = Logger("pipeline_object");
       };
 
       // Threadsafe getters      
@@ -96,7 +98,32 @@ namespace suturo_perception
         obj.c_centroid.y = centroid.y;
         obj.c_centroid.z = centroid.z;
         obj.c_type = suturo_perception_msgs::EurocObject::UNKNOWN; 
-        // TODO: cuboid
+        
+        // cuboid
+        Cuboid cub = get_c_cuboid();
+        shape_msgs::SolidPrimitive cuboid_primitive;
+        cuboid_primitive.type = shape_msgs::SolidPrimitive::BOX;
+        logger.logInfo("before");
+        cuboid_primitive.dimensions[shape_msgs::SolidPrimitive::BOX_X] = cub.length1;
+        cuboid_primitive.dimensions[shape_msgs::SolidPrimitive::BOX_Y] = cub.length2;
+        cuboid_primitive.dimensions[shape_msgs::SolidPrimitive::BOX_Z] = cub.length3;
+        logger.logInfo("after");
+        obj.object.primitives.push_back(cuboid_primitive);
+
+        geometry_msgs::Pose cuboid_pose;
+        cuboid_pose.position.x = cub.center[0];
+        cuboid_pose.position.y = cub.center[1];
+        cuboid_pose.position.z = cub.center[2];
+        // TODO: find out which one is right
+        //cuboid_pose.position.x = cub.center[0] - cub.length1 / 2;
+        //cuboid_pose.position.y = cub.center[1] - cub.length2 / 2;
+        //cuboid_pose.position.z = cub.center[2] - cub.length3 / 2;
+        cuboid_pose.orientation.x = cub.orientation.x();
+        cuboid_pose.orientation.y = cub.orientation.y();
+        cuboid_pose.orientation.z = cub.orientation.z();
+        cuboid_pose.orientation.w = cub.orientation.w();
+        obj.object.primitive_poses.push_back(cuboid_pose);
+
         return obj;
       }
     
@@ -107,8 +134,9 @@ namespace suturo_perception
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloud;
       Cuboid c_cuboid;
 
-
       boost::shared_ptr<boost::signals2::mutex> mutex;
+
+      Logger logger;
   };
 }
 
