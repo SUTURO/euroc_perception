@@ -18,7 +18,8 @@ typedef Eigen::Matrix< float, 6, 1 > 	Vector6f;
 typedef Eigen::Matrix< float, 12, 1 > 	Vector12f;
 
 
-Vector12f getVectorFromPointCloud4(pcl::PointCloud<pcl::PointXYZ>::Ptr p)
+// Vector12f getVectorFromPointCloud4(pcl::PointCloud<pcl::PointXYZ>::Ptr p)
+Eigen::VectorXf getVectorFromPointCloud4(pcl::PointCloud<pcl::PointXYZ>::Ptr p)
 {
   if(p->points.size() != 4)
   {
@@ -26,11 +27,7 @@ Vector12f getVectorFromPointCloud4(pcl::PointCloud<pcl::PointXYZ>::Ptr p)
     return Eigen::Matrix< float, 12, 1 >::Zero();
   }
 
-  // for(int i = 0; i < p->points.size(); i++)
-  // {
-  //   std::cout <<  p->points[i].x << " " << p->points[i].y << " " << p->points[i].z << std::endl;
-  // }
-  Vector12f result = Eigen::Matrix< float, 12, 1 >::Zero();
+  Eigen::VectorXf result = Eigen::Matrix< float, 12, 1 >::Zero();
   for(int i=0; i<4; i++)
   {
     result[0+(i*3)] = p->points[i].x;
@@ -40,7 +37,7 @@ Vector12f getVectorFromPointCloud4(pcl::PointCloud<pcl::PointXYZ>::Ptr p)
   return result;
 }
 
-Eigen::Matrix4f getRotationMatrixFromPose(Vector6f pose)
+Eigen::Matrix4f getRotationMatrixFromPose(Eigen::Matrix< float, 6, 1 > pose)
 {
   // The first three elments of the given vector are the
   // rotations around x,y and z
@@ -91,18 +88,18 @@ Eigen::Matrix4f getRotationMatrixFromPose(Vector6f pose)
 // Transform a cloud with a given pose + a small varation of one of the parameters in the pose
 // variation_idx indicates which index should be added by e
 pcl::PointCloud<pcl::PointXYZ>::Ptr transformVariedPose(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
-    Vector6f pose, int variation_idx, float e)
+    Eigen::Matrix< float, 6, 1 > pose, int variation_idx, float e)
 {
   // Transform the points with a slight change of param1 ...
   pcl::PointCloud<pcl::PointXYZ>::Ptr pts_param1 (new pcl::PointCloud<pcl::PointXYZ>);
-  Vector6f varied_vector = Vector6f::Zero();
+  Eigen::Matrix< float, 6, 1 > varied_vector = Vector6f::Zero();
   varied_vector[variation_idx] = e;
-  Vector6f pose_varied = pose + varied_vector;    
+  Eigen::Matrix< float, 6, 1 > pose_varied = pose + varied_vector;    
   pcl::transformPointCloud(*cloud, *pts_param1, getRotationMatrixFromPose(pose_varied) );
   return pts_param1;
 }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr generateBoxModelFromPose(Vector6f pose){
+pcl::PointCloud<pcl::PointXYZ>::Ptr generateBoxModelFromPose(Eigen::Matrix< float, 6, 1 > pose){
   pcl::PointCloud<pcl::PointXYZ>::Ptr result (new pcl::PointCloud<pcl::PointXYZ>);
   result->width=8;
   result->height=1;
@@ -168,17 +165,18 @@ int main(int argc, const char *argv[])
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
 
   // Initial guess for the pose
-  Vector6f x;
+  Eigen::Matrix< float, 6, 1 > x;
   x[0] = x[1] = x[2] = x[3] = x[4] = x[5] = 0;
 
   // Observed points in Vector format
-  Vector12f y0;
+  Eigen::VectorXf y0;
   y0 = getVectorFromPointCloud4(observed_correspondences);
-  // std::cout << "y0:" << std::endl << y0 << std::endl;
+
   // Define a small variation that will be used to calculate the
   // effect of varyiing the different parameters of the pose
   double e = 0.0001;
-  Eigen::Matrix< float, 12, 6 > jacobian = Eigen::Matrix< float, 12, 6 >::Zero();
+  // Eigen::Matrix< float, 12, 6 > jacobian = Eigen::Matrix< float, 12, 6 >::Zero();
+  Eigen::MatrixXf jacobian(12,6); // correspondence_points * 3 x 6 pose parameters
   int iterations;
   for(iterations=0; iterations<20; iterations++)
   {
@@ -187,16 +185,15 @@ int main(int argc, const char *argv[])
     pcl::PointCloud<pcl::PointXYZ>::Ptr predicted_model_pts (new pcl::PointCloud<pcl::PointXYZ>);
     // Calculate the model points w.r.t the current pose estimation
     pcl::transformPointCloud(*model_correspondences, *predicted_model_pts, getRotationMatrixFromPose(x) );
-    Eigen::Matrix< float, 12, 1 > y = getVectorFromPointCloud4(predicted_model_pts);
-    // std::cout << "y: " << std::endl << y << std::endl;
+    Eigen::VectorXf y = getVectorFromPointCloud4(predicted_model_pts);
 
 
-    // Transform the points with a slight change of the parameters
+    // Transform the points with a slight change of the pose parameters
     pcl::PointCloud<pcl::PointXYZ>::Ptr changed_pointcloud (new pcl::PointCloud<pcl::PointXYZ>);
     for(int idx=0;idx<6;idx++)
     {
       changed_pointcloud = transformVariedPose(model_correspondences, x, idx, e);
-      Vector12f pts_after_variation = getVectorFromPointCloud4(changed_pointcloud);
+      Eigen::VectorXf pts_after_variation = getVectorFromPointCloud4(changed_pointcloud);
       // ... and write these points in the jacobian column per column
       for(int j=0;j<12;j++)
       {
@@ -205,10 +202,10 @@ int main(int argc, const char *argv[])
     }
     // Get the delta between the observed points
     // and the predicted points w.r.t to the current pose
-    Vector12f deltay = y0 - y;
+    Eigen::VectorXf deltay = y0 - y;
     std::cout << "Residual: " << deltay.norm() << std::endl;
-    Vector6f deltax;
-    Eigen::Matrix<float,6,12> pinv = (jacobian.transpose() * jacobian).inverse() * jacobian.transpose();
+    Eigen::Matrix< float, 6, 1 > deltax;
+    Eigen::MatrixXf pinv = (jacobian.transpose() * jacobian).inverse() * jacobian.transpose();
     deltax = pinv * deltay;
 
     if( abs( (deltax.norm() / x.norm()) < 1e-6 ) )
@@ -223,8 +220,6 @@ int main(int argc, const char *argv[])
   boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
   suturo_perception::Logger logger("correspondence_transform");
   logger.logTime(s, end, "pose estimation");
-
-
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 
