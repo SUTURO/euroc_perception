@@ -18,11 +18,6 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-# enable openmp
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
-SET(CMAKE_BUILD_TYPE Release)	# Mandatory for openmp!
-
 catkin_package(
   CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils suturo_perception_msgs
   DEPENDS opencv pcl
