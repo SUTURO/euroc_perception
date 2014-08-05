@@ -121,6 +121,7 @@ target_link_libraries(correspondence_transform
   ${VTK_LIBRARIES}
 	${PCL_LIBRARIES}
 	libvtkFiltering.so
+	libvtkGraphics.so
 )
 
 #############

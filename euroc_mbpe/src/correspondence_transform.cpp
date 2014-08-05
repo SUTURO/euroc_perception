@@ -5,7 +5,6 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
-#include <pcl/io/vtk_lib_io.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/common/common_headers.h>
@@ -17,28 +16,7 @@
 typedef Eigen::Matrix< float, 6, 1 > 	Vector6f;
 typedef Eigen::Matrix< float, 12, 1 > 	Vector12f;
 
-// template<typename _Matrix_Type_>
-// _Matrix_Type_ pseudoInverse(const _Matrix_Type_ &a, double epsilon = std::numeric_limits<double>::epsilon())
-// {
-// 	Eigen::JacobiSVD< _Matrix_Type_ > svd(a ,Eigen::ComputeThinU | Eigen::ComputeThinV);
-// 	double tolerance = epsilon * std::max(a.cols(), a.rows()) *svd.singularValues().array().abs()(0);
-// 	return svd.matrixV() *  (svd.singularValues().array().abs() > tolerance).select(svd.singularValues().array().inverse(), 0).matrix().asDiagonal() * svd.matrixU().adjoint();
-// }
 
-// template<typename _Matrix_Type_>
-// bool pseudoInverse(const _Matrix_Type_ &a, _Matrix_Type_ &result, double epsilon = std::numeric_limits<typename _Matrix_Type_::Scalar>::epsilon())
-// {
-//   if(a.rows()<a.cols())
-//       return false;
-// 
-//   Eigen::JacobiSVD< _Matrix_Type_ > svd = a.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV);
-// 
-//   typename _Matrix_Type_::Scalar tolerance = epsilon * std::max(a.cols(), a.rows()) * svd.singularValues().array().abs().maxCoeff();
-//   
-//   result = svd.matrixV() * _Matrix_Type_( (svd.singularValues().array().abs() > tolerance).select(svd.singularValues().
-//       array().inverse(), 0) ).asDiagonal() * svd.matrixU().adjoint();
-// }
-// 
 Vector12f getVectorFromPointCloud4(pcl::PointCloud<pcl::PointXYZ>::Ptr p)
 {
   if(p->points.size() != 4)
@@ -123,6 +101,36 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr transformVariedPose(pcl::PointCloud<pcl::Poi
   return pts_param1;
 }
 
+pcl::PointCloud<pcl::PointXYZ>::Ptr generateBoxModelFromPose(Vector6f pose){
+  pcl::PointCloud<pcl::PointXYZ>::Ptr result (new pcl::PointCloud<pcl::PointXYZ>);
+  result->width=8;
+  result->height=1;
+  result->is_dense=true;
+  // result->points.resize(8);
+  double box_size=0.6;
+  double box_size_half=0.3;
+
+  for(double x=-box_size_half; x<= box_size_half; x+=box_size)
+  {
+    for(double y=-box_size_half; y<= box_size_half; y+=box_size)
+    {
+      for(double z=-box_size_half; z<= box_size_half; z+=box_size)
+      {
+        pcl::PointXYZ c;
+        c.x = x;
+        c.y = y;
+        c.z = z; 
+        std::cout << c << std::endl;
+        result->push_back(c);
+      }
+    }
+  }
+
+  pcl::transformPointCloud(*result, *result, getRotationMatrixFromPose(pose) );
+  return result;
+}
+
+
 int main(int argc, const char *argv[])
 {
   pcl::PointCloud<pcl::PointXYZ>::Ptr model_correspondences (new pcl::PointCloud<pcl::PointXYZ>);
@@ -160,13 +168,13 @@ int main(int argc, const char *argv[])
   // Observed points in Vector format
   Vector12f y0;
   y0 = getVectorFromPointCloud4(observed_correspondences);
-  std::cout << "y0:" << std::endl << y0 << std::endl;
+  // std::cout << "y0:" << std::endl << y0 << std::endl;
   // Define a small variation that will be used to calculate the
   // effect of varyiing the different parameters of the pose
   double e = 0.0001;
   Eigen::Matrix< float, 12, 6 > jacobian = Eigen::Matrix< float, 12, 6 >::Zero();
-
-  for(int i=0; i<3; i++)
+  int iterations;
+  for(iterations=0; iterations<20; iterations++)
   {
     // Where will the points of the model be with the given pose?
     // This will be the basis for our error calculation
@@ -174,7 +182,7 @@ int main(int argc, const char *argv[])
     // Calculate the model points w.r.t the current pose estimation
     pcl::transformPointCloud(*model_correspondences, *predicted_model_pts, getRotationMatrixFromPose(x) );
     Eigen::Matrix< float, 12, 1 > y = getVectorFromPointCloud4(predicted_model_pts);
-    std::cout << "y: " << std::endl << y << std::endl;
+    // std::cout << "y: " << std::endl << y << std::endl;
 
 
     // Transform the points with a slight change of the parameters
@@ -193,38 +201,120 @@ int main(int argc, const char *argv[])
     // and the predicted points w.r.t to the current pose
     Vector12f deltay = y0 - y;
     std::cout << "Residual: " << deltay.norm() << std::endl;
-    std::cout << "deltay: " << std::endl << deltay << std::endl;
+    // std::cout << "deltay: " << std::endl << deltay << std::endl;
     // TODO CALCULATE THE (Moore-Penrose) pseudo inverse 
     // http://eigen.tuxfamily.org/index.php?title=FAQ#Is_there_a_method_to_compute_the_.28Moore-Penrose.29_pseudo_inverse_.3F 
     // std::cout << pseudoInverse(jacobian);
     Vector6f deltax;
-    // Vector6f deltax = pseudoInverse(jacobian) * deltay;
-    Eigen::JacobiSVD<Eigen::MatrixXf> svd(jacobian, Eigen::ComputeThinU | Eigen::ComputeThinV); 
-    Eigen::Matrix<float,6,12> pinv = svd.solve(Eigen::Matrix<float,12,12>::Identity());
-    std::cout << "pinv: " << std::endl << pinv << std::endl;
-    std::cout << (jacobian * pinv) << std::endl;
-    std::cout << "deltax: " << std::endl << deltax << std::endl;
+    // std::cout << "Jacobian" << std::endl;
+    // std::cout << jacobian << std::endl;
+    // std::cout << "Jacobian^t" << std::endl;
+    // std::cout << jacobian.transpose() << std::endl;
+    // std::cout << "j^tj" << std::endl;
+    // std::cout << jacobian.transpose() * jacobian << std::endl;
+    // std::cout << "inv(j^t * j)" << std::endl;
+    // std::cout << (jacobian.transpose() * jacobian).inverse() << std::endl;
+    // std::cout << "inv(j^t * j) * J^t" << std::endl;
+    // std::cout << (jacobian.transpose() * jacobian).inverse() * jacobian.transpose() << std::endl;
+    // std::cout << "Should be nearly J" << std::endl;
+    Eigen::Matrix<float,6,12> pinv = (jacobian.transpose() * jacobian).inverse() * jacobian.transpose();
+    // std::cout << (jacobian * pinv * jacobian) << std::endl;
+    deltax = pinv * deltay;
+    // std::cout << "deltax: " << std::endl << deltax << std::endl;
 
     if( abs( (deltax.norm() / x.norm()) < 1e-6 ) )
     {
       // change in transformation is nearly zero .... 
       break;
     }
-    // Update estimate
+    // Update pose estimate
     x = x + deltax;
   }
-  std::cout << "Final pose estimation: " << std::endl << x << std::endl;
+  std::cout << "Final pose estimation after " << iterations << " iterations: " << std::endl << x << std::endl;
 
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+
+  cloud->points.resize (5);
+  for (size_t i = 0; i < cloud->points.size (); ++i)
+  {
+    cloud->points[i].x = i; 
+    cloud->points[i].y = i / 2; 
+    cloud->points[i].z = 0;
+  }
+
+  // Start the visualizer
+  pcl::visualization::PCLVisualizer p ("test_shapes");
+  // p.setBackgroundColor (1, 1, 1);
+  p.addCoordinateSystem (0.3);
+
+  //p.addPolygon (cloud, "polygon");
+  // p.addPolygon<pcl::PointXYZ> (cloud, 1.0, 0.0, 0.0, "polygon", 0);
+  // p.setShapeRenderingProperties (pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 10, "polygon");
   
+  // p.addLine<pcl::PointXYZ, pcl::PointXYZ> (cloud->points[0], cloud->points[1], 0.0, 1.0, 0.0);
+  // p.setShapeRenderingProperties (pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 10, "line");
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> green_color(observed_correspondences, 0, 255, 0);
+  p.addPointCloud<pcl::PointXYZ> (model_correspondences, "model_correspondences");
+  p.addPointCloud<pcl::PointXYZ> (observed_correspondences, green_color, "observed_correspondences");
+  p.addText("White pts = model correspondences, Green pts = observed correspondences, Green box = The model fitted to the observed points, Yellow pts = line between correspondences", 5, 10 , "caption");
+
+  // Create a model of the box as a Polygon
+  pcl::PointCloud<pcl::PointXYZ>::Ptr box_model = generateBoxModelFromPose(x);
+  // p.addPointCloud<pcl::PointXYZ> (box_model, "full_transformed_model");
+  // pcl::PointXYZ px,py;
+  // px.x = px.y = px.z = 1;
+  // py.x = py.y = py.z = 0;
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[0], box_model->points[1], 0.0, 1.0, 0.0,"line1");
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[1], box_model->points[3], 0.0, 1.0, 0.0,"line2");
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[1], box_model->points[5], 0.0, 1.0, 0.0,"line3");
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[0], box_model->points[2], 0.0, 1.0, 0.0,"line4");
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[0], box_model->points[4], 0.0, 1.0, 0.0,"line5");
+
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[2], box_model->points[3], 0.0, 1.0, 0.0,"line6");
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[4], box_model->points[5], 0.0, 1.0, 0.0,"line7");
+
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[6], box_model->points[7], 0.0, 1.0, 0.0,"line8");
+
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[6], box_model->points[2], 0.0, 1.0, 0.0,"line9");
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[6], box_model->points[4], 0.0, 1.0, 0.0,"line10");
+
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[7], box_model->points[3], 0.0, 1.0, 0.0,"line11");
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[7], box_model->points[5], 0.0, 1.0, 0.0,"line12");
+  // p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[0], box_model->points[1], 0.0, 1.0, 0.0);
+
+  // Add Correspondences
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (model_correspondences->points[0], observed_correspondences->points[0], 1.0, 1.0, 0.0,"corrline1");
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (model_correspondences->points[1], observed_correspondences->points[1], 1.0, 1.0, 0.0,"corrline2");
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (model_correspondences->points[2], observed_correspondences->points[2], 1.0, 1.0, 0.0,"corrline3");
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (model_correspondences->points[3], observed_correspondences->points[3], 1.0, 1.0, 0.0,"corrline4");
+
+  /*
   pcl::visualization::PCLVisualizer viewer;
-  viewer.initCameraParameters ();
+  // viewer.initCameraParameters ();
   viewer.addCoordinateSystem(0.3);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> green_color(observed_correspondences, 0, 255, 0);
-  viewer.addPointCloud<pcl::PointXYZ> (model_correspondences, "model_correspondences");
-  viewer.addPointCloud<pcl::PointXYZ> (observed_correspondences, green_color, "observed_correspondences");
-  viewer.addText("White pts = model correspondences, Green pts = observed correspondences", 5, 10 , "caption");
-  viewer.spin();
+  // viewer.addPointCloud<pcl::PointXYZ> (model_correspondences, "model_correspondences");
+  // viewer.addPointCloud<pcl::PointXYZ> (observed_correspondences, green_color, "observed_correspondences");
+  // viewer.addText("White pts = model correspondences, Green pts = observed correspondences", 5, 10 , "caption");
 
+  // Create a model of the box as a Polygon
+  pcl::PointCloud<pcl::PointXYZ>::Ptr box_model = generateBoxModelFromPose(x);
+  viewer.addPointCloud<pcl::PointXYZ> (box_model, "full_transformed_model");
+  
+  pcl::PointXYZ px,py;
+  px.x = px.y = px.z = 1;
+  px.x = px.y = px.z = 0;
+  
+  
+  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (px, py, 0.0, 1.0, 0.0,"line2");
+  p.setShapeRenderingProperties (pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 50, "line2");
+  
+
+  viewer.setBackgroundColor (1, 1, 1);
+  viewer.spin();
+  */
+  p.spin();
   
   return 0;
 }
