@@ -172,8 +172,8 @@ main (int argc, char** argv)
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
-  // output_cloud = generateBox(0.5, 0.5, 0.5, 10000);
-  output_cloud = generateCylinder(0.3, 0.2, 10000);
+  output_cloud = generateBox(0.5, 0.5, 0.5, 10000);
+  // output_cloud = generateCylinder(0.3, 0.2, 10000);
 
   // write pcd
   pcl::PCDWriter writer;
