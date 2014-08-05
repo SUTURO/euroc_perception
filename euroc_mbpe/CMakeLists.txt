@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   roscpp
   sensor_msgs
+  perception_utils
 )
 
 ## System dependencies are found with CMake's conventions
@@ -105,7 +106,7 @@ include_directories(
 
 ## Declare a cpp executable
 add_executable(generate_pc_model src/generate_pc_model.cpp)
-add_executable(correspondence_transform src/correspondence_transform.cpp)
+add_executable(ct_visualizer src/ct_visualizer.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -116,7 +117,7 @@ target_link_libraries(generate_pc_model
   ${catkin_LIBRARIES}
 )
 
-target_link_libraries(correspondence_transform
+target_link_libraries(ct_visualizer
   ${catkin_LIBRARIES}
   ${VTK_LIBRARIES}
 	${PCL_LIBRARIES}

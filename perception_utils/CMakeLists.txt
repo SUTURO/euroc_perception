@@ -71,7 +71,16 @@ add_executable(region_growing
   src/region_growing.cpp
   src/basic_io_pcd.cpp)
 
+add_executable(corner_detector 
+  src/corner_detector.cpp
+  src/basic_io_pcd.cpp)
+
 target_link_libraries(region_growing
+  ${catkin_LIBRARIES} 
+  ${PCL_LIBRARIES}
+)
+
+target_link_libraries(corner_detector
   ${catkin_LIBRARIES} 
   ${PCL_LIBRARIES}
 )
