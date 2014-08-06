@@ -4,6 +4,7 @@
 #include <pcl/point_types.h>
 #include <boost/signals2/mutex.hpp>
 #include <boost/thread.hpp>
+#include <boost/shared_ptr.hpp>
 #include <perception_utils/cuboid.hpp>
 #include <perception_utils/point.hpp>
 #include <perception_utils/logger.h>
@@ -24,10 +25,11 @@ namespace suturo_perception
         c_centroid.y = -1;
         c_centroid.z = -1;
         c_volume = -1.0;
-        c_cuboid.length1 = -1;
-        c_cuboid.length2 = -1;
-        c_cuboid.length3 = -1;
-        c_cuboid.volume = -1;
+        c_cuboid = Cuboid::Ptr(new Cuboid());
+        c_cuboid->length1 = -1;
+        c_cuboid->length2 = -1;
+        c_cuboid->length3 = -1;
+        c_cuboid->volume = -1;
 
         logger = Logger("pipeline_object");
       };
@@ -57,7 +59,7 @@ namespace suturo_perception
         return pointCloud; 
       };
 
-      Cuboid get_c_cuboid() const
+      Cuboid::Ptr get_c_cuboid() const
       {
         boost::lock_guard<boost::signals2::mutex> lock(*mutex); 
         return c_cuboid; 
@@ -84,7 +86,7 @@ namespace suturo_perception
         boost::lock_guard<boost::signals2::mutex> lock(*mutex);
         pointCloud = value;
       };
-      void set_c_cuboid(Cuboid &value)
+      void set_c_cuboid(Cuboid::Ptr &value)
       {
         boost::lock_guard<boost::signals2::mutex> lock(*mutex);
         c_cuboid = value;
@@ -102,27 +104,27 @@ namespace suturo_perception
         obj.c_type = suturo_perception_msgs::EurocObject::UNKNOWN; 
         
         // cuboid
-        Cuboid cub = get_c_cuboid();
+        Cuboid::Ptr cub = get_c_cuboid();
         shape_msgs::SolidPrimitive cuboid_primitive;
         cuboid_primitive.type = shape_msgs::SolidPrimitive::BOX;
         cuboid_primitive.dimensions.resize(3);
-        cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_X) = cub.length1;
-        cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_Y) = cub.length2;
-        cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_Z) = cub.length3;
+        cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_X) = cub->length1;
+        cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_Y) = cub->length2;
+        cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_Z) = cub->length3;
         obj.object.primitives.push_back(cuboid_primitive);
 
         geometry_msgs::Pose cuboid_pose;
-        cuboid_pose.position.x = cub.center[0];
-        cuboid_pose.position.y = cub.center[1];
-        cuboid_pose.position.z = cub.center[2];
+        cuboid_pose.position.x = cub->center[0];
+        cuboid_pose.position.y = cub->center[1];
+        cuboid_pose.position.z = cub->center[2];
         // TODO: find out which one is right
-        //cuboid_pose.position.x = cub.center[0] - cub.length1 / 2;
-        //cuboid_pose.position.y = cub.center[1] - cub.length2 / 2;
-        //cuboid_pose.position.z = cub.center[2] - cub.length3 / 2;
-        cuboid_pose.orientation.x = cub.orientation.x();
-        cuboid_pose.orientation.y = cub.orientation.y();
-        cuboid_pose.orientation.z = cub.orientation.z();
-        cuboid_pose.orientation.w = cub.orientation.w();
+        //cuboid_pose.position.x = cub->center[0] - cub->length1 / 2;
+        //cuboid_pose.position.y = cub->center[1] - cub->length2 / 2;
+        //cuboid_pose.position.z = cub->center[2] - cub->length3 / 2;
+        cuboid_pose.orientation.x = cub->orientation.x();
+        cuboid_pose.orientation.y = cub->orientation.y();
+        cuboid_pose.orientation.z = cub->orientation.z();
+        cuboid_pose.orientation.w = cub->orientation.w();
         obj.object.primitive_poses.push_back(cuboid_pose);
 
         return obj;
@@ -133,7 +135,7 @@ namespace suturo_perception
       Point c_centroid;
       double c_volume;
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloud;
-      Cuboid c_cuboid;
+      Cuboid::Ptr c_cuboid;
 
       boost::shared_ptr<boost::signals2::mutex> mutex;
 

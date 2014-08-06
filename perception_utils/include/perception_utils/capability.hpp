@@ -10,7 +10,7 @@ namespace suturo_perception
 	{
 		public:
 			// The PerceivedObject that will be modified by the capability
-			Capability(PerceivedObject &obj) : perceivedObject(obj) {};
+			Capability(PipelineObject::Ptr obj) : pipelineObject_(obj) {};
 
 			/* The execute method that has to be implemented by the deriving classes.
 			* This should modify the perceivedObject that was set before.
@@ -18,8 +18,7 @@ namespace suturo_perception
 			virtual void execute() = 0;
 
 		protected:
-			// TODO: Locking when converting to MT
-			suturo_perception_lib::PerceivedObject &perceivedObject;
+			PipelineObject::Ptr pipelineObject_;
 	};
 }
 

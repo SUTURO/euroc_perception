@@ -24,6 +24,7 @@
 #include <suturo_perception_match_cuboid/detected_plane.h>
 #include <suturo_perception_match_cuboid/cuboid_matcher.h>
 #include <perception_utils/cuboid.hpp>
+#include <perception_utils/pipeline_object.hpp>
 #include <pcl/ModelCoefficients.h>
 
 #define MIN_ANGLE 5 // the minimum angle offset between to norm vectors
@@ -199,7 +200,8 @@ main (int argc, char** argv)
   // Copy the original cloud to input cloud, which can be modified later during plane extraction
   pcl::copyPointCloud<pcl::PointXYZRGB, pcl::PointXYZRGB>(*original_cloud, *input_cloud);
 
-  CuboidMatcher cm;
+  suturo_perception::PipelineObject::Ptr pipelineObject(new suturo_perception::PipelineObject());
+  CuboidMatcher cm(pipelineObject);
   cm.setInputCloud(input_cloud);
   cm.setDebug(true);
   cm.setSaveIntermediateResults(true);
@@ -220,7 +222,7 @@ main (int argc, char** argv)
   */
 
 
-  Cuboid cuboid;
+  Cuboid::Ptr cuboid(new Cuboid());
   cm.execute(cuboid);
   boost::posix_time::ptime t_algorithm_done = boost::posix_time::microsec_clock::local_time();
   printDuration(t_file_loaded, t_algorithm_done, "Algorithm Runtime");
@@ -289,22 +291,22 @@ main (int argc, char** argv)
   viewer.addText("Matched Cuboid", 0.1, 0.1 , "result_cuboid", viewports.at(v_result));
   viewer.addPointCloud<pcl::PointXYZRGB> (original_cloud, red_pts, "input_cloud_w_result", viewports.at(v_result) );
   // Draw the bounding box from the given corner points
-  drawBoundingBoxLines(viewer, cuboid.corner_points, viewports.at(v_result));
+  drawBoundingBoxLines(viewer, cuboid->corner_points, viewports.at(v_result));
 
-  viewer.addCube	(	cuboid.center,
-      cuboid.orientation,
-      cuboid.length1,
-      cuboid.length2,
-      cuboid.length3,
+  viewer.addCube	(	cuboid->center,
+      cuboid->orientation,
+      cuboid->length1,
+      cuboid->length2,
+      cuboid->length3,
       "matched_cuboid_centered",
       viewports.at(v_result)
       );
 
   // viewer.addCube	(	Eigen::Vector3f(0,0,0),
   //     Eigen::Quaternion<float>::Identity(),
-  //     cuboid.length1,
-  //     cuboid.length2,
-  //     cuboid.length3,
+  //     cuboid->length1,
+  //     cuboid->length2,
+  //     cuboid->length3,
   //     "matched_cuboid",
   //     v2
   //   );

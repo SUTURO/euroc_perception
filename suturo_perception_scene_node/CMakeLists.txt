@@ -11,18 +11,21 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   perception_utils
   suturo_perception_msgs
+  suturo_perception_match_cuboid
 )
 
 find_package(PCL REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
+#link_directories(${PCL_LIBRARY_DIRS})
+#add_definitions(${PCL_DEFINITIONS})
+
+find_package(Boost REQUIRED COMPONENTS system program_options thread)
+include_directories(${Boost_INCLUDE_DIRS})
 
 catkin_package(
   CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils suturo_perception_msgs
   DEPENDS opencv pcl
 )
-
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
@@ -32,6 +35,7 @@ target_link_libraries(suturo_perception_scene_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
+  ${Boost_LIBRARIES} 
 )
 add_dependencies(suturo_perception_scene_node suturo_perception_msgs)
 

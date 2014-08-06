@@ -7,7 +7,8 @@
 // Define Mutex
 boost::mutex CuboidMatcher::mx;
 
-CuboidMatcher::CuboidMatcher()
+CuboidMatcher::CuboidMatcher(suturo_perception::PipelineObject::Ptr pipelineObject) :
+  suturo_perception::Capability(pipelineObject)
 {
     input_cloud_ = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     debug = true;
@@ -391,28 +392,29 @@ void CuboidMatcher::computeCuboidCornersWithMinMax3D(pcl::PointCloud<pcl::PointX
   corner_points->push_back(pt8);
 }
 
-Cuboid CuboidMatcher::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points)
+Cuboid::Ptr CuboidMatcher::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points)
 {
-  Cuboid c;
+  Cuboid::Ptr c(new Cuboid());
 
   // Get the "width": (minx,miny) -> (maxx,miny)
-  c.length1 = pcl::distances::l2(corner_points->points.at(0).getVector4fMap(),corner_points->points.at(2).getVector4fMap());
+  c->length1 = pcl::distances::l2(corner_points->points.at(0).getVector4fMap(),corner_points->points.at(2).getVector4fMap());
   // Get the "height": (minx,miny) -> (minx,maxy)
-  c.length2 = pcl::distances::l2(corner_points->points.at(0).getVector4fMap(),corner_points->points.at(3).getVector4fMap());
+  c->length2 = pcl::distances::l2(corner_points->points.at(0).getVector4fMap(),corner_points->points.at(3).getVector4fMap());
   // Get the "depth": (minx,miny,minz) -> (minx,maxy,maxz)
-  c.length3 = pcl::distances::l2(corner_points->points.at(0).getVector4fMap(),corner_points->points.at(4).getVector4fMap());
+  c->length3 = pcl::distances::l2(corner_points->points.at(0).getVector4fMap(),corner_points->points.at(4).getVector4fMap());
 
-  c.volume = c.length1 * c.length2 * c.length3;
+  c->volume = c->length1 * c->length2 * c->length3;
   Eigen::Vector4f centroid;
   CuboidMatcher::computeCentroid(corner_points, centroid);
-  c.center = getVector3fFromVector4f(centroid);
-  c.corner_points = corner_points;
+  c->center = getVector3fFromVector4f(centroid);
+  c->corner_points = corner_points;
   return c;
 }
 
 
-bool CuboidMatcher::execute(Cuboid &c)
+bool CuboidMatcher::execute(Cuboid::Ptr c)
 {
+  std::cout << "[cuboid_matcher] execute, input cloud size = " << input_cloud_->points.size() << std::endl;
   segmentPlanes();
   // TODO check pointsize of the detected planes
  
@@ -552,14 +554,14 @@ bool CuboidMatcher::execute(Cuboid &c)
     orientation *= transformations_as_q.at(i);
   }
 
-  c.orientation = orientation;
+  c->orientation = orientation;
 
 
   if(debug)
   {
     std::cout << "Cuboid statistics: ";
-    std::cout << "Width: " << c.length1 << " Height: " << c.length2 << " Depth: " << c.length3 << " Volume: " << c.volume;
-    std::cout << " m^3" << "O: " << c.orientation.w() << " " << c.orientation.x() << " " << c.orientation.y() << " " << c.orientation.z() << std::endl;
+    std::cout << "Width: " << c->length1 << " Height: " << c->length2 << " Depth: " << c->length3 << " Volume: " << c->volume;
+    std::cout << " m^3" << "O: " << c->orientation.w() << " " << c->orientation.x() << " " << c->orientation.y() << " " << c->orientation.z() << std::endl;
     std::cout << "Angle between the first used normal and the reference planes after transformation: ";
     std::cout << acos(transformed_normals_.at(0).dot( Eigen::Vector3f(0,0,1) ) ) * 180 << std::endl;
     if(transformed_normals_.size() > 1)

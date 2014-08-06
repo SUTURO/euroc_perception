@@ -1,6 +1,7 @@
 #include "suturo_scene_node.h"
 
 #include "perception_utils/point_cloud_operations.h"
+#include <suturo_perception_match_cuboid/cuboid_matcher.h>
 
 #include <pcl/filters/passthrough.h>
 
@@ -12,6 +13,8 @@
 #include <shape_msgs/Plane.h>
 #include <moveit_msgs/CollisionObject.h>
 #include <visualization_msgs/Marker.h>
+
+#include <boost/asio.hpp>
 
 using namespace suturo_perception;
 
@@ -42,6 +45,7 @@ SuturoSceneNode::SuturoSceneNode(ros::NodeHandle &n, std::string imageTopic, std
   ecObjClusterTolerance = 0.05f; // 3cm
   ecObjMinClusterSize = 10;
   ecObjMaxClusterSize = 25000;
+  numThreads_ = 8;
 }
 
 void SuturoSceneNode::publish_marker(PipelineObject::VecPtr &objects)
@@ -130,6 +134,46 @@ SuturoSceneNode::getScene(suturo_perception_msgs::GetScene::Request &req, suturo
 	table_msg.planes.push_back(plane);
   //res.table = table_msg;
   */
+  
+  /****************************************************************************/
+  // Execution pipeline
+  // Each capability provides an enrichment for the pipelineObject
+
+  // initialize threadpool
+  boost::asio::io_service ioService;
+  boost::thread_group threadpool;
+  std::auto_ptr<boost::asio::io_service::work> work(
+    new boost::asio::io_service::work(ioService));
+
+  // Add worker threads to threadpool
+  for(int i = 0; i < numThreads_; ++i)
+  {
+    threadpool.create_thread(
+      boost::bind(&boost::asio::io_service::run, &ioService)
+      );
+  }
+
+  for (int i = 0; i < pipelineObjects_.size(); i++) 
+  {
+    // Initialize Capabilities
+    
+    // suturo_perception_3d_capabilities::CuboidMatcherAnnotator cma(perceivedObjects[i]);
+    // Init the cuboid matcher with the table coefficients
+    CuboidMatcher cm(pipelineObjects_[i]);
+    cm.setMode(CUBOID_MATCHER_MODE_WITH_COEFFICIENTS);
+    cm.setTableCoefficients(coefficients_);
+    cm.setInputCloud(pipelineObjects_[i]->get_pointCloud());
+
+    // post work to threadpool
+    ioService.post(boost::bind(&CuboidMatcher::execute, &cm, pipelineObjects_[i]->get_c_cuboid()));
+  }
+  //boost::this_thread::sleep(boost::posix_time::microseconds(1000));
+  // wait for thread completion.
+  // destroy the work object to wait for all queued tasks to finish
+  work.reset();
+  ioService.run();
+  threadpool.join_all();
+  /****************************************************************************/
 
   logger.logInfo("done with perception pipeline, sending result");
   for (int i = 0; i < pipelineObjects_.size(); i++)

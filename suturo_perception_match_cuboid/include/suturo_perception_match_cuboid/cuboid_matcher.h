@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <cmath>
+
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/console/parse.h>
@@ -21,11 +22,14 @@
 #include <pcl/filters/project_inliers.h>
 #include <pcl/surface/convex_hull.h>
 #include <pcl/registration/distances.h>
+
 #include "boost/date_time/posix_time/posix_time.hpp"
-#include <suturo_perception_match_cuboid/detected_plane.h>
-#include <perception_utils/cuboid.hpp>
 #include <boost/thread.hpp>
+
 #include <perception_utils/threadsafe_hull.h>
+#include <perception_utils/cuboid.hpp>
+#include <perception_utils/capability.hpp>
+#include <suturo_perception_match_cuboid/detected_plane.h>
 
 // Constants for the different operation modes of this class
 #define CUBOID_MATCHER_MODE_WITHOUT_COEFFICIENTS 0 
@@ -55,11 +59,11 @@
 //    These ModelCoefficients should describe a plane where the object lies on.
 //    The algorithm will then try to use this plane to estimate the Pose of
 //    the Cuboid in the given PointCloud.
-class CuboidMatcher
+class CuboidMatcher : public suturo_perception::Capability
 {
   static boost::mutex mx;
   public:
-    CuboidMatcher();
+    CuboidMatcher(suturo_perception::PipelineObject::Ptr pipelineObject);
     // Return a pointer to the list of detected planes
     std::vector<DetectedPlane> *getDetectedPlanes();
 
@@ -104,7 +108,8 @@ class CuboidMatcher
     // be segmented by RANSAC.
     // true, if the algorithm has succeded.
     //
-    bool execute(Cuboid &c);
+    bool execute(Cuboid::Ptr c);
+    void execute() { execute(pipelineObject_->get_c_cuboid()); }
 
     bool estimationSuccessful(){ return estimation_succesful_; }
 
@@ -133,7 +138,7 @@ class CuboidMatcher
     // Given a set of corner points ( size = 8),
     // calculate the various informations for Cuboid
     // (side lengths, centroid, volume)
-    Cuboid computeCuboidFromBorderPoints(
+    Cuboid::Ptr computeCuboidFromBorderPoints(
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points);
 
   private:
