@@ -29,9 +29,9 @@ class SuturoSceneNode
 
     ros::Publisher markerPublisher_;
     int maxMarkerId_;
-    void publish_marker(std::vector<suturo_perception::PipelineObject::Ptr> objects);
+    void publish_marker(suturo_perception::PipelineObject::VecPtr &objects);
 		
-		std::vector<suturo_perception::PipelineObject::Ptr> pipelineObjects_;
+		suturo_perception::PipelineObject::VecPtr pipelineObjects_;
 		pcl::ModelCoefficients::Ptr coefficients_; 
     
     // Set default parameters

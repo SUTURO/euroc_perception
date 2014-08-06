@@ -44,7 +44,7 @@ SuturoSceneNode::SuturoSceneNode(ros::NodeHandle &n, std::string imageTopic, std
   ecObjMaxClusterSize = 25000;
 }
 
-void SuturoSceneNode::publish_marker(std::vector<PipelineObject::Ptr> objects)
+void SuturoSceneNode::publish_marker(PipelineObject::VecPtr &objects)
 {
   logger.logInfo("Publishing centroid marker");
 
