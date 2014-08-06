@@ -48,6 +48,7 @@ class SuturoSceneNode
     double ecObjClusterTolerance;
     int ecObjMinClusterSize;
     int ecObjMaxClusterSize;
+    int numThreads_;
 };
 
 #endif // TABLE_FROM_DEPTH_IMAGE_NODE_H
