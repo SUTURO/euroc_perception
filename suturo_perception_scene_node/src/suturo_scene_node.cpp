@@ -153,19 +153,21 @@ SuturoSceneNode::getScene(suturo_perception_msgs::GetScene::Request &req, suturo
       );
   }
 
+  std::vector<CuboidMatcher*> cmvec;
   for (int i = 0; i < pipelineObjects_.size(); i++) 
   {
     // Initialize Capabilities
     
     // suturo_perception_3d_capabilities::CuboidMatcherAnnotator cma(perceivedObjects[i]);
     // Init the cuboid matcher with the table coefficients
-    CuboidMatcher cm(pipelineObjects_[i]);
-    cm.setMode(CUBOID_MATCHER_MODE_WITH_COEFFICIENTS);
-    cm.setTableCoefficients(coefficients_);
-    cm.setInputCloud(pipelineObjects_[i]->get_pointCloud());
+    CuboidMatcher *cm = new CuboidMatcher(pipelineObjects_[i]);
+		cmvec.push_back(cm);
+    cm->setMode(CUBOID_MATCHER_MODE_WITH_COEFFICIENTS);
+    cm->setTableCoefficients(coefficients_);
+    cm->setInputCloud(pipelineObjects_[i]->get_pointCloud());
 
     // post work to threadpool
-    ioService.post(boost::bind(&CuboidMatcher::execute, &cm, pipelineObjects_[i]->get_c_cuboid()));
+    ioService.post(boost::bind(&CuboidMatcher::execute, cm, pipelineObjects_[i]->get_c_cuboid()));
   }
   //boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   // wait for thread completion.
@@ -173,6 +175,11 @@ SuturoSceneNode::getScene(suturo_perception_msgs::GetScene::Request &req, suturo
   work.reset();
   ioService.run();
   threadpool.join_all();
+	
+  for (int i = 0; i < cmvec.size(); i++) 
+  {
+		delete cmvec.at(i);
+	}
   /****************************************************************************/
 
   logger.logInfo("done with perception pipeline, sending result");
