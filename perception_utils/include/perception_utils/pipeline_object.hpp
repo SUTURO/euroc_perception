@@ -14,7 +14,9 @@ namespace suturo_perception
   class PipelineObject
   {
     public:
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
       typedef boost::shared_ptr<PipelineObject> Ptr;
+      typedef std::vector<suturo_perception::PipelineObject::Ptr, Eigen::aligned_allocator<suturo_perception::PipelineObject::Ptr> > VecPtr;
 
       PipelineObject() : mutex(new boost::signals2::mutex()) {
         c_id = -1;
@@ -82,7 +84,7 @@ namespace suturo_perception
         boost::lock_guard<boost::signals2::mutex> lock(*mutex);
         pointCloud = value;
       };
-      void set_c_cuboid(Cuboid value)
+      void set_c_cuboid(Cuboid &value)
       {
         boost::lock_guard<boost::signals2::mutex> lock(*mutex);
         c_cuboid = value;
@@ -103,11 +105,10 @@ namespace suturo_perception
         Cuboid cub = get_c_cuboid();
         shape_msgs::SolidPrimitive cuboid_primitive;
         cuboid_primitive.type = shape_msgs::SolidPrimitive::BOX;
-        logger.logInfo("before");
-        cuboid_primitive.dimensions[shape_msgs::SolidPrimitive::BOX_X] = cub.length1;
-        cuboid_primitive.dimensions[shape_msgs::SolidPrimitive::BOX_Y] = cub.length2;
-        cuboid_primitive.dimensions[shape_msgs::SolidPrimitive::BOX_Z] = cub.length3;
-        logger.logInfo("after");
+        cuboid_primitive.dimensions.resize(3);
+        cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_X) = cub.length1;
+        cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_Y) = cub.length2;
+        cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_Z) = cub.length3;
         obj.object.primitives.push_back(cuboid_primitive);
 
         geometry_msgs::Pose cuboid_pose;
