@@ -5,6 +5,7 @@
 
 #include "perception_utils/logger.h"
 #include "perception_utils/pipeline_object.hpp"
+#include "perception_utils/pipeline_data.hpp"
 #include "suturo_perception_msgs/GetScene.h"
 
 #include <pcl_ros/point_cloud.h>
@@ -32,23 +33,10 @@ class SuturoSceneNode
     void publish_marker(suturo_perception::PipelineObject::VecPtr &objects);
 		
 		suturo_perception::PipelineObject::VecPtr pipelineObjects_;
-		pcl::ModelCoefficients::Ptr coefficients_; 
+    suturo_perception::PipelineData::Ptr pipelineData_;
+		// pcl::ModelCoefficients::Ptr coefficients_; 
     
-    // Set default parameters
-    float zAxisFilterMin;
-    float zAxisFilterMax;
-    float downsampleLeafSize;
-    int planeMaxIterations;
-    double planeDistanceThreshold;
-    double ecClusterTolerance; 
-    int ecMinClusterSize;
-    int ecMaxClusterSize;  
-    double prismZMin;
-    double prismZMax;
-    double ecObjClusterTolerance;
-    int ecObjMinClusterSize;
-    int ecObjMaxClusterSize;
-    int numThreads_;
+    
 };
 
 #endif // TABLE_FROM_DEPTH_IMAGE_NODE_H

@@ -56,7 +56,7 @@ set(perception_utils_files
 
 add_library(perception_utils ${perception_utils_files})
 target_link_libraries(perception_utils ${PCL_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV_LIBS} ${catkin_LIBRARIES})      
-add_dependencies(perception_utils suturo_perception_msgs)
+add_dependencies(perception_utils suturo_perception_msgs_generate_messages_cpp)
 
 add_library(threadsafe_hull src/threadsafe_hull.cpp)
 target_link_libraries(threadsafe_hull ${catkin_LIBRARIES})      
