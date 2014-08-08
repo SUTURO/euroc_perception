@@ -27,6 +27,7 @@ class SuturoGripperNode
     std::string cloudTopic_;
     suturo_perception::Logger logger;
 		int idx_;
+    int objidx_;
 		bool processing_;
 
     ros::Publisher markerPublisher_;

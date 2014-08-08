@@ -38,6 +38,7 @@ target_link_libraries(suturo_perception_scene_node
   ${PCL_LIBRARIES}
   ${Boost_LIBRARIES} 
 )
+add_dependencies(suturo_perception_scene_node suturo_perception_msgs_generate_messages_cpp)
 
 add_executable(scene_client src/scene_client.cpp)
 target_link_libraries(scene_client
@@ -45,3 +46,4 @@ target_link_libraries(scene_client
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
 )
+add_dependencies(scene_client suturo_perception_msgs_generate_messages_cpp)

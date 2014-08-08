@@ -4,6 +4,7 @@
 #include <perception_utils/publisher_helper.h>
 #include <suturo_perception_segmentation/projection_segmenter.h>
 #include <suturo_perception_pipeline/pipeline.h>
+#include <suturo_perception_msgs/EurocObject.h>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
@@ -21,6 +22,7 @@ SuturoSceneNode::SuturoSceneNode(ros::NodeHandle &n, std::string imageTopic, std
   clusterService_ = nodeHandle_.advertiseService("/suturo/GetScene", 
     &SuturoSceneNode::getScene, this);
 	idx_ = 0;
+  objidx_ = 0;
 
   markerPublisher_ = nodeHandle_.advertise<visualization_msgs::Marker>("/suturo/cuboid_markers", 0);
   maxMarkerId_ = 0;
@@ -68,7 +70,11 @@ SuturoSceneNode::getScene(suturo_perception_msgs::GetScene::Request &req, suturo
       logger.logError("pipeline object is NULL! investigate this!");
       continue;
     }
-    res.objects.push_back(pipelineObjects_[i]->toEurocObject());
+    suturo_perception_msgs::EurocObject euObj = pipelineObjects_[i]->toEurocObject();
+    euObj.frame_id = "/sdepth";
+    euObj.c_id = objidx_;
+    objidx_++;
+    res.objects.push_back(euObj);
   }
 
   logger.logInfo("results sent, publishing markers");
