@@ -96,4 +96,47 @@ bool PublisherHelper::publish_cv_mat(std::string topic, cv::Mat &img, ros::Time 
   return true;
 }
 
+void PublisherHelper::publish_marker(PipelineObject::VecPtr &objects, std::string frame, ros::Publisher markerPublisher, int *maxMarkerId)
+{
+  for (int i = 0; i < *maxMarkerId; i++)
+  {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = frame;
+    marker.header.stamp = ros::Time();
+    marker.ns = "suturo_perception";
+    marker.id = i;
+    marker.action = visualization_msgs::Marker::DELETE;
+    markerPublisher.publish(marker);
+  }
+
+  for (int i = 0; i < objects.size(); i++)
+  {
+    PipelineObject::Ptr obj = objects[i];
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = frame;
+    marker.header.stamp = ros::Time();
+    marker.ns = "suturo_perception";
+    marker.id = i;
+    marker.type = visualization_msgs::Marker::SPHERE;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = obj->get_c_centroid().x;
+    marker.pose.position.y = obj->get_c_centroid().y;
+    marker.pose.position.z = obj->get_c_centroid().z;
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 0.0;
+    marker.scale.x = 0.1;
+    marker.scale.y = 0.1;
+    marker.scale.z = 0.1;
+    marker.color.a = 1.0;
+    marker.color.r = 0.0;
+    marker.color.g = 1.0;
+    marker.color.b = 0.0;
+    markerPublisher.publish(marker);
+  }
+
+  *maxMarkerId = objects.size();
+}
+
 // vim: tabstop=2 expandtab shiftwidth=2 softtabstop=2: 

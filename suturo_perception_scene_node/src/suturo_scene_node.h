@@ -9,6 +9,7 @@
 #include "suturo_perception_msgs/GetScene.h"
 
 #include <pcl_ros/point_cloud.h>
+#include <pcl/point_cloud.h>
 #include <sensor_msgs/PointCloud2.h>
 
 class SuturoSceneNode

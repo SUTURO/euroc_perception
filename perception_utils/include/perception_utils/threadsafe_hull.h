@@ -7,7 +7,7 @@
 #include <pcl/impl/point_types.hpp>
 #include <boost/shared_ptr.hpp>
 
-namespace perception_utils
+namespace suturo_perception
 {
 	/**
 	 * Helper class to compute a ConvexHull threadsafe.

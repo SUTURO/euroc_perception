@@ -30,6 +30,8 @@
 #define MIN_ANGLE 5 // the minimum angle offset between to norm vectors
                     // if this threshold is not reached, no rotation will be made on this axis
 
+using namespace suturo_perception;
+
 void printDuration(boost::posix_time::ptime s, boost::posix_time::ptime e, std::string text)
 {
     boost::posix_time::time_duration d = e - s;

@@ -87,7 +87,7 @@ include_directories(${PCL_INCLUDE_DIRS})
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES suturo_perception_match_cuboid
-  CATKIN_DEPENDS pcl_ros roscpp roslib
+  CATKIN_DEPENDS pcl_ros roscpp roslib perception_utils
 #  DEPENDS system_lib
 )
 

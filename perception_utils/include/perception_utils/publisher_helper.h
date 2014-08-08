@@ -3,13 +3,14 @@
 
 #include "ros/ros.h"
 #include "perception_utils/logger.h"
-
+#include "perception_utils/pipeline_object.hpp"
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/image_encodings.h>
+#include <visualization_msgs/Marker.h>
 
 #include "opencv2/core/core.hpp"
 #include <cv_bridge/cv_bridge.h>
@@ -101,6 +102,8 @@ namespace suturo_perception
        */
       bool publish_cv_mat(std::string topic, cv::Mat &img, ros::Time time, std::string frame, std::string image_encoding);
 
+      
+      static void publish_marker(PipelineObject::VecPtr &objects, std::string frame, ros::Publisher markerPublisher, int *maxMarkerId);
   };
 }
 

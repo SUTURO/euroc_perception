@@ -1,6 +1,7 @@
 #include "suturo_perception_pipeline/pipeline.h"
 
 #include <suturo_perception_match_cuboid/cuboid_matcher.h>
+#include <suturo_perception_centroid_calc/centroid_calc.h>
 
 #include <boost/asio.hpp>
 
@@ -30,22 +31,32 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
       );
   }
 
+  int object_cnt = pipeline_objects.size();
   std::vector<CuboidMatcher*> cmvec;
-  for (int i = 0; i < pipeline_objects.size(); i++) 
+  std::vector<CentroidCalc*> ccvec;
+  
+  // Initialize Capabilities
+  for (int i = 0; i < object_cnt; i++)
   {
-    // Initialize Capabilities
-    
-    // suturo_perception_3d_capabilities::CuboidMatcherAnnotator cma(perceivedObjects[i]);
-    // Init the cuboid matcher with the table coefficients
-    CuboidMatcher *cm = new CuboidMatcher(pipeline_objects[i]);
-    cmvec.push_back(cm);
+    cmvec.push_back(new CuboidMatcher(pipeline_objects[i]));
+    ccvec.push_back(new CentroidCalc(pipeline_objects[i]));
+  }
+  
+  // post work to threadpool
+  for (int i = 0; i < object_cnt; i++) 
+  {
+    // cuboid calculation
+    CuboidMatcher *cm = cmvec.at(i);
     cm->setMode(CUBOID_MATCHER_MODE_WITH_COEFFICIENTS);
     cm->setTableCoefficients(pipeline_data->coefficients_);
     cm->setInputCloud(pipeline_objects[i]->get_pointCloud());
-
-    // post work to threadpool
     ioService.post(boost::bind(&CuboidMatcher::execute, cm, pipeline_objects[i]->get_c_cuboid()));
+    
+    // centroid calculation
+    CentroidCalc *cc = ccvec.at(i);
+    ioService.post(boost::bind(&CentroidCalc::execute, cc));
   }
+  
   //boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   // wait for thread completion.
   // destroy the work object to wait for all queued tasks to finish
@@ -53,8 +64,10 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
   ioService.run();
   threadpool.join_all();
   
-  for (int i = 0; i < cmvec.size(); i++) 
+  // Deinitialize Capabilities
+  for (int i = 0; i < object_cnt; i++) 
   {
     delete cmvec.at(i);
+    delete ccvec.at(i);
   }
 }

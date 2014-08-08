@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   perception_utils
   suturo_perception_match_cuboid
+  suturo_perception_centroid_calc
 )
 
 find_package(PCL REQUIRED)
@@ -22,7 +23,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES suturo_perception_pipeline
-  CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils suturo_perception_match_cuboid
+  CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils suturo_perception_match_cuboid suturo_perception_centroid_calc
   DEPENDS pcl
 )
 

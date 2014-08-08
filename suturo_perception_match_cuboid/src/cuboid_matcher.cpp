@@ -4,6 +4,8 @@
 #define MIN_ANGLE 5 // the minimum angle offset between to norm vectors
                     // if this threshold is not reached, no rotation will be made on this axis
 
+using namespace suturo_perception;
+
 // Define Mutex
 boost::mutex CuboidMatcher::mx;
 
@@ -260,7 +262,7 @@ void CuboidMatcher::segmentPlanes()
 void CuboidMatcher::computeCentroid(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, Eigen::Vector4f &centroid)
 {
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_points (new pcl::PointCloud<pcl::PointXYZRGB> ());
-  perception_utils::ThreadsafeHull::computeConvexHull(cloud_in, hull_points);
+  ThreadsafeHull::computeConvexHull(cloud_in, hull_points);
 
   // Centroid calulcation
   pcl::compute3DCentroid (*hull_points, centroid);  
