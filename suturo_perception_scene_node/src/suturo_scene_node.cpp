@@ -1,8 +1,8 @@
 #include "suturo_scene_node.h"
 
 #include "perception_utils/point_cloud_operations.h"
-#include <suturo_perception_match_cuboid/cuboid_matcher.h>
 #include <suturo_perception_segmentation/projection_segmenter.h>
+#include <suturo_perception_pipeline/pipeline.h>
 
 #include <pcl/filters/passthrough.h>
 
@@ -14,8 +14,6 @@
 #include <shape_msgs/Plane.h>
 #include <moveit_msgs/CollisionObject.h>
 #include <visualization_msgs/Marker.h>
-
-#include <boost/asio.hpp>
 
 using namespace suturo_perception;
 
@@ -32,7 +30,7 @@ SuturoSceneNode::SuturoSceneNode(ros::NodeHandle &n, std::string imageTopic, std
   markerPublisher_ = nodeHandle_.advertise<visualization_msgs::Marker>("/suturo/cuboid_markers", 0);
   maxMarkerId_ = 0;
 
-  }
+}
 
 void SuturoSceneNode::publish_marker(PipelineObject::VecPtr &objects)
 {
@@ -106,68 +104,9 @@ SuturoSceneNode::getScene(suturo_perception_msgs::GetScene::Request &req, suturo
     r.sleep();
   }
   logger.logInfo("done with segmentation, starting pipeline");
-  
-  /*
-  if (coefficients_->values.size() != 4)
-	{
-		logger.logError("coefficients_.size() != 4");
-		return false;
-	}
-	shape_msgs::Plane plane;
-	for (int i = 0; i < 4; i++)
-	{
-		plane.coef[i] = coefficients_->values.at(i);
-	}
-  moveit_msgs::CollisionObject table_msg;
-	table_msg.planes.push_back(plane);
-  //res.table = table_msg;
-  */
-  
-  /****************************************************************************/
-  // Execution pipeline
-  // Each capability provides an enrichment for the pipelineObject
-
-  // initialize threadpool
-  boost::asio::io_service ioService;
-  boost::thread_group threadpool;
-  std::auto_ptr<boost::asio::io_service::work> work(
-    new boost::asio::io_service::work(ioService));
-
-  // Add worker threads to threadpool
-  for(int i = 0; i < pipelineData_->numThreads_; ++i)
-  {
-    threadpool.create_thread(
-      boost::bind(&boost::asio::io_service::run, &ioService)
-      );
-  }
-
-  std::vector<CuboidMatcher*> cmvec;
-  for (int i = 0; i < pipelineObjects_.size(); i++) 
-  {
-    // Initialize Capabilities
     
-    // suturo_perception_3d_capabilities::CuboidMatcherAnnotator cma(perceivedObjects[i]);
-    // Init the cuboid matcher with the table coefficients
-    CuboidMatcher *cm = new CuboidMatcher(pipelineObjects_[i]);
-		cmvec.push_back(cm);
-    cm->setMode(CUBOID_MATCHER_MODE_WITH_COEFFICIENTS);
-    cm->setTableCoefficients(pipelineData_->coefficients_);
-    cm->setInputCloud(pipelineObjects_[i]->get_pointCloud());
-
-    // post work to threadpool
-    ioService.post(boost::bind(&CuboidMatcher::execute, cm, pipelineObjects_[i]->get_c_cuboid()));
-  }
-  //boost::this_thread::sleep(boost::posix_time::microseconds(1000));
-  // wait for thread completion.
-  // destroy the work object to wait for all queued tasks to finish
-  work.reset();
-  ioService.run();
-  threadpool.join_all();
-	
-  for (int i = 0; i < cmvec.size(); i++) 
-  {
-		delete cmvec.at(i);
-	}
+  /****************************************************************************/
+  Pipeline::execute(pipelineData_, pipelineObjects_);
   /****************************************************************************/
 
   logger.logInfo("done with perception pipeline, sending result");
@@ -210,16 +149,16 @@ SuturoSceneNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputClou
     return;
   }
  
- // TODO: migrate this into a capability! 
-    
-  /*
+  // TODO: migrate this into a capability! 
+  for (int i = 0; i < pipelineObjects_.size(); i++)
+  {
     // Calculate the volume of each cluster
     // Create a convex hull around the cluster and calculate the total volume
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_points (new pcl::PointCloud<pcl::PointXYZRGB> ());
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr obj_points_from_hull (new pcl::PointCloud<pcl::PointXYZRGB> ());
 
     pcl::ConvexHull<pcl::PointXYZRGB> hull;
-    hull.setInputCloud(it);
+    hull.setInputCloud(pipelineObjects_[i]->get_pointCloud());
     hull.setDimension(3);
     hull.setComputeAreaVolume(true); // This creates alot of output, but it's necessary for getTotalVolume() ....
     hull.reconstruct (*hull_points);
@@ -234,8 +173,8 @@ SuturoSceneNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputClou
     centroid_point.x = centroid[0];
     centroid_point.y = centroid[1];
     centroid_point.z = centroid[2];
-    pipelineObject->set_c_centroid(centroid_point);
-  */
+    pipelineObjects_[i]->set_c_centroid(centroid_point);
+  }
 		
   //idx_++;
 	processing_ = false;

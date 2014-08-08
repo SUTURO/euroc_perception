@@ -35,4 +35,4 @@ set(suturo_perception_segmentation_files
 )
 
 add_library(suturo_perception_segmentation ${suturo_perception_segmentation_files})
-target_link_libraries(suturo_perception_segmentation ${PCL_LIBRARIES} ${Boost_LIBRARIES} ${catkin_LIBRARIES}) 
+target_link_libraries(suturo_perception_segmentation ${PCL_LIBRARIES} ${catkin_LIBRARIES}) 
