@@ -235,7 +235,7 @@ int main(int argc, const char *argv[])
   }
 
   // Start the visualizer
-  pcl::visualization::PCLVisualizer p ("test_shapes");
+  pcl::visualization::PCLVisualizer p ("Pose Estimation test");
   p.addCoordinateSystem (0.3);
 
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> green_color(observed_correspondences, 0, 255, 0);

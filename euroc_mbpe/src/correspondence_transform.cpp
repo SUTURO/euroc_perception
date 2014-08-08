@@ -102,4 +102,6 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr CorrespondenceTransform::generateBoxModelFro
       }
     }
   }
+  pcl::transformPointCloud(*result, *result, getRotationMatrixFromPose(pose) );
+  return result;
 }
