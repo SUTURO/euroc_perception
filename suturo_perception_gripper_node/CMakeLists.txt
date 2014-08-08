@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(suturo_perception_scene_node)
+project(suturo_perception_gripper_node)
 
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
@@ -31,16 +31,16 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(suturo_perception_scene_node src/main.cpp src/suturo_scene_node.cpp)
-target_link_libraries(suturo_perception_scene_node
+add_executable(suturo_perception_gripper_node src/main.cpp src/suturo_gripper_node.cpp)
+target_link_libraries(suturo_perception_gripper_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
   ${Boost_LIBRARIES} 
 )
 
-add_executable(scene_client src/scene_client.cpp)
-target_link_libraries(scene_client
+add_executable(gripper_client src/gripper_client.cpp)
+target_link_libraries(gripper_client
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
