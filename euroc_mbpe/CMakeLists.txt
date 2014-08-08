@@ -82,7 +82,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES euroc_mbpe
 #  CATKIN_DEPENDS pcl_conversions pcl_ros roscpp sensor_msgs
 #  DEPENDS system_lib
@@ -94,15 +94,15 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
-# add_library(euroc_mbpe
-#   src/${PROJECT_NAME}/euroc_mbpe.cpp
-# )
+add_library(correspondence_transform
+  src/correspondence_transform.cpp
+)
 
 ## Declare a cpp executable
 add_executable(generate_pc_model src/generate_pc_model.cpp)
@@ -117,12 +117,17 @@ target_link_libraries(generate_pc_model
   ${catkin_LIBRARIES}
 )
 
+target_link_libraries(correspondence_transform
+  ${catkin_LIBRARIES}
+)
+
 target_link_libraries(ct_visualizer
   ${catkin_LIBRARIES}
   ${VTK_LIBRARIES}
 	${PCL_LIBRARIES}
 	libvtkFiltering.so
 	libvtkGraphics.so
+  correspondence_transform
 )
 
 #############

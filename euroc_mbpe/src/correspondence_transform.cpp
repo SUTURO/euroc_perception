@@ -1,24 +1,6 @@
-#include <ros/ros.h>
-#include <iostream>
-#include <tf/transform_listener.h>
-#include <boost/program_options.hpp>
-#include <pcl_ros/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/common/common_headers.h>
-#include <pcl/common/transforms.h>
-#include <Eigen/Dense>
-#include <Eigen/Core>
-#include <Eigen/SVD>
-#include "perception_utils/logger.h"
+#include "euroc_mbpe/correspondence_transform.h"
 
-typedef Eigen::Matrix< float, 6, 1 > 	Vector6f;
-typedef Eigen::Matrix< float, 12, 1 > 	Vector12f;
-
-
-Vector12f getVectorFromPointCloud4(pcl::PointCloud<pcl::PointXYZ>::Ptr p)
+Eigen::VectorXf CorrespondenceTransform::getVectorFromPointCloud4(pcl::PointCloud<pcl::PointXYZ>::Ptr p)
 {
   if(p->points.size() != 4)
   {
@@ -26,11 +8,7 @@ Vector12f getVectorFromPointCloud4(pcl::PointCloud<pcl::PointXYZ>::Ptr p)
     return Eigen::Matrix< float, 12, 1 >::Zero();
   }
 
-  // for(int i = 0; i < p->points.size(); i++)
-  // {
-  //   std::cout <<  p->points[i].x << " " << p->points[i].y << " " << p->points[i].z << std::endl;
-  // }
-  Vector12f result = Eigen::Matrix< float, 12, 1 >::Zero();
+  Eigen::VectorXf result = Eigen::Matrix< float, 12, 1 >::Zero();
   for(int i=0; i<4; i++)
   {
     result[0+(i*3)] = p->points[i].x;
@@ -40,7 +18,7 @@ Vector12f getVectorFromPointCloud4(pcl::PointCloud<pcl::PointXYZ>::Ptr p)
   return result;
 }
 
-Eigen::Matrix4f getRotationMatrixFromPose(Vector6f pose)
+Eigen::Matrix4f CorrespondenceTransform::getRotationMatrixFromPose(Eigen::Matrix< float, 6, 1 > pose)
 {
   // The first three elments of the given vector are the
   // rotations around x,y and z
@@ -88,21 +66,19 @@ Eigen::Matrix4f getRotationMatrixFromPose(Vector6f pose)
   return result;
 }
 
-// Transform a cloud with a given pose + a small varation of one of the parameters in the pose
-// variation_idx indicates which index should be added by e
-pcl::PointCloud<pcl::PointXYZ>::Ptr transformVariedPose(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
-    Vector6f pose, int variation_idx, float e)
+pcl::PointCloud<pcl::PointXYZ>::Ptr CorrespondenceTransform::transformVariedPose(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
+    Eigen::Matrix< float, 6, 1 > pose, int variation_idx, float e)
 {
   // Transform the points with a slight change of param1 ...
   pcl::PointCloud<pcl::PointXYZ>::Ptr pts_param1 (new pcl::PointCloud<pcl::PointXYZ>);
-  Vector6f varied_vector = Vector6f::Zero();
+  Eigen::Matrix< float, 6, 1 > varied_vector = Eigen::Matrix< float, 6, 1 >::Zero();
   varied_vector[variation_idx] = e;
-  Vector6f pose_varied = pose + varied_vector;    
+  Eigen::Matrix< float, 6, 1 > pose_varied = pose + varied_vector;    
   pcl::transformPointCloud(*cloud, *pts_param1, getRotationMatrixFromPose(pose_varied) );
   return pts_param1;
 }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr generateBoxModelFromPose(Vector6f pose){
+pcl::PointCloud<pcl::PointXYZ>::Ptr CorrespondenceTransform::generateBoxModelFromPose(Eigen::Matrix< float, 6, 1 > pose){
   pcl::PointCloud<pcl::PointXYZ>::Ptr result (new pcl::PointCloud<pcl::PointXYZ>);
   result->width=8;
   result->height=1;
@@ -126,151 +102,4 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr generateBoxModelFromPose(Vector6f pose){
       }
     }
   }
-
-  pcl::transformPointCloud(*result, *result, getRotationMatrixFromPose(pose) );
-  return result;
-}
-
-
-int main(int argc, const char *argv[])
-{
-  pcl::PointCloud<pcl::PointXYZ>::Ptr model_correspondences (new pcl::PointCloud<pcl::PointXYZ>);
-  // Init the model correspondences. Let's take some of the corners of a box
-  pcl::PointXYZ c;
-  c.x = -0.3;
-  c.y = 0.3;
-  c.z = -0.3; 
-  model_correspondences->push_back(c);
-  c.x = -0.3;
-  c.y = 0.3;
-  c.z = 0.3; 
-  model_correspondences->push_back(c);
-  c.x = -0.3;
-  c.y = -0.3;
-  c.z = 0.3; 
-  model_correspondences->push_back(c);
-  c.x = 0.3;
-  c.y = -0.3;
-  c.z = 0.3; 
-  model_correspondences->push_back(c);
-
-  // Transform the given points and think of these new points as the observed ones
-  pcl::PointCloud<pcl::PointXYZ>::Ptr observed_correspondences (new pcl::PointCloud<pcl::PointXYZ>);
-  Vector6f d; // (theta_x, theta_y, theta_z, x, y, z)
-  d[0] = d[1] = d[2] = d[3] = d[4] = d[5] = 0;
-  d[2] = M_PI/4; // Rotate pi/4 around the z-axis
-  d[3] = 0.5; // Translation on the x axis
-  Eigen::Matrix4f transform_1 = getRotationMatrixFromPose(d);
-  pcl::transformPointCloud(*model_correspondences, *observed_correspondences, transform_1 );
-
-
-  // Start time measuring ...
-  boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
-
-  // Initial guess for the pose
-  Vector6f x;
-  x[0] = x[1] = x[2] = x[3] = x[4] = x[5] = 0;
-
-  // Observed points in Vector format
-  Vector12f y0;
-  y0 = getVectorFromPointCloud4(observed_correspondences);
-  // std::cout << "y0:" << std::endl << y0 << std::endl;
-  // Define a small variation that will be used to calculate the
-  // effect of varyiing the different parameters of the pose
-  double e = 0.0001;
-  Eigen::Matrix< float, 12, 6 > jacobian = Eigen::Matrix< float, 12, 6 >::Zero();
-  int iterations;
-  for(iterations=0; iterations<20; iterations++)
-  {
-    // Where will the points of the model be with the given pose?
-    // This will be the basis for our error calculation
-    pcl::PointCloud<pcl::PointXYZ>::Ptr predicted_model_pts (new pcl::PointCloud<pcl::PointXYZ>);
-    // Calculate the model points w.r.t the current pose estimation
-    pcl::transformPointCloud(*model_correspondences, *predicted_model_pts, getRotationMatrixFromPose(x) );
-    Eigen::Matrix< float, 12, 1 > y = getVectorFromPointCloud4(predicted_model_pts);
-    // std::cout << "y: " << std::endl << y << std::endl;
-
-
-    // Transform the points with a slight change of the parameters
-    pcl::PointCloud<pcl::PointXYZ>::Ptr changed_pointcloud (new pcl::PointCloud<pcl::PointXYZ>);
-    for(int idx=0;idx<6;idx++)
-    {
-      changed_pointcloud = transformVariedPose(model_correspondences, x, idx, e);
-      Vector12f pts_after_variation = getVectorFromPointCloud4(changed_pointcloud);
-      // ... and write these points in the jacobian column per column
-      for(int j=0;j<12;j++)
-      {
-        jacobian(j,idx) = (pts_after_variation[j] - y[j]) / e;
-      }
-    }
-    // Get the delta between the observed points
-    // and the predicted points w.r.t to the current pose
-    Vector12f deltay = y0 - y;
-    std::cout << "Residual: " << deltay.norm() << std::endl;
-    Vector6f deltax;
-    Eigen::Matrix<float,6,12> pinv = (jacobian.transpose() * jacobian).inverse() * jacobian.transpose();
-    deltax = pinv * deltay;
-
-    if( abs( (deltax.norm() / x.norm()) < 1e-6 ) )
-    {
-      // change in transformation is nearly zero .... 
-      break;
-    }
-    // Update pose estimate
-    x = x + deltax;
-  }
-  std::cout << "Final pose estimation after " << iterations << " iterations: " << std::endl << x << std::endl;
-  boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
-  suturo_perception::Logger logger("correspondence_transform");
-  logger.logTime(s, end, "pose estimation");
-
-
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-
-  cloud->points.resize (5);
-  for (size_t i = 0; i < cloud->points.size (); ++i)
-  {
-    cloud->points[i].x = i; 
-    cloud->points[i].y = i / 2; 
-    cloud->points[i].z = 0;
-  }
-
-  // Start the visualizer
-  pcl::visualization::PCLVisualizer p ("test_shapes");
-  p.addCoordinateSystem (0.3);
-
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> green_color(observed_correspondences, 0, 255, 0);
-  p.addPointCloud<pcl::PointXYZ> (model_correspondences, "model_correspondences");
-  p.addPointCloud<pcl::PointXYZ> (observed_correspondences, green_color, "observed_correspondences");
-  p.addText("White pts = model correspondences, Green pts = observed correspondences, Green box = The model fitted to the observed points, Yellow pts = line between correspondences", 5, 10 , "caption");
-
-  // Create a model of the box as a Polygon
-  pcl::PointCloud<pcl::PointXYZ>::Ptr box_model = generateBoxModelFromPose(x);
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[0], box_model->points[1], 0.0, 1.0, 0.0,"line1");
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[1], box_model->points[3], 0.0, 1.0, 0.0,"line2");
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[1], box_model->points[5], 0.0, 1.0, 0.0,"line3");
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[0], box_model->points[2], 0.0, 1.0, 0.0,"line4");
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[0], box_model->points[4], 0.0, 1.0, 0.0,"line5");
-
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[2], box_model->points[3], 0.0, 1.0, 0.0,"line6");
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[4], box_model->points[5], 0.0, 1.0, 0.0,"line7");
-
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[6], box_model->points[7], 0.0, 1.0, 0.0,"line8");
-
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[6], box_model->points[2], 0.0, 1.0, 0.0,"line9");
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[6], box_model->points[4], 0.0, 1.0, 0.0,"line10");
-
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[7], box_model->points[3], 0.0, 1.0, 0.0,"line11");
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (box_model->points[7], box_model->points[5], 0.0, 1.0, 0.0,"line12");
-
-  // Add Correspondences
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (model_correspondences->points[0], observed_correspondences->points[0], 1.0, 1.0, 0.0,"corrline1");
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (model_correspondences->points[1], observed_correspondences->points[1], 1.0, 1.0, 0.0,"corrline2");
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (model_correspondences->points[2], observed_correspondences->points[2], 1.0, 1.0, 0.0,"corrline3");
-  p.addLine<pcl::PointXYZ, pcl::PointXYZ> (model_correspondences->points[3], observed_correspondences->points[3], 1.0, 1.0, 0.0,"corrline4");
-
-  p.spin();
-  
-  return 0;
 }
