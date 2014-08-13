@@ -31,6 +31,7 @@ int main(int argc, char **argv)
         ROS_INFO(" |-> centroid: %f %f %f", obj.c_centroid.x, obj.c_centroid.y, obj.c_centroid.z);
         ROS_INFO(" |-> volume: %f", obj.c_volume);
         ROS_INFO(" |-> c_type: %d", obj.c_type);
+        ROS_INFO(" |-> c_shape: %d", obj.c_shape);
         ROS_INFO(" |-> moveit CollisionObject:");
         ROS_INFO(" |-|-> primitives: %d", obj.object.primitives.size());
         for (int j = 0; j < obj.object.primitives.size(); j++)

@@ -2,6 +2,7 @@
 
 #include <suturo_perception_match_cuboid/cuboid_matcher.h>
 #include <suturo_perception_centroid_calc/centroid_calc.h>
+#include <suturo_perception_shape_detection/shape_detector.h>
 
 #include <boost/asio.hpp>
 
@@ -34,12 +35,14 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
   int object_cnt = pipeline_objects.size();
   std::vector<CuboidMatcher*> cmvec;
   std::vector<CentroidCalc*> ccvec;
+  std::vector<ShapeDetector*> sdvec;
   
   // Initialize Capabilities
   for (int i = 0; i < object_cnt; i++)
   {
     cmvec.push_back(new CuboidMatcher(pipeline_objects[i]));
     ccvec.push_back(new CentroidCalc(pipeline_objects[i]));
+    sdvec.push_back(new ShapeDetector(pipeline_objects[i]));
   }
   
   // post work to threadpool
@@ -55,6 +58,10 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
     // centroid calculation
     CentroidCalc *cc = ccvec.at(i);
     ioService.post(boost::bind(&CentroidCalc::execute, cc));
+    
+    // shape detection
+    ShapeDetector *sd = sdvec.at(i);
+    ioService.post(boost::bind(&ShapeDetector::execute, sd));
   }
   
   //boost::this_thread::sleep(boost::posix_time::microseconds(1000));
@@ -69,5 +76,6 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
   {
     delete cmvec.at(i);
     delete ccvec.at(i);
+    delete sdvec.at(i);
   }
 }
