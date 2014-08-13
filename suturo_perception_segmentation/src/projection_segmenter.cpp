@@ -73,7 +73,8 @@ ProjectionSegmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
   pcl::PointIndices::Ptr object_indices (new pcl::PointIndices);
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters (new pcl::PointCloud<pcl::PointXYZRGB>());
   PointCloudOperations::extractAllPointsAbovePointCloud(cloud_filtered, plane_cluster,
-      object_clusters, object_indices, 2, pipeline_data->prismZMin, pipeline_data->prismZMax);
+      object_clusters, object_indices, 2, -pipeline_data->prismZMin, -pipeline_data->prismZMax);
+  logger.logInfo((boost::format("After extractAllPointsAbovePointCloud: %s indices and %s object_cluster pts") % object_indices->indices.size() % object_clusters->points.size() ).str() );
   //objects_on_plane_cloud_ = object_clusters;
 
   // Project the pointcloud above the table onto the table to get a 2d representation of the objects
