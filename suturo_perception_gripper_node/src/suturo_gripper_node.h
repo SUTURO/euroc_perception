@@ -1,11 +1,12 @@
-#ifndef SUTURO_PERCEPTION_SCENE_NODE_H
-#define SUTURO_PERCEPTION_SCENE_NODE_H
+#ifndef SUTURO_PERCEPTION_GRIPPER_NODE_H
+#define SUTURO_PERCEPTION_GRIPPER_NODE_H
 
 #include "ros/ros.h"
 
 #include "perception_utils/logger.h"
 #include "perception_utils/pipeline_object.hpp"
 #include "perception_utils/pipeline_data.hpp"
+#include "perception_utils/publisher_helper.h"
 #include "suturo_perception_msgs/GetGripper.h"
 
 #include <pcl_ros/point_cloud.h>
@@ -21,6 +22,8 @@ class SuturoGripperNode
     void receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud);
     void clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, pcl::PointCloud<pcl::PointXYZRGB>::Ptr original_cloud, std::vector<int> *removed_indices_filtered, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices);
   private:
+    static const std::string OBJECT_CLOUD_PREFIX_TOPIC;
+
     ros::NodeHandle nodeHandle_;
     ros::ServiceServer clusterService_;
 		std::string imageTopic_;
@@ -29,6 +32,7 @@ class SuturoGripperNode
 		int idx_;
     int objidx_;
 		bool processing_;
+    suturo_perception::PublisherHelper ph_;
 
     ros::Publisher markerPublisher_;
     int maxMarkerId_;
@@ -41,4 +45,4 @@ class SuturoGripperNode
     
 };
 
-#endif // TABLE_FROM_DEPTH_IMAGE_NODE_H
+#endif // SUTURO_PERCEPTION_GRIPPER_NODE_H

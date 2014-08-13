@@ -13,10 +13,12 @@
 
 using namespace suturo_perception;
 
+const std::string SuturoGripperNode::OBJECT_CLOUD_PREFIX_TOPIC= "/suturo/object_cluster_cloud/";
 SuturoGripperNode::SuturoGripperNode(ros::NodeHandle &n, std::string imageTopic, std::string depthTopic) : 
   nodeHandle_(n), 
   imageTopic_(imageTopic),
-  cloudTopic_(depthTopic)
+  cloudTopic_(depthTopic),
+  ph_(n)
 {
 	logger = Logger("SuturoPerceptionGripperNode");
   clusterService_ = nodeHandle_.advertiseService("/suturo/GetGripper", 
@@ -26,6 +28,16 @@ SuturoGripperNode::SuturoGripperNode(ros::NodeHandle &n, std::string imageTopic,
 
   markerPublisher_ = nodeHandle_.advertise<visualization_msgs::Marker>("/suturo/cuboid_markers_gripper", 0);
   maxMarkerId_ = 0;
+
+  // Add additional topics for debugging purposes
+  // init 7 topics for the pointclouds of every object cluster
+  for(int i = 0; i <= 6; ++i)
+  {
+    std::stringstream ss;
+    ss << i;
+    ph_.advertise<sensor_msgs::PointCloud2>(OBJECT_CLOUD_PREFIX_TOPIC + ss.str());
+  }
+
 
 }
 
@@ -79,6 +91,15 @@ SuturoGripperNode::getGripper(suturo_perception_msgs::GetGripper::Request &req, 
 
   logger.logInfo("results sent, publishing markers");
   PublisherHelper::publish_marker(pipelineObjects_, "/tdepth", markerPublisher_, &maxMarkerId_);
+
+  logger.logInfo("Publishing data on debugging topics");
+  for (int i = 0; i < pipelineObjects_.size(); i++)
+  {
+    std::stringstream ss;
+    ss << i;
+    ph_.publish_pointcloud(OBJECT_CLOUD_PREFIX_TOPIC + ss.str(), 
+        pipelineObjects_[i]->get_pointCloud(), "/tdepth");
+  }
 
   return true;
 }
