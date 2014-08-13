@@ -1,0 +1,7 @@
+== Dependencies ==
+PCL must be installed.
+
+== Instructions ==
+- cd build/  # or create it if it doesn't yet exist
+- cmake ..
+- make

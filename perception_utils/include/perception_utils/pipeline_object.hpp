@@ -8,6 +8,7 @@
 #include <perception_utils/cuboid.hpp>
 #include <perception_utils/point.hpp>
 #include <perception_utils/logger.h>
+#include <perception_utils/shape.hpp>
 #include <suturo_perception_msgs/EurocObject.h>
 
 namespace suturo_perception
@@ -30,6 +31,7 @@ namespace suturo_perception
         c_cuboid->length2 = -1;
         c_cuboid->length3 = -1;
         c_cuboid->volume = -1;
+        c_shape = None;
 
         logger = Logger("pipeline_object");
       };
@@ -65,6 +67,12 @@ namespace suturo_perception
         return c_cuboid; 
       };
 
+      Shape get_c_shape() const
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex); 
+        return c_shape; 
+      };
+
       // Threadsafe setters
       void set_c_id(int value)
       {
@@ -90,6 +98,11 @@ namespace suturo_perception
       {
         boost::lock_guard<boost::signals2::mutex> lock(*mutex);
         c_cuboid = value;
+      };
+      void set_c_shape(Shape value)
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex);
+        c_shape = value;
       };
 
       suturo_perception_msgs::EurocObject toEurocObject()
@@ -127,6 +140,22 @@ namespace suturo_perception
         cuboid_pose.orientation.w = cub->orientation.w();
         obj.object.primitive_poses.push_back(cuboid_pose);
 
+        // shape
+        switch(c_shape)
+        {
+          case Sphere:
+            obj.c_shape = suturo_perception_msgs::EurocObject::SHAPE_SPHERE;
+          break;
+          case Box:
+            obj.c_shape = suturo_perception_msgs::EurocObject::SHAPE_BOX;
+          break;
+          case Cylinder:
+            obj.c_shape = suturo_perception_msgs::EurocObject::SHAPE_CYLINDER;
+          break;
+          case None:
+          default:
+            obj.c_shape = suturo_perception_msgs::EurocObject::SHAPE_UNKNOWN;
+        }
         return obj;
       }
     
@@ -136,6 +165,7 @@ namespace suturo_perception
       double c_volume;
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloud;
       Cuboid::Ptr c_cuboid;
+      Shape c_shape;
 
       boost::shared_ptr<boost::signals2::mutex> mutex;
 
