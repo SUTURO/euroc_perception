@@ -27,12 +27,12 @@ def rgb_to_hsv(color):
 
 def depth_project(x, y, depth_image):
     rows, cols, _ = depth_image.shape
-    rospy.logdebug("Projecting with Image size (%d / %d)" % (rows, cols))
+    rospy.logdebug("Projecting (%d / %d) with Image size %dx%d" % (x, y, cols, rows))
     fov_h = 1.047 #TODO: get this from the yaml description
     fov_v = 2.0 * math.atan(math.tan(fov_h / 2.0) * (rows / cols))
     h = math.tan(fov_h / 2.0)
     v = math.tan(fov_v / 2.0)
-    depth = depth_image[x,y]
+    depth = depth_image[y,x]
     res_x = depth
     res_y = depth * (h - 2.0 * h * x / cols)
     res_z = depth * (v - 2.0 * v * y / rows)
@@ -110,6 +110,7 @@ class ColorDetector(object):
                     if contour is not None:
                         x, y = self.get_centroid(contour)
                         if x >= 0 and y >= 0:
+                            rospy.logdebug("Object at (%d / %d)" % (x, y))
                             # Found an object check the depth image
                             position = depth_project(x, y, self.__depth_image)
                             # Append the found result
