@@ -94,9 +94,15 @@ double v1 = tan(fov_v/2);
        pPt->x = pPt->y = pPt->z = bad_point;
        continue;
      }
-     pPt->z = depth;
+     /*
+     pPt->x = depth;
      pPt->y = depth * (h1 - (2*h1 *( u/(double)640) ));
-     pPt->x = depth * (v1 - (2*v1 *( y/(double)480) ));
+     pPt->z = depth * (v1 - (2*v1 *( y/(double)480) ));
+     */
+     
+     pPt->z = depth;
+     pPt->y = -depth * (v1 - (2*v1 *( y/(double)480) ));
+     pPt->x = -depth * (h1 - (2*h1 *( u/(double)640) ));
    }
  }
  return cloud;
@@ -155,7 +161,7 @@ int main (int argc, char** argv)
 {
   depth_topic = "/euroc_interface_node/cameras/scene_depth_cam";
   rgb_topic = "/euroc_interface_node/cameras/scene_rgb_cam";
-  frame = "/sdepth";
+  frame = "/sdepth_pcl";
   output_topic = "/suturo/euroc_scene_cloud";
   std::string desired_cam = "scene";
 
@@ -209,14 +215,14 @@ int main (int argc, char** argv)
   {
     depth_topic = "/euroc_interface_node/cameras/scene_depth_cam";
     rgb_topic = "/euroc_interface_node/cameras/scene_rgb_cam";
-    frame = "/sdepth";
+    frame = "/sdepth_pcl";
     output_topic = "/suturo/euroc_scene_cloud";
   }
   else if(desired_cam == "tcp")
   {
     depth_topic = "/euroc_interface_node/cameras/tcp_depth_cam";
     rgb_topic = "/euroc_interface_node/cameras/tcp_rgb_cam";
-    frame = "/tdepth";
+    frame = "/tdepth_pcl";
     output_topic = "/suturo/euroc_tcp_cloud";
   }
   else

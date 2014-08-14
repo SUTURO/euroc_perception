@@ -118,15 +118,15 @@ SuturoGripperNode::getGripper(suturo_perception_msgs::GetGripper::Request &req, 
       continue;
     }
     suturo_perception_msgs::EurocObject euObj = pipelineObjects_[i]->toEurocObject();
-    euObj.frame_id = "/tdepth";
+    euObj.frame_id = "/tdepth_pcl";
     euObj.c_id = objidx_;
     objidx_++;
-    euObj.object.header.frame_id="/tdepth";
+    euObj.object.header.frame_id="/tdepth_pcl";
     res.objects.push_back(euObj);
   }
 
   logger.logInfo("results sent, publishing markers");
-  PublisherHelper::publish_marker(pipelineObjects_, "/tdepth", markerPublisher_, &maxMarkerId_);
+  PublisherHelper::publish_marker(pipelineObjects_, "/tdepth_pcl", markerPublisher_, &maxMarkerId_);
 
   logger.logInfo("Publishing data on debugging topics");
   for (int i = 0; i < pipelineObjects_.size(); i++)
@@ -134,7 +134,7 @@ SuturoGripperNode::getGripper(suturo_perception_msgs::GetGripper::Request &req, 
     std::stringstream ss;
     ss << i;
     ph_.publish_pointcloud(OBJECT_CLOUD_PREFIX_TOPIC + ss.str(), 
-        pipelineObjects_[i]->get_pointCloud(), "/tdepth");
+        pipelineObjects_[i]->get_pointCloud(), "/tdepth_pcl");
   }
 
   return true;
@@ -163,12 +163,12 @@ SuturoGripperNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCl
   }
   // Publish the segmentation debug topics
   ph_.publish_pointcloud(TABLE_TOPIC, projection_segmenter.getTablePointCloud()
-        , "/tdepth");
+        , "/tdepth_pcl");
 
   ph_.publish_pointcloud(DOWNSAMPLED_CLOUD, projection_segmenter.getDownsampledPointCloud()
-        , "/tdepth");
+        , "/tdepth_pcl");
   ph_.publish_pointcloud(POINTS_ABOVE_TABLE_CLOUD, projection_segmenter.getPointsAboveTable()
-        , "/tdepth");
+        , "/tdepth_pcl");
 
 	processing_ = false;
 }
