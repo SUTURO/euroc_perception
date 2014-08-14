@@ -119,6 +119,7 @@ SuturoGripperNode::getGripper(suturo_perception_msgs::GetGripper::Request &req, 
     euObj.frame_id = "/tdepth";
     euObj.c_id = objidx_;
     objidx_++;
+    euObj.object.header.frame_id="/tdepth";
     res.objects.push_back(euObj);
   }
 
