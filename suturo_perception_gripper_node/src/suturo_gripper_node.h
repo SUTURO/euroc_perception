@@ -26,6 +26,7 @@ class SuturoGripperNode
     void clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, pcl::PointCloud<pcl::PointXYZRGB>::Ptr original_cloud, std::vector<int> *removed_indices_filtered, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices);
   private:
     static const std::string OBJECT_CLOUD_PREFIX_TOPIC;
+    static const std::string TABLE_TOPIC;
 
     ros::NodeHandle nodeHandle_;
     ros::ServiceServer clusterService_;

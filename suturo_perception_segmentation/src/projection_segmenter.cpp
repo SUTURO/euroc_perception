@@ -58,6 +58,8 @@ ProjectionSegmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
   pcl::PointIndices::Ptr new_inliers (new pcl::PointIndices);
   PointCloudOperations::extractBiggestCluster(cloud_plane, plane_cluster, inliers, new_inliers,
     pipeline_data->ecObjClusterTolerance, pipeline_data->ecMinClusterSize, pipeline_data->ecMaxClusterSize);
+  // Save the plane cluster for debugging purposes in a member variable
+  table_pointcloud_ = plane_cluster;
 
   // NOTE: We need to transform the inliers from table_cluster_indices to inliers
   inliers = new_inliers;
@@ -215,4 +217,8 @@ bool ProjectionSegmenter::clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB
 
 }
 
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr ProjectionSegmenter::getTablePointCloud()
+{
+  return table_pointcloud_;
+}
 
