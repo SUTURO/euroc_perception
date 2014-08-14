@@ -94,9 +94,9 @@ double v1 = tan(fov_v/2);
        pPt->x = pPt->y = pPt->z = bad_point;
        continue;
      }
-     pPt->x = depth;
+     pPt->z = depth;
      pPt->y = depth * (h1 - (2*h1 *( u/(double)640) ));
-     pPt->z = depth * (v1 - (2*v1 *( y/(double)480) ));
+     pPt->x = depth * (v1 - (2*v1 *( y/(double)480) ));
    }
  }
  return cloud;
