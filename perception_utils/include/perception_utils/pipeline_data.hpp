@@ -1,6 +1,8 @@
 #ifndef PIPELINE_DATA_H
 #define PIPELINE_DATA_H
 
+#include <perception_utils/logger.h>
+
 #include <pcl/ModelCoefficients.h>
 #include <boost/shared_ptr.hpp>
 
@@ -10,27 +12,31 @@ namespace suturo_perception
 	{
     public:
       typedef boost::shared_ptr<PipelineData> Ptr;
+
+      // segmentation results
+      pcl::ModelCoefficients::Ptr coefficients_; 
+      
+      
       PipelineData()
       {
+        logger = Logger("pipeline_data");
+        
         // Set default parameters
         zAxisFilterMin = 0.0f;
         zAxisFilterMax = 1.5f;
-        downsampleLeafSize = 0.01f; // [pcl::VoxelGrid::applyFilter] Leaf size is too small for the input dataset. Integer indices would overflow
+        downsampleLeafSize = 0.005f; // [pcl::VoxelGrid::applyFilter] Leaf size is too small for the input dataset. Integer indices would overflow
         planeMaxIterations = 1000;
-        planeDistanceThreshold = 0.01f; 
+        planeDistanceThreshold = 0.001f; 
         ecClusterTolerance = 0.02f; // 2cm
         ecMinClusterSize = 1000;
         ecMaxClusterSize = 200000;  
         prismZMin = 0.001f;
         prismZMax = 0.50f; // cutoff 50 cm above plane
-        ecObjClusterTolerance = 0.05f; // 3cm
-        ecObjMinClusterSize = 10;
+        ecObjClusterTolerance = 0.03f; // 3cm
+        ecObjMinClusterSize = 100;
         ecObjMaxClusterSize = 25000;
         numThreads_ = 8;
       }
-
-      // segmentation results
-      pcl::ModelCoefficients::Ptr coefficients_; 
 
       // pipeline configuration
       float zAxisFilterMin;
@@ -47,6 +53,37 @@ namespace suturo_perception
       int ecObjMinClusterSize;
       int ecObjMaxClusterSize;
       int numThreads_;
+      
+      void resetData()
+      {
+        coefficients_ = pcl::ModelCoefficients::Ptr(new pcl::ModelCoefficients);
+      }
+      
+      void printConfig()
+      {
+        logger.logInfo((boost::format("Reconfigure request : \n"
+            "segmenter: zAxisFilterMin: %f \n"
+            "segmenter: zAxisFilterMax: %f \n"
+            "segmenter: downsampleLeafSize: %f \n"
+            "segmenter: planeMaxIterations: %i \n"
+            "segmenter: planeDistanceThreshold: %f \n"
+            "segmenter: ecClusterTolerance: %f \n"
+            "segmenter: ecMinClusterSize: %i \n"
+            "segmenter: ecMaxClusterSize: %i \n"
+            "segmenter: prismZMin: %f \n"
+            "segmenter: prismZMax: %f \n"
+            "segmenter: ecObjClusterTolerance: %f \n"
+            "segmenter: ecObjMinClusterSize: %i \n"
+            "segmenter: ecObjMaxClusterSize: %i \n"
+            "general: numThreads: %i \n") %
+            zAxisFilterMin % zAxisFilterMax % downsampleLeafSize %
+            planeMaxIterations % planeDistanceThreshold % ecClusterTolerance %
+            ecMinClusterSize % ecMaxClusterSize % prismZMin % prismZMax %
+            ecObjClusterTolerance % ecObjMinClusterSize % ecObjMaxClusterSize % 
+            numThreads_).str());
+      }
+    private:
+      Logger logger;
 	};
 }
 

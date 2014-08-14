@@ -23,6 +23,10 @@ include_directories(${PCL_INCLUDE_DIRS})
 find_package(Boost REQUIRED COMPONENTS system program_options thread)
 include_directories(${Boost_INCLUDE_DIRS})
 
+generate_dynamic_reconfigure_options(
+  cfg/SuturoPerception.cfg
+)
+
 catkin_package(
   CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils suturo_perception_msgs suturo_perception_segmentation suturo_perception_pipeline
   DEPENDS opencv pcl

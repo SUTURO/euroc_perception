@@ -37,8 +37,36 @@ SuturoGripperNode::SuturoGripperNode(ros::NodeHandle &n, std::string imageTopic,
     ss << i;
     ph_.advertise<sensor_msgs::PointCloud2>(OBJECT_CLOUD_PREFIX_TOPIC + ss.str());
   }
+  
+  // Initialize pipeline configuration
+  pipelineData_ = PipelineData::Ptr(new PipelineData());
+  
+  // Initialize dynamic reconfigure
+  reconfCb = boost::bind(&SuturoGripperNode::reconfigureCallback, this, _1, _2);
+  reconfSrv.setCallback(reconfCb);
 
+}
 
+/*
+ * Callback for the dynamic reconfigure service
+ */
+void SuturoGripperNode::reconfigureCallback(suturo_perception_gripper_node::SuturoPerceptionConfig &config, uint32_t level)
+{
+  pipelineData_->zAxisFilterMin = config.zAxisFilterMin;
+  pipelineData_->zAxisFilterMax = config.zAxisFilterMax;
+  pipelineData_->downsampleLeafSize = config.downsampleLeafSize;
+  pipelineData_->planeMaxIterations = config.planeMaxIterations;
+  pipelineData_->planeDistanceThreshold = config.planeDistanceThreshold;
+  pipelineData_->ecClusterTolerance = config.ecClusterTolerance;
+  pipelineData_->ecMinClusterSize = config.ecMinClusterSize;
+  pipelineData_->ecMaxClusterSize = config.ecMaxClusterSize;
+  pipelineData_->prismZMin = config.prismZMin;
+  pipelineData_->prismZMax = config.prismZMax;
+  pipelineData_->ecObjClusterTolerance = config.ecObjClusterTolerance;
+  pipelineData_->ecObjMinClusterSize = config.ecObjMinClusterSize;
+  pipelineData_->ecObjMaxClusterSize = config.ecObjMaxClusterSize;
+  
+  pipelineData_->printConfig();
 }
 
 bool
@@ -47,8 +75,8 @@ SuturoGripperNode::getGripper(suturo_perception_msgs::GetGripper::Request &req, 
 	res.id = idx_;
 	idx_++;
 
-  pipelineData_ = PipelineData::Ptr(new PipelineData());
-	
+	pipelineData_->resetData();
+  
 	ros::Subscriber sub = nodeHandle_.subscribe<sensor_msgs::PointCloud2>(cloudTopic_, 1, boost::bind(&SuturoGripperNode::receive_cloud,this, _1));
 	
 	logger.logInfo("Waiting for processed cloud");
