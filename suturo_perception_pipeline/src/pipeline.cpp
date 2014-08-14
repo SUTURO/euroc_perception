@@ -74,6 +74,11 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
   // Deinitialize Capabilities
   for (int i = 0; i < object_cnt; i++) 
   {
+    Cuboid::Ptr c = pipeline_objects[i]->get_c_cuboid();
+    std::cout << "Cuboid statistics: ";
+    std::cout << "Width: " << c->length1 << " Height: " << c->length2 << " Depth: " << c->length3 << " Volume: " << c->volume;
+    std::cout << " m^3" << "O: " << c->orientation.w() << " " << c->orientation.x() << " " << c->orientation.y() << " " << c->orientation.z() << std::endl;
+    
     delete cmvec.at(i);
     delete ccvec.at(i);
     delete sdvec.at(i);
