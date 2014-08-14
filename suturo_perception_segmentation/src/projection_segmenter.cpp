@@ -228,3 +228,8 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr ProjectionSegmenter::getDownsampledPointC
   return downsampled_pointcloud_;
 }
 
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr ProjectionSegmenter::getPointsAboveTable()
+{
+  return points_above_table_;
+}
+

@@ -21,6 +21,7 @@ namespace suturo_perception
       // Should be available after a successful segmentation
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr getTablePointCloud();
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr getDownsampledPointCloud();
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr getPointsAboveTable();
 
     protected:
       bool clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, pcl::PointCloud<pcl::PointXYZRGB>::Ptr original_cloud, std::vector<int> *removed_indices_filtered, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, PipelineData::Ptr &pipeline_data);
@@ -29,6 +30,7 @@ namespace suturo_perception
       Logger logger;
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr table_pointcloud_;
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampled_pointcloud_;
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr points_above_table_;
   };
 }
 #endif // SUTURO_PERCEPTION_PROJECTION_SEGMENTER
