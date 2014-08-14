@@ -1,3 +1,3 @@
 <launch>
-    <node pkg="euroc_perception_color_recognizer" name="color_recognizer.py" type="ColorRecognizer" output="screen"></node>
+    <node pkg="euroc_perception_color_recognizer" name="color_recognizer" type="color_recognizer.py" output="screen"></node>
 </launch>
