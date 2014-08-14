@@ -36,6 +36,7 @@ ProjectionSegmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
   cloud_filtered = cloud_downsampled; // Use the downsampled cloud now
   
   logger.logInfo((boost::format("PointCloud after downsample: %s data points") % cloud_filtered->points.size()).str());
+  downsampled_pointcloud_ = cloud_filtered;
 
   // Find the biggest table plane in the scene
   pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
@@ -220,5 +221,10 @@ bool ProjectionSegmenter::clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr ProjectionSegmenter::getTablePointCloud()
 {
   return table_pointcloud_;
+}
+
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr ProjectionSegmenter::getDownsampledPointCloud()
+{
+  return downsampled_pointcloud_;
 }
 

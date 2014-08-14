@@ -27,6 +27,7 @@ class SuturoGripperNode
   private:
     static const std::string OBJECT_CLOUD_PREFIX_TOPIC;
     static const std::string TABLE_TOPIC;
+    static const std::string DOWNSAMPLED_CLOUD;
 
     ros::NodeHandle nodeHandle_;
     ros::ServiceServer clusterService_;
