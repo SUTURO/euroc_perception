@@ -15,6 +15,7 @@ using namespace suturo_perception;
 
 const std::string SuturoGripperNode::OBJECT_CLOUD_PREFIX_TOPIC= "/suturo/object_cluster_cloud/";
 const std::string SuturoGripperNode::TABLE_TOPIC= "/suturo/tcp_table/";
+const std::string SuturoGripperNode::DOWNSAMPLED_CLOUD= "/suturo/tcp_downsampled_cloud/";
 
 SuturoGripperNode::SuturoGripperNode(ros::NodeHandle &n, std::string imageTopic, std::string depthTopic) : 
   nodeHandle_(n), 
@@ -40,6 +41,7 @@ SuturoGripperNode::SuturoGripperNode(ros::NodeHandle &n, std::string imageTopic,
     ph_.advertise<sensor_msgs::PointCloud2>(OBJECT_CLOUD_PREFIX_TOPIC + ss.str());
   }
   ph_.advertise<sensor_msgs::PointCloud2>(TABLE_TOPIC);
+  ph_.advertise<sensor_msgs::PointCloud2>(DOWNSAMPLED_CLOUD);
   
   // Initialize pipeline configuration
   pipelineData_ = PipelineData::Ptr(new PipelineData());
@@ -158,6 +160,9 @@ SuturoGripperNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCl
   }
   // Publish the segmentation debug topics
   ph_.publish_pointcloud(TABLE_TOPIC, projection_segmenter.getTablePointCloud()
+        , "/tdepth");
+
+  ph_.publish_pointcloud(DOWNSAMPLED_CLOUD, projection_segmenter.getDownsampledPointCloud()
         , "/tdepth");
 
 	processing_ = false;
