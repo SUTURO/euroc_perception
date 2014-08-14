@@ -21,7 +21,7 @@ ProjectionSegmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
   // Build a filter to filter on the Z Axis
   pcl::PassThrough<pcl::PointXYZRGB> pass(true);
   PointCloudOperations::filterZAxis(cloud_in, cloud_filtered, pass, pipeline_data->zAxisFilterMin, pipeline_data->zAxisFilterMax);
-  logger.logInfo((boost::format("PointCloud: %s data points") % cloud_filtered->points.size()).str());
+  logger.logInfo((boost::format("PointCloud: %s data points") % cloud_in->points.size()).str());
 
   std::vector<int> removed_indices_filtered;
   removed_indices_filtered = *pass.getIndices();
