@@ -79,6 +79,7 @@ ProjectionSegmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
       object_clusters, object_indices, 2, pipeline_data->prismZMin, pipeline_data->prismZMax);
   logger.logInfo((boost::format("After extractAllPointsAbovePointCloud: %s indices and %s object_cluster pts") % object_indices->indices.size() % object_clusters->points.size() ).str() );
   //objects_on_plane_cloud_ = object_clusters;
+  points_above_table_ = object_clusters;
 
   // Project the pointcloud above the table onto the table to get a 2d representation of the objects
   // This will cause every point of an object to be at the base of the object
@@ -226,5 +227,10 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr ProjectionSegmenter::getTablePointCloud()
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr ProjectionSegmenter::getDownsampledPointCloud()
 {
   return downsampled_pointcloud_;
+}
+
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr ProjectionSegmenter::getPointsAboveTable()
+{
+  return points_above_table_;
 }
 
