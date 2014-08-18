@@ -109,13 +109,25 @@ void PublisherHelper::publish_marker(PipelineObject::VecPtr &objects, std::strin
     markerPublisher.publish(marker);
   }
 
+  // Delete cuboids
+  // for (int i = 0; i < *maxMarkerId; i++)
+  // {
+  //   visualization_msgs::Marker marker;
+  //   marker.header.frame_id = frame;
+  //   marker.header.stamp = ros::Time();
+  //   marker.ns = "suturo_perception";
+  //   marker.id = i+100;
+  //   marker.action = visualization_msgs::Marker::DELETE;
+  //   markerPublisher.publish(marker);
+  // }
+
   for (int i = 0; i < objects.size(); i++)
   {
     PipelineObject::Ptr obj = objects[i];
     visualization_msgs::Marker marker;
     marker.header.frame_id = frame;
     marker.header.stamp = ros::Time();
-    marker.ns = "suturo_perception";
+    marker.ns = "suturo_perception_centroids";
     marker.id = i;
     marker.type = visualization_msgs::Marker::SPHERE;
     marker.action = visualization_msgs::Marker::ADD;
@@ -126,14 +138,50 @@ void PublisherHelper::publish_marker(PipelineObject::VecPtr &objects, std::strin
     marker.pose.orientation.y = 0.0;
     marker.pose.orientation.z = 0.0;
     marker.pose.orientation.w = 0.0;
-    marker.scale.x = 0.1;
-    marker.scale.y = 0.1;
-    marker.scale.z = 0.1;
+    marker.scale.x = 0.01;
+    marker.scale.y = 0.01;
+    marker.scale.z = 0.01;
     marker.color.a = 1.0;
     marker.color.r = 0.0;
     marker.color.g = 1.0;
     marker.color.b = 0.0;
     markerPublisher.publish(marker);
+
+    // Publish visualization markers
+    visualization_msgs::Marker cuboidMarker;
+    cuboidMarker.header.frame_id = frame;
+    cuboidMarker.header.stamp = ros::Time();
+    cuboidMarker.ns = "suturo_perception_cuboids";
+    cuboidMarker.id = i + 100;
+    cuboidMarker.lifetime = ros::Duration(10);
+    cuboidMarker.type = visualization_msgs::Marker::CUBE;
+    cuboidMarker.action = visualization_msgs::Marker::ADD;
+
+    cuboidMarker.pose.position.x = obj->get_c_cuboid()->center[0];
+    cuboidMarker.pose.position.y = obj->get_c_cuboid()->center[1];
+    cuboidMarker.pose.position.z = obj->get_c_cuboid()->center[2];
+    cuboidMarker.pose.orientation.x = obj->get_c_cuboid()->orientation.x();
+    cuboidMarker.pose.orientation.y = obj->get_c_cuboid()->orientation.y();
+    cuboidMarker.pose.orientation.z = obj->get_c_cuboid()->orientation.z();
+    cuboidMarker.pose.orientation.w = obj->get_c_cuboid()->orientation.w();
+    cuboidMarker.scale.x = obj->get_c_cuboid()->length1;
+    cuboidMarker.scale.y = obj->get_c_cuboid()->length2;
+    cuboidMarker.scale.z = obj->get_c_cuboid()->length3;
+    cuboidMarker.color.a = 1.0;
+    cuboidMarker.color.r = 1.0;
+    cuboidMarker.color.g = 0.0;
+    cuboidMarker.color.b = 0.0;
+    if(cuboidMarker.pose.position.x != -1 &&
+       cuboidMarker.pose.position.y != -1 &&
+       cuboidMarker.pose.position.z != -1)
+    {
+      markerPublisher.publish(cuboidMarker);
+    }
+    else
+    {
+      std::cout << "Invalid cuboid. Did not publish it" << std::endl;
+    }
+
   }
 
   *maxMarkerId = objects.size();

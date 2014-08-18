@@ -394,10 +394,8 @@ void CuboidMatcher::computeCuboidCornersWithMinMax3D(pcl::PointCloud<pcl::PointX
   corner_points->push_back(pt8);
 }
 
-Cuboid::Ptr CuboidMatcher::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points)
+void CuboidMatcher::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points,Cuboid::Ptr c)
 {
-  Cuboid::Ptr c(new Cuboid());
-
   // Get the "width": (minx,miny) -> (maxx,miny)
   c->length1 = pcl::distances::l2(corner_points->points.at(0).getVector4fMap(),corner_points->points.at(2).getVector4fMap());
   // Get the "height": (minx,miny) -> (minx,maxy)
@@ -410,6 +408,12 @@ Cuboid::Ptr CuboidMatcher::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::Po
   CuboidMatcher::computeCentroid(corner_points, centroid);
   c->center = getVector3fFromVector4f(centroid);
   c->corner_points = corner_points;
+}
+
+Cuboid::Ptr CuboidMatcher::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points)
+{
+  Cuboid::Ptr c(new Cuboid());
+  computeCuboidFromBorderPoints(corner_points,c);
   return c;
 }
 
@@ -543,7 +547,7 @@ bool CuboidMatcher::execute(Cuboid::Ptr c)
     std::cout << bounding_box->points.size() << std::endl;
     return false;
   }
-  c = computeCuboidFromBorderPoints(bounding_box);
+  computeCuboidFromBorderPoints(bounding_box,c);
 
   if(debug)
     std::cout << "Calculating orientation" << std::endl;

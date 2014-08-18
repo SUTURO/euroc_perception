@@ -143,6 +143,9 @@ namespace suturo_perception
       Cuboid::Ptr computeCuboidFromBorderPoints(
           pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points);
 
+      void computeCuboidFromBorderPoints(
+          pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points, Cuboid::Ptr );
+
     private:
       // If mode == CUBOID_MATCHER_MODE_WITH_COEFFICIENTS, this
       // integer describes the best matching plane
