@@ -75,6 +75,9 @@ ProjectionSegmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
   // the table plane
   pcl::PointIndices::Ptr object_indices (new pcl::PointIndices);
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters (new pcl::PointCloud<pcl::PointXYZRGB>());
+  std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_clusters;
+  std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_cluster_hulls;
+
   PointCloudOperations::extractAllPointsAbovePointCloud(cloud_filtered, plane_cluster,
       object_clusters, object_indices, 2, pipeline_data->prismZMin, pipeline_data->prismZMax);
   logger.logInfo((boost::format("After extractAllPointsAbovePointCloud: %s indices and %s object_cluster pts") % object_indices->indices.size() % object_clusters->points.size() ).str() );
@@ -84,15 +87,18 @@ ProjectionSegmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
   // Project the pointcloud above the table onto the table to get a 2d representation of the objects
   // This will cause every point of an object to be at the base of the object
   PointCloudOperations::projectToPlaneCoefficients(cloud_filtered, object_indices, coefficients, objects_cloud_projected);
+  projected_points_ = objects_cloud_projected;
   //if(writer_pcd) writer.write ("objects_cloud_projected.pcd", *objects_cloud_projected, false);
 
   // Take the projected points, cluster them and extract everything that's above it
   // By doing this, we should get every object on the table and a 2d image of it.
   std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> extractedObjects;
 	std::vector<pcl::PointIndices::Ptr> extractedIndices;
-  clusterFromProjection(objects_cloud_projected, cloud_in, &removed_indices_filtered, extractedObjects, extractedIndices, pipeline_data);
+  clusterFromProjection(objects_cloud_projected, cloud_in, &removed_indices_filtered, extractedObjects, extractedIndices, projected_clusters, projected_cluster_hulls, pipeline_data);
   logger.logInfo((boost::format(" - extractedObjects Vector size %s") % extractedObjects.size()).str());
   logger.logInfo((boost::format(" - extractedIndices  Vector size %s") % extractedIndices.size()).str());
+  projection_clusters_ = projected_clusters;
+  projection_cluster_hulls_ = projected_cluster_hulls;
  
   e = boost::posix_time::microsec_clock::local_time();
   logger.logTime(s, e, "table from pointcloud");
@@ -137,7 +143,7 @@ ProjectionSegmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
  * see SuturoPerception::prismZMax and SuturoPerception::prismZMin.
  * In the future, this method will also extract 2d images from every object cluster.
  */
-bool ProjectionSegmenter::clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, pcl::PointCloud<pcl::PointXYZRGB>::Ptr original_cloud, std::vector<int> *removed_indices_filtered, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, PipelineData::Ptr &pipeline_data)
+bool ProjectionSegmenter::clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, pcl::PointCloud<pcl::PointXYZRGB>::Ptr original_cloud, std::vector<int> *removed_indices_filtered, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clustered_projections, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clustered_hulls, PipelineData::Ptr &pipeline_data)
 {
 
   if(original_cloud->points.size() < 50)
@@ -177,6 +183,7 @@ bool ProjectionSegmenter::clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB
     // Gather all points for a cluster into a single pointcloud
     boost::posix_time::ptime s1 = boost::posix_time::microsec_clock::local_time();
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull (new pcl::PointCloud<pcl::PointXYZRGB>);
     for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); pit++)
       cloud_cluster->points.push_back (object_clusters->points[*pit]); //*
 
@@ -184,6 +191,8 @@ bool ProjectionSegmenter::clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB
     cloud_cluster->height = 1;
     cloud_cluster->is_dense = true;
     logger.logInfo((boost::format("Cloud Cluster Size is %s") % cloud_cluster->points.size ()).str());
+
+    clustered_projections.push_back(cloud_cluster);
     //std::ostringstream fn;
     //fn << "2dcluster_" << i << ".pcd";
     //if(writer_pcd) writer.write(fn.str(), *cloud_cluster, false);
@@ -193,8 +202,11 @@ bool ProjectionSegmenter::clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB
     // These points will belong to a single object on the table
     pcl::PointIndices::Ptr object_indices (new pcl::PointIndices); // The extracted indices of a single object above the plane
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_points (new pcl::PointCloud<pcl::PointXYZRGB>());
-    PointCloudOperations::extractAllPointsAbovePointCloud(original_cloud, cloud_cluster, object_points, object_indices, 2,
+    PointCloudOperations::extractAllPointsAbovePointCloud(original_cloud, cloud_cluster, object_points,
+        object_indices, cloud_hull, 2,
         pipeline_data->prismZMin, pipeline_data->prismZMax);
+
+    clustered_hulls.push_back(cloud_hull);
     extracted_objects.push_back(object_points);
 		original_indices.push_back(object_indices);
 
@@ -233,4 +245,17 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr ProjectionSegmenter::getPointsAboveTable(
 {
   return points_above_table_;
 }
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr ProjectionSegmenter::getProjectedPoints()
+{
+  return projected_points_;
+}
 
+std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> ProjectionSegmenter::getProjectionClusters()
+{
+  return projection_clusters_;
+}
+
+std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> ProjectionSegmenter::getProjectionClusterHulls()
+{
+  return projection_cluster_hulls_;
+}

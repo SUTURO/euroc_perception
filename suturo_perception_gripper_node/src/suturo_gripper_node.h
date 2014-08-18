@@ -29,6 +29,9 @@ class SuturoGripperNode
     static const std::string TABLE_TOPIC;
     static const std::string DOWNSAMPLED_CLOUD;
     static const std::string POINTS_ABOVE_TABLE_CLOUD;
+    static const std::string PROJECTED_POINTS_TOPIC;
+    static const std::string PROJECTED_CLUSTERS_PREFIX_TOPIC;
+    static const std::string PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC;
 
     ros::NodeHandle nodeHandle_;
     ros::ServiceServer clusterService_;

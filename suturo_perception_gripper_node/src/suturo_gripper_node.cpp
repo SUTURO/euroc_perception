@@ -17,6 +17,9 @@ const std::string SuturoGripperNode::OBJECT_CLOUD_PREFIX_TOPIC= "/suturo/object_
 const std::string SuturoGripperNode::TABLE_TOPIC= "/suturo/tcp_table/";
 const std::string SuturoGripperNode::DOWNSAMPLED_CLOUD= "/suturo/tcp_downsampled_cloud/";
 const std::string SuturoGripperNode::POINTS_ABOVE_TABLE_CLOUD= "/suturo/tcp/points_above_table/";
+const std::string SuturoGripperNode::PROJECTED_POINTS_TOPIC= "/suturo/tcp/projected_points/";
+const std::string SuturoGripperNode::PROJECTED_CLUSTERS_PREFIX_TOPIC= "/suturo/tcp/projected_point_clusters/";
+const std::string SuturoGripperNode::PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC= "/suturo/tcp/projected_point_hulls/";
 
 SuturoGripperNode::SuturoGripperNode(ros::NodeHandle &n, std::string imageTopic, std::string depthTopic) : 
   nodeHandle_(n), 
@@ -34,16 +37,19 @@ SuturoGripperNode::SuturoGripperNode(ros::NodeHandle &n, std::string imageTopic,
   maxMarkerId_ = 0;
 
   // Add additional topics for debugging purposes
-  // init 7 topics for the pointclouds of every object cluster
+  // init 7 topics for the pointclouds of every object cluster and projection cluster
   for(int i = 0; i <= 6; ++i)
   {
     std::stringstream ss;
     ss << i;
     ph_.advertise<sensor_msgs::PointCloud2>(OBJECT_CLOUD_PREFIX_TOPIC + ss.str());
+    ph_.advertise<sensor_msgs::PointCloud2>(PROJECTED_CLUSTERS_PREFIX_TOPIC + ss.str());
+    ph_.advertise<sensor_msgs::PointCloud2>(PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC + ss.str());
   }
   ph_.advertise<sensor_msgs::PointCloud2>(TABLE_TOPIC);
   ph_.advertise<sensor_msgs::PointCloud2>(DOWNSAMPLED_CLOUD);
   ph_.advertise<sensor_msgs::PointCloud2>(POINTS_ABOVE_TABLE_CLOUD);
+  ph_.advertise<sensor_msgs::PointCloud2>(PROJECTED_POINTS_TOPIC);
   
   // Initialize pipeline configuration
   pipelineData_ = PipelineData::Ptr(new PipelineData());
@@ -161,6 +167,19 @@ SuturoGripperNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCl
   {
     return;
   }
+  std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_points_clusters =
+    projection_segmenter.getProjectionClusters();
+  std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_point_hulls =
+    projection_segmenter.getProjectionClusterHulls();
+  for (int i = 0; i < projected_points_clusters.size(); i++)
+  {
+    std::stringstream ss;
+    ss << i;
+    ph_.publish_pointcloud(PROJECTED_CLUSTERS_PREFIX_TOPIC + ss.str(), 
+        projected_points_clusters[i], "/tdepth_pcl");
+    ph_.publish_pointcloud(PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC + ss.str(), 
+        projected_point_hulls[i], "/tdepth_pcl");
+  }
   // Publish the segmentation debug topics
   ph_.publish_pointcloud(TABLE_TOPIC, projection_segmenter.getTablePointCloud()
         , "/tdepth_pcl");
@@ -168,6 +187,9 @@ SuturoGripperNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCl
   ph_.publish_pointcloud(DOWNSAMPLED_CLOUD, projection_segmenter.getDownsampledPointCloud()
         , "/tdepth_pcl");
   ph_.publish_pointcloud(POINTS_ABOVE_TABLE_CLOUD, projection_segmenter.getPointsAboveTable()
+        , "/tdepth_pcl");
+
+  ph_.publish_pointcloud(PROJECTED_POINTS_TOPIC, projection_segmenter.getProjectedPoints()
         , "/tdepth_pcl");
 
 	processing_ = false;
