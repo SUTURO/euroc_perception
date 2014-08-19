@@ -18,6 +18,7 @@ CuboidMatcher::CuboidMatcher(suturo_perception::PipelineObject::Ptr pipelineObje
     estimation_succesful_ = false;
     // Use the more general WITHOUT_COEFFICIENTS mode per default
     mode_ = CUBOID_MATCHER_MODE_WITHOUT_COEFFICIENTS;
+    ransac_distance_threshold_ = 0.001;
 }
 std::vector<DetectedPlane> *CuboidMatcher::getDetectedPlanes()
 {
@@ -87,7 +88,7 @@ void CuboidMatcher::segmentPlanes()
     seg.setModelType (pcl::SACMODEL_PLANE );
     seg.setMethodType (pcl::SAC_RANSAC);
     seg.setMaxIterations (1000);
-    seg.setDistanceThreshold (0.005); // Tolerance is 0.5 cm
+    seg.setDistanceThreshold (ransac_distance_threshold_); 
 
     seg.setInputCloud (cloud);
     seg.segment (*detected_planes_.at(planeIdx).getInliers(),

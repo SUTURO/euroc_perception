@@ -5,6 +5,64 @@
 
 using namespace suturo_perception;
 
+bool ProjectionSegmenter::clusterPointcloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, PipelineData::Ptr &pipeline_data)
+{
+
+  if(object_clusters->points.size() < 50)
+  {
+    logger.logError("clusterPointcloud: original_cloud has less than 50 points. Skipping ...");
+    return false;
+  }
+
+  boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
+
+  // Identify clusters in the input cloud
+  pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
+  tree->setInputCloud (object_clusters);
+
+  std::vector<pcl::PointIndices> cluster_indices;
+  pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
+  ec.setClusterTolerance (pipeline_data->ecObjClusterTolerance);
+  ec.setMinClusterSize (pipeline_data->ecObjMinClusterSize);
+  ec.setMaxClusterSize (pipeline_data->ecObjMaxClusterSize);
+  ec.setSearchMethod (tree);
+  ec.setInputCloud (object_clusters);
+  ec.extract(cluster_indices);
+  logger.logInfo((boost::format("Found %s clusters.") % cluster_indices.size()).str());
+
+  boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
+  logger.logTime(s, e, "filtering out objects above the plane");
+
+  int i=0;
+  // Iterate over the found clusters and extract single pointclouds
+  for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
+  {
+    if (it->indices.size() < 10)
+    {
+      logger.logError("Cloud cluster has less than 10 points, skipping...");
+      continue;
+    }
+    // Gather all points for a cluster into a single pointcloud
+    boost::posix_time::ptime s1 = boost::posix_time::microsec_clock::local_time();
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull (new pcl::PointCloud<pcl::PointXYZRGB>);
+    for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); pit++)
+      cloud_cluster->points.push_back (object_clusters->points[*pit]); //*
+
+    cloud_cluster->width = cloud_cluster->points.size ();
+    cloud_cluster->height = 1;
+    cloud_cluster->is_dense = true;
+
+    i++;
+    extracted_objects.push_back(cloud_cluster);
+     // TODO fill in object indices
+  }
+  return true;
+
+  boost::posix_time::ptime e2 = boost::posix_time::microsec_clock::local_time();
+  logger.logTime(s, e2, "clusterPointcloud");
+
+}
 bool 
 ProjectionSegmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, 
     PipelineData::Ptr &pipeline_data, 
@@ -78,7 +136,12 @@ ProjectionSegmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
   std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_clusters;
   std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_cluster_hulls;
 
-  PointCloudOperations::extractAllPointsAbovePointCloud(cloud_filtered, plane_cluster,
+  // Remove all NaNs from the PointCloud. Otherwise, we can't use Euclidean Clustering (KDTree)
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr nanles_cloud (new pcl::PointCloud<pcl::PointXYZRGB>()); // NEW
+  PointCloudOperations::removeNans(cloud_in, nanles_cloud); // NEW
+
+  // PointCloudOperations::extractAllPointsAbovePointCloud(cloud_filtered, plane_cluster, // OLD
+  PointCloudOperations::extractAllPointsAbovePointCloud(nanles_cloud, plane_cluster, // New
       object_clusters, object_indices, 2, pipeline_data->prismZMin, pipeline_data->prismZMax);
   logger.logInfo((boost::format("After extractAllPointsAbovePointCloud: %s indices and %s object_cluster pts") % object_indices->indices.size() % object_clusters->points.size() ).str() );
   //objects_on_plane_cloud_ = object_clusters;
@@ -86,15 +149,16 @@ ProjectionSegmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
 
   // Project the pointcloud above the table onto the table to get a 2d representation of the objects
   // This will cause every point of an object to be at the base of the object
-  PointCloudOperations::projectToPlaneCoefficients(cloud_filtered, object_indices, coefficients, objects_cloud_projected);
+  // PointCloudOperations::projectToPlaneCoefficients(cloud_filtered, object_indices, coefficients, objects_cloud_projected); // OLD - Not necessary for "workaround" segmentation
   projected_points_ = objects_cloud_projected;
-  //if(writer_pcd) writer.write ("objects_cloud_projected.pcd", *objects_cloud_projected, false);
 
   // Take the projected points, cluster them and extract everything that's above it
   // By doing this, we should get every object on the table and a 2d image of it.
   std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> extractedObjects;
 	std::vector<pcl::PointIndices::Ptr> extractedIndices;
-  clusterFromProjection(objects_cloud_projected, cloud_in, &removed_indices_filtered, extractedObjects, extractedIndices, projected_clusters, projected_cluster_hulls, pipeline_data);
+  // clusterFromProjection(objects_cloud_projected, cloud_in, &removed_indices_filtered, extractedObjects, extractedIndices, projected_clusters, projected_cluster_hulls, pipeline_data); // OLD. Extract PointClouds by using the 2d Projection clusters.
+
+  clusterPointcloud(object_clusters, extractedObjects, extractedIndices, pipeline_data); // NEW - Just cluster everything above the table - This is unfortunately slower then the projection method ...
   logger.logInfo((boost::format(" - extractedObjects Vector size %s") % extractedObjects.size()).str());
   logger.logInfo((boost::format(" - extractedIndices  Vector size %s") % extractedIndices.size()).str());
   projection_clusters_ = projected_clusters;
@@ -136,6 +200,7 @@ ProjectionSegmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
 
   return true;
 }
+
 
 /**
  * Use EuclideanClusterExtraction on object_clusters to identify seperate objects in the given pointcloud.
