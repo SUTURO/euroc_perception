@@ -130,9 +130,12 @@ int main(int argc, char** argv){
   boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
   // Specify the table normal of the given model
   // Eigen::Vector4f table_normal(-0.0102523,-0.746435,-0.66538,0.92944); // pancake_fail
-  Eigen::Vector4f table_normal(0.0118185, 0.612902, 0.79007, -0.917831); // pancake 
+  // Eigen::Vector4f table_normal(0.0118185, 0.612902, 0.79007, -0.917831); // pancake 
   // Eigen::Vector4f table_normal(0.00924593, 0.697689, 0.716341, -0.914689); // pancake 0deg moved
   // Eigen::Vector4f table_normal(0.0102382,0.6985,0.715537,-0.914034); // pancake 0deg moved
+  // Eigen::Vector4f table_normal(0.000572634, 0.489801, 0.871834, -0.64807); // euroc_mbpe/test_files/correctly_segmented_box.pcd
+  Eigen::Vector4f table_normal(0.169393, 0.488678, 0.855862, -0.596477); // euroc_mbpe/test_files/correctly_segmented_cylinder.pcd
+ 
   PancakePose ria(input_cloud_voxeled, model_cloud_voxeled, table_normal);
   pcl::PointCloud<pcl::PointXYZ>::Ptr model_initial_aligned = ria.execute();
 
@@ -151,7 +154,8 @@ int main(int argc, char** argv){
   pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
   icp.setInputSource(ria._upwards_object);
   icp.setInputTarget(ria._upwards_model);
-  icp.setEuclideanFitnessEpsilon (0.000001f);
+  // icp.setEuclideanFitnessEpsilon (0.000001f);
+  icp.setEuclideanFitnessEpsilon (0.00000000001f);
   // icp.setMaxCorrespondenceDistance (0.55);
   // icp.setRANSACOutlierRejectionThreshold(0.10f);
   pcl::PointCloud<pcl::PointXYZ>::Ptr Final(new pcl::PointCloud<pcl::PointXYZ>);
@@ -185,7 +189,7 @@ int main(int argc, char** argv){
   // viewer.addSphere(a,0.5,"sphere",v2);
   viewer.createViewPort(0.33,0, 0.66  ,1, v3 );
   viewer.addCoordinateSystem(0.3,v3);
-  viewer.addText("ICP", 0.1, 0.1 , "icp_text", v3 );
+  viewer.addText("ICP (yellow=ICP result, green=input, orange=model)", 0.1, 0.1 , "icp_text", v3 );
   viewer.createViewPort(0.66,0, 1  ,1, v4 );
   viewer.addCoordinateSystem(0.3,v4);
   viewer.addText("Pose estimation", 0.1, 0.1 , "pose_text", v4 );
