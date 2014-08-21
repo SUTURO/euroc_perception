@@ -48,6 +48,7 @@ void drawNormalizedVector(pcl::visualization::PCLVisualizer &viewer, Eigen::Vect
 int main(int argc, char** argv){
   std::string cad_model_pc_filename;
   std::string input_pc_filename;
+  int max_iterations=-1;
 
   // "HashMap" for program parameters
   po::variables_map vm;
@@ -59,6 +60,7 @@ int main(int argc, char** argv){
       ("help", "produce help message")
       ("input-pc,i", po::value<std::string>(&input_pc_filename)->required(), "The  filename of the input pointcloud.")
       ("cad-model-pc,m", po::value<std::string>(&cad_model_pc_filename)->required(), "A pointcloud of the CAD-Model to match. You can get a Pointcloud of your CAD-Model with CloudCompare.")
+      ("max-iterations,c", po::value<int>(&max_iterations), "The max iteration count for ICP")
     ;
 
     po::positional_options_description p;
@@ -133,8 +135,8 @@ int main(int argc, char** argv){
   // Eigen::Vector4f table_normal(0.0118185, 0.612902, 0.79007, -0.917831); // pancake 
   // Eigen::Vector4f table_normal(0.00924593, 0.697689, 0.716341, -0.914689); // pancake 0deg moved
   // Eigen::Vector4f table_normal(0.0102382,0.6985,0.715537,-0.914034); // pancake 0deg moved
-  // Eigen::Vector4f table_normal(0.000572634, 0.489801, 0.871834, -0.64807); // euroc_mbpe/test_files/correctly_segmented_box.pcd
-  Eigen::Vector4f table_normal(0.169393, 0.488678, 0.855862, -0.596477); // euroc_mbpe/test_files/correctly_segmented_cylinder.pcd
+  Eigen::Vector4f table_normal(0.000572634, 0.489801, 0.871834, -0.64807); // euroc_mbpe/test_files/correctly_segmented_box.pcd
+  // Eigen::Vector4f table_normal(0.169393, 0.488678, 0.855862, -0.596477); // euroc_mbpe/test_files/correctly_segmented_cylinder.pcd
  
   PancakePose ria(input_cloud_voxeled, model_cloud_voxeled, table_normal);
   pcl::PointCloud<pcl::PointXYZ>::Ptr model_initial_aligned = ria.execute();
@@ -154,10 +156,22 @@ int main(int argc, char** argv){
   pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
   icp.setInputSource(ria._upwards_object);
   icp.setInputTarget(ria._upwards_model);
+  if(max_iterations!=-1)
+  {
+    std::cout << "Setting max iterations in ICP to: "<< max_iterations << std::endl;
+    icp.setMaximumIterations(max_iterations);
+  }
+  else
+  {
+    icp.setMaximumIterations(100000);
+  }
   // icp.setEuclideanFitnessEpsilon (0.000001f);
-  icp.setEuclideanFitnessEpsilon (0.00000000001f);
+  // icp.setEuclideanFitnessEpsilon (0.00000000001f);
   // icp.setMaxCorrespondenceDistance (0.55);
   // icp.setRANSACOutlierRejectionThreshold(0.10f);
+  //
+  // Observation: The fitness score should be below 1e-5
+  
   pcl::PointCloud<pcl::PointXYZ>::Ptr Final(new pcl::PointCloud<pcl::PointXYZ>);
   icp.align(*Final);
   std::cout << "has converged:" << icp.hasConverged() << " score: " <<

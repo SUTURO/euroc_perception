@@ -240,7 +240,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PancakePose::execute()
   pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
   icp.setInputSource(_upwards_object);
   icp.setInputTarget(_upwards_model);
-  icp.setEuclideanFitnessEpsilon (0.000001f);
+  // icp.setMaximumIterations(200000);
+  // icp.setEuclideanFitnessEpsilon (0.000001f);
   // icp.setMaxCorrespondenceDistance (0.55);
   // icp.setRANSACOutlierRejectionThreshold(0.10f);
   pcl::PointCloud<pcl::PointXYZ>::Ptr Final(new pcl::PointCloud<pcl::PointXYZ>);
