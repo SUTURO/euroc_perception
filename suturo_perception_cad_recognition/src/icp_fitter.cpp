@@ -1,6 +1,6 @@
-#include <suturo_perception_cad_recognition/pancake_pose.h>
+#include <suturo_perception_cad_recognition/icp_fitter.h>
 
-Eigen::Matrix< float, 4, 4 > PancakePose::rotateAroundCrossProductOfNormals(
+Eigen::Matrix< float, 4, 4 > ICPFitter::rotateAroundCrossProductOfNormals(
     Eigen::Vector3f base_normal,
     Eigen::Vector3f normal_to_rotate,
     bool store_transformation)
@@ -50,7 +50,7 @@ Eigen::Matrix< float, 4, 4 > PancakePose::rotateAroundCrossProductOfNormals(
   return rotationBox;
 }
 
-Cuboid PancakePose::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points)
+Cuboid ICPFitter::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points)
 {
   Cuboid c;
 
@@ -66,7 +66,7 @@ Cuboid PancakePose::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::PointXYZR
   return c;
 }
 
-void PancakePose::computeCuboidCornersWithMinMax3D(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in, pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points)
+void ICPFitter::computeCuboidCornersWithMinMax3D(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in, pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points)
 {
   pcl::PointXYZ min_pt, max_pt;
   pcl::getMinMax3D(*cloud_in, min_pt, max_pt);
@@ -100,7 +100,7 @@ void PancakePose::computeCuboidCornersWithMinMax3D(pcl::PointCloud<pcl::PointXYZ
   corner_points->push_back(pt8);
 }
 
-Eigen::Matrix< float, 4, 4> PancakePose::getTranslationMatrix(
+Eigen::Matrix< float, 4, 4> ICPFitter::getTranslationMatrix(
     float x, float y, float z)
 {
   Eigen::Matrix< float, 4, 4> translation;
@@ -131,7 +131,7 @@ Eigen::Matrix< float, 4, 4> PancakePose::getTranslationMatrix(
 }
 
 // @override
-pcl::PointCloud<pcl::PointXYZ>::Ptr PancakePose::execute()
+pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
 {
   // Get the dimensions of the model
   // Rotate the model upwards, to get the proper dimensions
@@ -240,7 +240,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PancakePose::execute()
   pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
   icp.setInputSource(_upwards_object);
   icp.setInputTarget(_upwards_model);
-  // icp.setMaximumIterations(200000);
+  if(_max_icp_iterations != NO_ICP_MAX_ITERATIONS)
+    icp.setMaximumIterations(_max_icp_iterations);
   // icp.setEuclideanFitnessEpsilon (0.000001f);
   // icp.setMaxCorrespondenceDistance (0.55);
   // icp.setRANSACOutlierRejectionThreshold(0.10f);
@@ -248,6 +249,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PancakePose::execute()
   icp.align(*Final);
   std::cout << "has converged:" << icp.hasConverged() << " score: " <<
   icp.getFitnessScore() << std::endl;
+  _icp_fitness_score = icp.getFitnessScore();
   std::cout << icp.getFinalTransformation() << std::endl;
   // boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
   _icp_transform = icp.getFinalTransformation();
@@ -273,7 +275,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr PancakePose::execute()
   return transformed_cloud;
 }
 
-Eigen::Matrix<float, 4, 4>  PancakePose::getRotation()
+Eigen::Matrix<float, 4, 4>  ICPFitter::getRotation()
 {
   Eigen::Matrix<float, 4, 4> result;
   result.setIdentity();
@@ -283,7 +285,7 @@ Eigen::Matrix<float, 4, 4>  PancakePose::getRotation()
   return result;
 }
 
-Eigen::Matrix<float, 4, 4>  PancakePose::getTranslation()
+Eigen::Matrix<float, 4, 4>  ICPFitter::getTranslation()
 {
   Eigen::Matrix<float, 4, 4> result = getTranslationMatrix(0,0,0);
 
@@ -300,7 +302,7 @@ Eigen::Matrix<float, 4, 4>  PancakePose::getTranslation()
   return result;
 }
 
-Eigen::Matrix< float, 3, 3 > PancakePose::removeTranslationVectorFromMatrix(Eigen::Matrix<float,4,4> m)
+Eigen::Matrix< float, 3, 3 > ICPFitter::removeTranslationVectorFromMatrix(Eigen::Matrix<float,4,4> m)
 {
   Eigen::Matrix< float, 3, 3 > result;
   result.setZero();
@@ -318,7 +320,7 @@ Eigen::Matrix< float, 3, 3 > PancakePose::removeTranslationVectorFromMatrix(Eige
   return result;
 }
 
-Eigen::Quaternionf PancakePose::getOrientation()
+Eigen::Quaternionf ICPFitter::getOrientation()
 {
   Eigen::Matrix<float, 4, 4> final_transform =
     rotations_.at(1) * translations_.at(1) * translations_.at(0) * _icp_transform_inverse * rotations_.at(0);
@@ -326,7 +328,7 @@ Eigen::Quaternionf PancakePose::getOrientation()
   return q;
 }
 
-pcl::PointXYZ PancakePose::getOrigin()
+pcl::PointXYZ ICPFitter::getOrigin()
 {
 
   // Transform object center
@@ -338,4 +340,14 @@ pcl::PointXYZ PancakePose::getOrigin()
       translations_.at(1) * translations_.at(0) * _icp_transform_inverse * rotations_.at(0) );
   return origin->points.at(0);
 
+}
+
+void ICPFitter::setMaxICPIterations(int v)
+{
+  _max_icp_iterations = v;
+}
+
+double ICPFitter::getFitnessScore()
+{
+  return _icp_fitness_score;
 }

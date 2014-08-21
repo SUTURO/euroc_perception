@@ -106,8 +106,8 @@ include_directories(
 )
 
 ## Declare a cpp library
-add_library(suturo_perception_pancake_pose
-   src/pancake_pose.cpp
+add_library(suturo_perception_icp_fitter
+   src/icp_fitter.cpp
 )
 
 ## Declare a cpp executable
@@ -119,7 +119,7 @@ add_executable(convert_ply_to_pcd src/convert_ply_to_pcd.cpp)
 # add_dependencies(suturo_perception_cad_recognition_node suturo_perception_cad_recognition_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(suturo_perception_pancake_pose
+target_link_libraries(suturo_perception_icp_fitter
    ${catkin_LIBRARIES}
    ${Boost_LIBRARIES}
 )
@@ -127,7 +127,7 @@ target_link_libraries(suturo_perception_pancake_pose
 target_link_libraries(cad_recognition
    ${catkin_LIBRARIES}
    ${Boost_LIBRARIES}
-	 suturo_perception_pancake_pose
+	 suturo_perception_icp_fitter
 )
 
 target_link_libraries(convert_ply_to_pcd

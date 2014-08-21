@@ -1,5 +1,5 @@
 /*
- * This node uses the PancakePose library to estimate
+ * This node uses the ICPFitter library to estimate
  * the pose of a segmented, partial pointcloud against a 
  * CAD Model. The results will be visualized as follows:
  *   1) The input cloud and the cloud of the CAD model
@@ -31,7 +31,7 @@
 #include <pcl/features/fpfh.h>
 #include <pcl/features/shot.h>
 #include <suturo_perception_match_cuboid/cuboid_matcher.h>
-#include <suturo_perception_cad_recognition/pancake_pose.h>
+#include <suturo_perception_cad_recognition/icp_fitter.h>
 
 namespace po = boost::program_options;
 using namespace boost;
@@ -60,7 +60,7 @@ int main(int argc, char** argv){
       ("help", "produce help message")
       ("input-pc,i", po::value<std::string>(&input_pc_filename)->required(), "The  filename of the input pointcloud.")
       ("cad-model-pc,m", po::value<std::string>(&cad_model_pc_filename)->required(), "A pointcloud of the CAD-Model to match. You can get a Pointcloud of your CAD-Model with CloudCompare.")
-      ("max-iterations,c", po::value<int>(&max_iterations), "The max iteration count for ICP")
+      ("max-iterations,c", po::value<int>(&max_iterations), "The max iteration count for ICP. Default: 60")
     ;
 
     po::positional_options_description p;
@@ -126,10 +126,8 @@ int main(int argc, char** argv){
   sor.filter (*model_cloud_voxeled);
 
   boost::posix_time::ptime file_load_end = boost::posix_time::microsec_clock::local_time();
-  // suturo_perception_utils::Logger l("cad_recognition");
   // l.logTime(file_load_start,file_load_end,"File loading and voxeling done");
 
-  boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
   // Specify the table normal of the given model
   // Eigen::Vector4f table_normal(-0.0102523,-0.746435,-0.66538,0.92944); // pancake_fail
   // Eigen::Vector4f table_normal(0.0118185, 0.612902, 0.79007, -0.917831); // pancake 
@@ -138,8 +136,14 @@ int main(int argc, char** argv){
   Eigen::Vector4f table_normal(0.000572634, 0.489801, 0.871834, -0.64807); // euroc_mbpe/test_files/correctly_segmented_box.pcd
   // Eigen::Vector4f table_normal(0.169393, 0.488678, 0.855862, -0.596477); // euroc_mbpe/test_files/correctly_segmented_cylinder.pcd
  
-  PancakePose ria(input_cloud_voxeled, model_cloud_voxeled, table_normal);
+  ICPFitter ria(input_cloud_voxeled, model_cloud_voxeled, table_normal);
+  ria.setMaxICPIterations(60);
+  boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
   pcl::PointCloud<pcl::PointXYZ>::Ptr model_initial_aligned = ria.execute();
+  boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
+  boost::posix_time::time_duration d = end - start;
+  float diff = (float)d.total_microseconds() / (float)1000;
+  std::cout << "Runtime for ICPFitter execute(): " << diff << "ms" << std::endl;
 
   Eigen::Matrix<float, 4, 4> initial_alignment_rotation = 
     ria.getRotation();
@@ -163,7 +167,7 @@ int main(int argc, char** argv){
   }
   else
   {
-    icp.setMaximumIterations(100000);
+    icp.setMaximumIterations(60);
   }
   // icp.setEuclideanFitnessEpsilon (0.000001f);
   // icp.setEuclideanFitnessEpsilon (0.00000000001f);
@@ -177,8 +181,6 @@ int main(int argc, char** argv){
   std::cout << "has converged:" << icp.hasConverged() << " score: " <<
   icp.getFitnessScore() << std::endl;
   std::cout << icp.getFinalTransformation() << std::endl;
-  boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
-  // l.logTime(start,end,"Initial Alignment and ICP");
 
 
   // Check the result of the calculated transformation

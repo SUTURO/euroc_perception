@@ -1,5 +1,5 @@
-#ifndef SUTURO_PERCEPTION_PANCAKE_POSE
-#define SUTURO_PERCEPTION_PANCAKE_POSE
+#ifndef SUTURO_PERCEPTION_ICP_FITTER
+#define SUTURO_PERCEPTION_ICP_FITTER
 
 /*
  * This node is part of a pipeline
@@ -43,9 +43,10 @@
 using namespace boost;
 using namespace std;
 
-class PancakePose
+class ICPFitter
 {
 
+  #define NO_ICP_MAX_ITERATIONS -1
   protected:
     Eigen::Vector4f _table_normal;
 
@@ -59,6 +60,8 @@ class PancakePose
     pcl::PointCloud<pcl::PointXYZ>::Ptr _upwards_object_s1;
     pcl::PointCloud<pcl::PointXYZ>::Ptr _upwards_object_s2;
     pcl::PointCloud<pcl::PointXYZ>::Ptr _upwards_object_s3;
+    int _max_icp_iterations;
+    double _icp_fitness_score;
     // The transformation that has been done by ICP after the initial alignment
     Eigen::Matrix<float, 4, 4> _icp_transform;
     // The inverse of the last transformation
@@ -67,8 +70,10 @@ class PancakePose
     std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > > rotations_;
     std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > > translations_;
 
-    PancakePose(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in, pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud, Eigen::Vector4f table_normal) : _cloud_in(cloud_in), _model_cloud(model_cloud), _table_normal(table_normal)
+    ICPFitter(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in, pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud, Eigen::Vector4f table_normal) : _cloud_in(cloud_in), _model_cloud(model_cloud), _table_normal(table_normal)
     {
+      _max_icp_iterations = NO_ICP_MAX_ITERATIONS;
+      _icp_fitness_score = 99; // Default
     }
     // Eigen::Matrix<float, 4, 4>  getTransformation(); // Available after execution
 
@@ -109,6 +114,13 @@ class PancakePose
 
     // Get the origin of the aligned object.
     pcl::PointXYZ getOrigin(); 
+
+    // Set the max iteration count for the final ICP procress. 
+    // The default is -1 and means, that the ICP defaults will be used
+    void setMaxICPIterations(int v);
+  
+    // Get the fitness score that has been yielded by the ICP process. This indicates how well a cloud has been aligned to a given model. This value should be < 1e-4 for a proper match, but this depends on your usecase
+    double getFitnessScore();
 };
 #endif
 
