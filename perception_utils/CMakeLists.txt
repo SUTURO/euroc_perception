@@ -78,7 +78,16 @@ add_executable(corner_detector
   src/corner_detector.cpp
   src/basic_io_pcd.cpp)
 
+add_executable(cropbox_cloud 
+  src/cropbox_cloud.cpp
+  src/basic_io_pcd.cpp)
+
 target_link_libraries(region_growing
+  ${catkin_LIBRARIES} 
+  ${PCL_LIBRARIES}
+)
+
+target_link_libraries(cropbox_cloud
   ${catkin_LIBRARIES} 
   ${PCL_LIBRARIES}
 )
