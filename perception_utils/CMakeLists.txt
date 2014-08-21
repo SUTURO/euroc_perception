@@ -22,7 +22,7 @@ include_directories(${PCL_INCLUDE_DIRS})
 set(Boost_USE_STATIC_LIBS OFF) 
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF) 
-find_package(Boost 1.48.0 COMPONENTS thread) 
+find_package(Boost 1.48.0 COMPONENTS thread system) 
 
 # include opencv
 find_package(OpenCV REQUIRED)
@@ -48,11 +48,13 @@ set(perception_utils_files
 	src/point_cloud_operations.cpp 
 	src/logger.cpp 
 	src/publisher_helper.cpp 
+	src/get_euroc_task_description.cpp
 	include/perception_utils/capability.hpp
 	include/perception_utils/pipeline_data.hpp
 	include/perception_utils/pipeline_object.hpp
 	include/perception_utils/point.hpp
 	include/perception_utils/shape.hpp
+  include/perception_utils/get_euroc_task_description.h
 )
 
 add_library(perception_utils ${perception_utils_files})
