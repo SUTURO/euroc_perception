@@ -14,6 +14,9 @@ class CropBoxIO : public BasicIOPCD
     }
     void execute()
     {
+      // These 2 points span a Box. The box can be rotated and translated with setTransform
+      // or setRotation
+      //
       Eigen::Vector4f min(0,0,0,0);
       Eigen::Vector4f max(1,0.5,1,0);
       pcl::CropBox<pcl::PointXYZRGB> c(true);
