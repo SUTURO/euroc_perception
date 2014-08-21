@@ -49,3 +49,5 @@ target_link_libraries(gripper_client
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
 )
+
+add_dependencies(suturo_perception_gripper_node ${PROJECT_NAME}_gencfg)
