@@ -19,6 +19,7 @@ namespace suturo_perception
 
       // capability method
       void execute();
+      std::string getName() { return "shape"; }
     private:
       Shape shape;
       Logger logger;
