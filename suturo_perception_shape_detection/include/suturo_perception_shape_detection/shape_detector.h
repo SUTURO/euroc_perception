@@ -13,12 +13,14 @@ namespace suturo_perception
   class ShapeDetector : public Capability
   {
     public:
-      ShapeDetector(PipelineObject::Ptr obj);
+      ShapeDetector();
+      ShapeDetector *instantiateCapability(PipelineObject::Ptr obj);
       void detectShape(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudIn);
       Shape getShape();
 
       // capability method
       void execute();
+      std::string getName() { return "shape"; }
     private:
       Shape shape;
       Logger logger;

@@ -4,6 +4,9 @@
 #include <perception_utils/pipeline_object.hpp>
 #include <perception_utils/pipeline_data.hpp>
 
+#include <string>
+#include <vector>
+
 namespace suturo_perception
 {
   class Pipeline
@@ -12,6 +15,14 @@ namespace suturo_perception
       Pipeline();
     
       static void execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeline_objects);
+    protected:
+      /**
+       * @return -1: default value, 0: disabled, 1: enabled
+       */
+      static int capabilityEnabled(std::string capability_settings, std::string capability_name);
+      
+      std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
+      std::vector<std::string> split(const std::string &s, char delim);
   };
 }
 #endif

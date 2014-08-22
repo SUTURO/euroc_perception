@@ -112,6 +112,7 @@ namespace suturo_perception
       //
       bool execute(Cuboid::Ptr c);
       void execute() { execute(pipelineObject_->get_c_cuboid()); }
+      std::string getName() { return "cuboid"; }
 
       bool estimationSuccessful(){ return estimation_succesful_; }
 

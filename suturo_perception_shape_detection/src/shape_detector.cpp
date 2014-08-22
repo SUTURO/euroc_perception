@@ -17,10 +17,15 @@
 
 using namespace suturo_perception;
 
-ShapeDetector::ShapeDetector(PipelineObject::Ptr obj) : Capability(obj)
+ShapeDetector::ShapeDetector() : Capability()
 {
- shape = None;
- logger = Logger("suturo_perception_shape_detection");
+}
+
+ShapeDetector* ShapeDetector::instantiateCapability(PipelineObject::Ptr obj)
+{
+  pipelineObject_ = obj;
+  shape = None;
+  logger = Logger("suturo_perception_shape_detection");
 }    
 
 Shape

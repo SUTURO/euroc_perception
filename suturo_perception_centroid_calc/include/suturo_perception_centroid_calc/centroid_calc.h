@@ -13,6 +13,7 @@ namespace suturo_perception
     CentroidCalc(suturo_perception::PipelineObject::Ptr pipelineObject);
     
     void execute();
+    std::string getName() { return "centroid"; }
   protected:
     Logger logger;
   };
