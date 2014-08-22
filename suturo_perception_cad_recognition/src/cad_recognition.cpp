@@ -49,6 +49,7 @@ int main(int argc, char** argv){
   std::string cad_model_pc_filename;
   std::string input_pc_filename;
   int max_iterations=-1;
+  int max_distance=-1;
 
   // "HashMap" for program parameters
   po::variables_map vm;
@@ -61,6 +62,7 @@ int main(int argc, char** argv){
       ("input-pc,i", po::value<std::string>(&input_pc_filename)->required(), "The  filename of the input pointcloud.")
       ("cad-model-pc,m", po::value<std::string>(&cad_model_pc_filename)->required(), "A pointcloud of the CAD-Model to match. You can get a Pointcloud of your CAD-Model with CloudCompare.")
       ("max-iterations,c", po::value<int>(&max_iterations), "The max iteration count for ICP. Default: 60")
+      ("max-correspondence-distance,d", po::value<int>(&max_distance), "The max iteration correspondence distance for ICP. If no value is set, the PCL default will be used")
     ;
 
     po::positional_options_description p;
@@ -133,8 +135,9 @@ int main(int argc, char** argv){
   // Eigen::Vector4f table_normal(0.0118185, 0.612902, 0.79007, -0.917831); // pancake 
   // Eigen::Vector4f table_normal(0.00924593, 0.697689, 0.716341, -0.914689); // pancake 0deg moved
   // Eigen::Vector4f table_normal(0.0102382,0.6985,0.715537,-0.914034); // pancake 0deg moved
-  Eigen::Vector4f table_normal(0.000572634, 0.489801, 0.871834, -0.64807); // euroc_mbpe/test_files/correctly_segmented_box.pcd
+  // Eigen::Vector4f table_normal(0.000572634, 0.489801, 0.871834, -0.64807); // euroc_mbpe/test_files/correctly_segmented_box.pcd
   // Eigen::Vector4f table_normal(0.169393, 0.488678, 0.855862, -0.596477); // euroc_mbpe/test_files/correctly_segmented_cylinder.pcd
+  Eigen::Vector4f table_normal(0.000309765, 0.601889, 0.79858, -0.782525); // euroc_mbpe/test_files/correctly_segmented_handlebar.pcd
  
   ICPFitter ria(input_cloud_voxeled, model_cloud_voxeled, table_normal);
   ria.setMaxICPIterations(60);

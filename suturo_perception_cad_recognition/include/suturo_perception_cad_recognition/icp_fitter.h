@@ -47,6 +47,7 @@ class ICPFitter
 {
 
   #define NO_ICP_MAX_ITERATIONS -1
+  #define NO_ICP_DISTANCE -1
   protected:
     Eigen::Vector4f _table_normal;
 
@@ -61,6 +62,7 @@ class ICPFitter
     pcl::PointCloud<pcl::PointXYZ>::Ptr _upwards_object_s2;
     pcl::PointCloud<pcl::PointXYZ>::Ptr _upwards_object_s3;
     int _max_icp_iterations;
+    double _max_icp_distance;
     double _icp_fitness_score;
     // The transformation that has been done by ICP after the initial alignment
     Eigen::Matrix<float, 4, 4> _icp_transform;
@@ -74,6 +76,7 @@ class ICPFitter
     {
       _max_icp_iterations = NO_ICP_MAX_ITERATIONS;
       _icp_fitness_score = 99; // Default
+      _max_icp_distance = NO_ICP_DISTANCE;
     }
     // Eigen::Matrix<float, 4, 4>  getTransformation(); // Available after execution
 
@@ -121,6 +124,9 @@ class ICPFitter
   
     // Get the fitness score that has been yielded by the ICP process. This indicates how well a cloud has been aligned to a given model. This value should be < 1e-4 for a proper match, but this depends on your usecase
     double getFitnessScore();
+
+    void setMaxCorrespondenceDistance(double v);
+  
 };
 #endif
 
