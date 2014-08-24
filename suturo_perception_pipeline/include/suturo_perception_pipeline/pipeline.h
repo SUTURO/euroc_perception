@@ -20,9 +20,9 @@ namespace suturo_perception
        * @return -1: default value, 0: disabled, 1: enabled
        */
       static int capabilityEnabled(std::string capability_settings, std::string capability_name);
-      
-      std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
-      std::vector<std::string> split(const std::string &s, char delim);
+     
+      static std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
+      static std::vector<std::string> split(const std::string &s, char delim);
   };
 }
 #endif

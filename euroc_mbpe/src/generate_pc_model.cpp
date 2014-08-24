@@ -5,7 +5,59 @@
 #include <pcl/point_types.h>
 #include <pcl/console/parse.h>
 #include <pcl/filters/filter.h>
+#include <pcl/common/transforms.h>
 #include <math.h>
+
+#define POINTS_PER_BOX 3000
+#define POINTS_PER_CYLINDER 5000
+
+Eigen::Matrix4f getRotationMatrixFromPose(Eigen::Matrix< float, 6, 1 > pose)
+{
+  // The first three elments of the given vector are the
+  // translations in x/y/z
+  
+  Eigen::Matrix3f rz = Eigen::Matrix3f::Identity();
+  float theta = pose[5];
+  rz (0,0) = cos (theta);
+  rz (0,1) = -sin(theta);
+  rz (1,0) = sin (theta);
+  rz (1,1) = cos (theta);
+
+  Eigen::Matrix3f ry = Eigen::Matrix3f::Identity();
+  theta = pose[4];
+  ry (0,0) = cos (theta);
+  ry (2,0) = -sin(theta);
+  ry (0,2) = sin (theta);
+  ry (2,2) = cos (theta);
+
+  Eigen::Matrix3f rx = Eigen::Matrix3f::Identity();
+  theta = pose[3];
+  rx (1,1) = cos (theta);
+  rx (1,2) = -sin(theta);
+  rx (2,1) = sin (theta);
+  rx (2,2) = cos (theta);
+
+  Eigen::Matrix3f rotation = rz * ry * rx;
+  Eigen::Matrix4f result;
+  // Copy rotational result
+  result(0,0) = rotation(0,0);
+  result(0,1) = rotation(0,1);
+  result(0,2) = rotation(0,2);
+  result(1,0) = rotation(1,0);
+  result(1,1) = rotation(1,1);
+  result(1,2) = rotation(1,2);
+  result(2,0) = rotation(2,0);
+  result(2,1) = rotation(2,1);
+  result(2,2) = rotation(2,2);
+  // Apply translation
+  // These are the last three elements in the vector.
+  result(0,3) = pose[0];
+  result(1,3) = pose[1];
+  result(2,3) = pose[2];
+  result(3,3) = 0; // Set last translation element to 0
+
+  return result;
+}
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateBox(double size_x, double size_y,
     double size_z, int total_points)
@@ -138,7 +190,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateCylinder(double length, double ra
       for(double y = -radius; y <= radius; y+= raster_size)
       {
         double dist = sqrt(x*x + y*y);
-        if(dist <= radius && dist > radius*0.95)
+        if(dist <= radius && dist > radius*0.945)
         {
           output_cloud->points[pt_idx].x = x;
           output_cloud->points[pt_idx].y = y;
@@ -156,6 +208,38 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateCylinder(double length, double ra
   return output_cloud;
 }
 
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateComposed()
+{
+  Eigen::VectorXf pose_cylinder = Eigen::Matrix< float, 6, 1 >::Zero();
+  pose_cylinder[0] = pose_cylinder[1] =  pose_cylinder[3] =  pose_cylinder[4] = pose_cylinder[5] = 0;
+  pose_cylinder[2] = 0.175;
+
+  Eigen::VectorXf pose_box1 = Eigen::Matrix< float, 6, 1 >::Zero();
+  pose_box1[0] = pose_box1[1] = pose_box1[2] =  pose_box1[3] =  pose_box1[4] = pose_box1[5] = 0;
+
+  Eigen::VectorXf pose_box2 = Eigen::Matrix< float, 6, 1 >::Zero();
+  pose_box2[0] = pose_box2[1] = pose_box2[3] =  pose_box2[4] = pose_box2[5] = 0;
+  pose_box2[2] =  0.35;
+
+  // Generate each model
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cylinder(new pcl::PointCloud<pcl::PointXYZRGB>);
+  cylinder = generateCylinder(0.3, 0.01, POINTS_PER_CYLINDER);
+
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr box1(new pcl::PointCloud<pcl::PointXYZRGB>);
+  box1 = generateBox(0.05, 0.05, 0.05, POINTS_PER_BOX);
+
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr box2(new pcl::PointCloud<pcl::PointXYZRGB>);
+  box2 = generateBox(0.05, 0.05, 0.05, POINTS_PER_BOX);
+
+  pcl::transformPointCloud(*cylinder, *cylinder, getRotationMatrixFromPose(pose_cylinder) );
+  pcl::transformPointCloud(*box2, *box2, getRotationMatrixFromPose(pose_box2) );
+
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr result(new pcl::PointCloud<pcl::PointXYZRGB>);
+  result = cylinder;
+  *result += *box1;
+  *result += *box2;
+  return result;
+}
 int
 main (int argc, char** argv)
 {
@@ -173,7 +257,8 @@ main (int argc, char** argv)
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
   // output_cloud = generateBox(0.05, 0.05, 0.05, 3000);
-  output_cloud = generateCylinder(0.1, 0.02, 5000);
+  // output_cloud = generateCylinder(0.1, 0.02, 5000);
+  output_cloud = generateComposed();
 
   // write pcd
   pcl::PCDWriter writer;

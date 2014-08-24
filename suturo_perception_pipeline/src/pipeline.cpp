@@ -1,9 +1,5 @@
 #include "suturo_perception_pipeline/pipeline.h"
 
-#include <suturo_perception_match_cuboid/cuboid_matcher.h>
-#include <suturo_perception_centroid_calc/centroid_calc.h>
-#include <suturo_perception_shape_detection/shape_detector.h>
-
 #include <boost/asio.hpp>
 
 using namespace suturo_perception;
@@ -38,10 +34,7 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
   std::vector<ShapeDetector*> sdvec;
   
   // Available Capabilities
-  std::vector<Capability*> avail_capabilities;
-  avail_capabilities.push_back(new CuboidMatcher());
-  avail_capabilities.push_back(new CentroidCalc());
-  avail_capabilities.push_back(new ShapeDetector());
+  int avail_capabilities = Capability::capabilityCount();
   
   // Initialize Capabilities
   std::vector<std::vector<Capability*> > capabilities;
@@ -50,7 +43,7 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
     std::vector<Capability*> object_capabilities;
     for (int j = 0; j < avail_capabilities; j++)
     {
-      object_capabilities.push_back(avail_capabilities->instantiateCapability(pipeline_objects[i]));
+      object_capabilities.push_back(avail_capabilities->instantiateCapability((Capability::CapabilityType)j, pipeline_objects[i]));
     }
     capabilities.push_back(object_capabilities);
     /*
@@ -122,11 +115,10 @@ Pipeline::capabilityEnabled(std::string capability_settings, std::string capabil
   std::vector<std::string> enabled_capabilities = split(capability_settings, ',');
   if (enabled_capabilities.size() == 0)
     return -1;
-  return std::find(enabled_capabilities.begin(), enabled_capabilities.end(), capability_name) != v.end();
+  return std::find(enabled_capabilities.begin(), enabled_capabilities.end(), capability_name) != enabled_capabilities.end()==0?0:1;
 }
-
 // taken from: http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c
-std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
+std::vector<std::string> &Pipeline::split(const std::string &s, char delim, std::vector<std::string> &elems) {
     std::stringstream ss(s);
     std::string item;
     while (std::getline(ss, item, delim)) {
@@ -136,7 +128,7 @@ std::vector<std::string> &split(const std::string &s, char delim, std::vector<st
 }
 
 // taken from: http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c
-std::vector<std::string> split(const std::string &s, char delim) {
+std::vector<std::string> Pipeline::split(const std::string &s, char delim) {
     std::vector<std::string> elems;
     split(s, delim, elems);
     return elems;
