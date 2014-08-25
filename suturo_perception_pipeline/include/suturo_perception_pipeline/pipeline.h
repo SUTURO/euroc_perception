@@ -1,6 +1,7 @@
 #ifndef SUTURO_PERCEPTION_PIPELINE
 #define SUTURO_PERCEPTION_PIPELINE
 
+#include <perception_utils/capability.hpp>
 #include <perception_utils/pipeline_object.hpp>
 #include <perception_utils/pipeline_data.hpp>
 
@@ -12,10 +13,21 @@ namespace suturo_perception
   class Pipeline
   {
     public:
+      // add your capability BEFORE last_capability!!!
+      enum CapabilityType 
+      { 
+        CUBOID_MATCHER, 
+        CENTROID_CALC, 
+        SHAPE_DETECTOR, 
+        
+        LAST_CAPABILITY 
+      };
+      
       Pipeline();
     
       static void execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeline_objects);
     protected:
+      static Capability* instantiateCapability(CapabilityType type, PipelineObject::Ptr obj, bool enabled = true);
       /**
        * @return -1: default value, 0: disabled, 1: enabled
        */

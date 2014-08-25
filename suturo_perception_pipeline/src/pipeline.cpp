@@ -1,11 +1,38 @@
 #include "suturo_perception_pipeline/pipeline.h"
 
+#include <suturo_perception_match_cuboid/cuboid_matcher.h>
+#include <suturo_perception_centroid_calc/centroid_calc.h>
+#include <suturo_perception_shape_detection/shape_detector.h>
+
 #include <boost/asio.hpp>
 
 using namespace suturo_perception;
 
 Pipeline::Pipeline()
 {
+}
+
+Capability* 
+Pipeline::instantiateCapability(CapabilityType type, PipelineObject::Ptr obj, bool enabled)
+{
+  switch (type)
+  {
+    case CUBOID_MATCHER:
+    return new CuboidMatcher(obj);
+    break;  
+
+    case CENTROID_CALC:
+    return new CentroidCalc(obj);
+    break;
+
+    case SHAPE_DETECTOR:
+    return new ShapeDetector(obj);
+    break;
+
+    default:
+    return NULL;
+    break;
+  }
 }
 
 void
@@ -28,13 +55,11 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
       );
   }
 
+  // Number of objects to process
   int object_cnt = pipeline_objects.size();
-  std::vector<CuboidMatcher*> cmvec;
-  std::vector<CentroidCalc*> ccvec;
-  std::vector<ShapeDetector*> sdvec;
   
   // Available Capabilities
-  int avail_capabilities = Capability::capabilityCount();
+  int avail_capabilities = LAST_CAPABILITY;
   
   // Initialize Capabilities
   std::vector<std::vector<Capability*> > capabilities;
@@ -43,7 +68,7 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
     std::vector<Capability*> object_capabilities;
     for (int j = 0; j < avail_capabilities; j++)
     {
-      object_capabilities.push_back(avail_capabilities->instantiateCapability((Capability::CapabilityType)j, pipeline_objects[i]));
+      object_capabilities.push_back(instantiateCapability((CapabilityType)j, pipeline_objects[i]));
     }
     capabilities.push_back(object_capabilities);
     /*
@@ -59,7 +84,7 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
     for (int j = 0; j < avail_capabilities; j++)
     {
       if (capabilities[i][j]->isEnabled())
-        ioService.post(boost::bind(&capabilities[i][j]::execute, capabilities[i][j]));
+        ioService.post(boost::bind(&Capability::execute, capabilities[i][j]));
     }
     /*
     // cuboid calculation
@@ -92,7 +117,7 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
   // Deinitialize Capabilities
   for (int i = 0; i < object_cnt; i++) 
   {
-    for (int j = 0; j < available_capabilities; j++)
+    for (int j = 0; j < avail_capabilities; j++)
     {
       delete capabilities[i][j];
     }
