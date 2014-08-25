@@ -17,7 +17,7 @@
 
 using namespace suturo_perception;
 
-ShapeDetector::ShapeDetector(PipelineObject::Ptr obj) : Capability(obj)
+ShapeDetector::ShapeDetector(PipelineData::Ptr data, PipelineObject::Ptr obj) : Capability(data, obj)
 {
   shape = None;
   logger = Logger("suturo_perception_shape_detection");

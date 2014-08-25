@@ -65,7 +65,7 @@ namespace suturo_perception
   {
     static boost::mutex mx;
     public:
-      CuboidMatcher(suturo_perception::PipelineObject::Ptr pipelineObject);
+      CuboidMatcher(PipelineData::Ptr pipelineData, PipelineObject::Ptr pipelineObject);
       // Return a pointer to the list of detected planes
       std::vector<DetectedPlane> *getDetectedPlanes();
 
@@ -111,7 +111,7 @@ namespace suturo_perception
       // true, if the algorithm has succeded.
       //
       bool execute(Cuboid::Ptr c);
-      void execute() { execute(pipelineObject_->get_c_cuboid()); }
+      void execute(); 
       std::string getName() { return "cuboid"; }
 
       bool estimationSuccessful(){ return estimation_succesful_; }

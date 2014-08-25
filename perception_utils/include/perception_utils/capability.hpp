@@ -1,6 +1,7 @@
 #ifndef CAPABILITY_H
 #define CAPABILITY_H
 
+#include "perception_utils/pipeline_data.hpp"
 #include "perception_utils/pipeline_object.hpp"
 
 #include <boost/signals2/mutex.hpp>
@@ -12,8 +13,8 @@ namespace suturo_perception
 	{
 		public:
 			// The PerceivedObject that will be modified by the capability
-			Capability(PipelineObject::Ptr obj, bool enabled = true) 
-      : pipelineObject_(obj), enabled_(enabled)
+			Capability(PipelineData::Ptr data, PipelineObject::Ptr obj, bool enabled = true) 
+      : pipelineData_(data), pipelineObject_(obj), enabled_(enabled)
       {
       }
 
@@ -31,6 +32,7 @@ namespace suturo_perception
       void setEnabled(bool enabled) { enabled_ = enabled; }
 
 		protected:
+      PipelineData::Ptr pipelineData_;
 			PipelineObject::Ptr pipelineObject_;
       
       bool enabled_;

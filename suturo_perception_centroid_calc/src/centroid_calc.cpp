@@ -7,8 +7,8 @@
 
 using namespace suturo_perception;
 
-CentroidCalc::CentroidCalc(suturo_perception::PipelineObject::Ptr pipelineObject) :
-  Capability(pipelineObject)
+CentroidCalc::CentroidCalc(PipelineData::Ptr pipelineData, PipelineObject::Ptr pipelineObject) :
+  Capability(pipelineData, pipelineObject)
 {
   logger = Logger("suturo_perception_centroid_calc");
 }

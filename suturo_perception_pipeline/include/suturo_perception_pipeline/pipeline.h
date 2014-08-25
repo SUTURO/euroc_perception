@@ -27,7 +27,7 @@ namespace suturo_perception
     
       static void execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeline_objects);
     protected:
-      static Capability* instantiateCapability(CapabilityType type, PipelineObject::Ptr obj, bool enabled = true);
+      static Capability* instantiateCapability(CapabilityType type, PipelineData::Ptr data, PipelineObject::Ptr obj, bool enabled = true);
       /**
        * @return -1: default value, 0: disabled, 1: enabled
        */

@@ -3,6 +3,7 @@
 
 #include <perception_utils/logger.h>
 #include <perception_utils/capability.hpp>
+#include <perception_utils/pipeline_data.hpp>
 #include <perception_utils/pipeline_object.hpp>
 #include <perception_utils/shape.hpp>
 
@@ -13,7 +14,7 @@ namespace suturo_perception
   class ShapeDetector : public Capability
   {
     public:
-      ShapeDetector(PipelineObject::Ptr obj);
+      ShapeDetector(PipelineData::Ptr data, PipelineObject::Ptr obj);
       void detectShape(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudIn);
       Shape getShape();
 

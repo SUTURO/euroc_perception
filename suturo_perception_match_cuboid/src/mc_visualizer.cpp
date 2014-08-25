@@ -203,7 +203,8 @@ main (int argc, char** argv)
   pcl::copyPointCloud<pcl::PointXYZRGB, pcl::PointXYZRGB>(*original_cloud, *input_cloud);
 
   suturo_perception::PipelineObject::Ptr pipelineObject(new suturo_perception::PipelineObject());
-  CuboidMatcher cm(pipelineObject);
+  suturo_perception::PipelineData::Ptr pipelineData(new suturo_perception::PipelineData());
+  CuboidMatcher cm(pipelineData, pipelineObject);
   cm.setInputCloud(input_cloud);
   cm.setDebug(true);
   cm.setSaveIntermediateResults(true);

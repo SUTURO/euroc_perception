@@ -13,20 +13,20 @@ Pipeline::Pipeline()
 }
 
 Capability* 
-Pipeline::instantiateCapability(CapabilityType type, PipelineObject::Ptr obj, bool enabled)
+Pipeline::instantiateCapability(CapabilityType type, PipelineData::Ptr data, PipelineObject::Ptr obj, bool enabled)
 {
   switch (type)
   {
     case CUBOID_MATCHER:
-    return new CuboidMatcher(obj);
+    return new CuboidMatcher(data, obj);
     break;  
 
     case CENTROID_CALC:
-    return new CentroidCalc(obj);
+    return new CentroidCalc(data, obj);
     break;
 
     case SHAPE_DETECTOR:
-    return new ShapeDetector(obj);
+    return new ShapeDetector(data, obj);
     break;
 
     default:
@@ -68,7 +68,7 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
     std::vector<Capability*> object_capabilities;
     for (int j = 0; j < avail_capabilities; j++)
     {
-      object_capabilities.push_back(instantiateCapability((CapabilityType)j, pipeline_objects[i]));
+      object_capabilities.push_back(instantiateCapability((CapabilityType)j, pipeline_data, pipeline_objects[i]));
     }
     capabilities.push_back(object_capabilities);
     /*

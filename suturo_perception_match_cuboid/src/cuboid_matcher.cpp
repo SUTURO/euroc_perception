@@ -9,8 +9,8 @@ using namespace suturo_perception;
 // Define Mutex
 boost::mutex CuboidMatcher::mx;
 
-CuboidMatcher::CuboidMatcher(suturo_perception::PipelineObject::Ptr pipelineObject) :
-  suturo_perception::Capability(pipelineObject)
+CuboidMatcher::CuboidMatcher(PipelineData::Ptr pipelineData, PipelineObject::Ptr pipelineObject) :
+  suturo_perception::Capability(pipelineData, pipelineObject)
 {
     input_cloud_ = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     debug = true;
@@ -418,6 +418,13 @@ Cuboid::Ptr CuboidMatcher::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::Po
   return c;
 }
 
+void CuboidMatcher::execute()
+{
+  setMode(CUBOID_MATCHER_MODE_WITH_COEFFICIENTS);
+  setTableCoefficients(pipelineData_->coefficients_);
+  setInputCloud(pipelineObject_->get_pointCloud());
+  execute(pipelineObject_->get_c_cuboid());
+}
 
 bool CuboidMatcher::execute(Cuboid::Ptr c)
 {

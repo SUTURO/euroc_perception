@@ -10,7 +10,7 @@ namespace suturo_perception
   class CentroidCalc : public Capability
   {
   public:
-    CentroidCalc(suturo_perception::PipelineObject::Ptr pipelineObject);
+    CentroidCalc(PipelineData::Ptr pipelineData, PipelineObject::Ptr pipelineObject);
     
     void execute();
     std::string getName() { return "centroid"; }
