@@ -32,6 +32,7 @@
 #include <pcl/features/shot.h>
 #include <suturo_perception_match_cuboid/cuboid_matcher.h>
 #include <suturo_perception_cad_recognition/icp_fitter.h>
+#include <boost/algorithm/string.hpp>
 
 namespace po = boost::program_options;
 using namespace boost;
@@ -48,6 +49,7 @@ void drawNormalizedVector(pcl::visualization::PCLVisualizer &viewer, Eigen::Vect
 int main(int argc, char** argv){
   std::string cad_model_pc_filename;
   std::string input_pc_filename;
+  std::string table_normal_string;
   int max_iterations=-1;
   int max_distance=-1;
 
@@ -63,6 +65,7 @@ int main(int argc, char** argv){
       ("cad-model-pc,m", po::value<std::string>(&cad_model_pc_filename)->required(), "A pointcloud of the CAD-Model to match. You can get a Pointcloud of your CAD-Model with CloudCompare.")
       ("max-iterations,c", po::value<int>(&max_iterations), "The max iteration count for ICP. Default: 60")
       ("max-correspondence-distance,d", po::value<int>(&max_distance), "The max iteration correspondence distance for ICP. If no value is set, the PCL default will be used")
+      ("table_normal,t", po::value<std::string>(&table_normal_string)->required(), "The normal of the surface where the object rests on")
     ;
 
     po::positional_options_description p;
@@ -70,7 +73,7 @@ int main(int argc, char** argv){
     options(desc).positional(p).run(), vm); 
 
     if (vm.count("help")) {
-      std::cout << "Usage: cad_recognition [-t topic]" << endl << endl;
+      std::cout << "Usage: cad_recognition -i input_cloud.pcd -m cad_model_cloud.pcd -t 'table_normal'" << endl << endl;
       std::cout << desc << "\n";
       return 1;
     }
@@ -82,7 +85,7 @@ int main(int argc, char** argv){
   }
   catch(std::exception& e)
   {
-    std::cout << "Usage: cad_recognition -i input_cloud.pcd -m cad_model_cloud.pcd" << endl << endl;
+    std::cout << "Usage: cad_recognition -i input_cloud.pcd -m cad_model_cloud.pcd -t 'table_normal'" << endl << endl;
     std::cerr << "Error: " << e.what() << "\n";
     return false;
   }
@@ -130,6 +133,25 @@ int main(int argc, char** argv){
   boost::posix_time::ptime file_load_end = boost::posix_time::microsec_clock::local_time();
   // l.logTime(file_load_start,file_load_end,"File loading and voxeling done");
 
+  std::vector<std::string> table_normal_components;
+  boost::split(table_normal_components, table_normal_string, boost::is_any_of(","));
+
+  if(table_normal_components.size() != 4)
+  {
+    std::cout << "Extracted " << table_normal_components.size() << " components from the table normal string. Required are exactly 4! See the pcl ModelCoefficients or a RANSAC plane for reference" << std::endl;
+    return 1;
+  }
+  std::cout << "Using the following table normal: ";
+  std::cout << atof(table_normal_components.at(0).c_str()) << ", ";
+  std::cout << atof(table_normal_components.at(1).c_str()) << ", ";
+  std::cout << atof(table_normal_components.at(2).c_str()) << ", ";
+  std::cout << atof(table_normal_components.at(3).c_str()) << std::endl;
+  Eigen::Vector4f table_normal(
+      atof(table_normal_components.at(0).c_str()),
+      atof(table_normal_components.at(1).c_str()),
+      atof(table_normal_components.at(2).c_str()),
+      atof(table_normal_components.at(3).c_str())
+      );
   // Specify the table normal of the given model
   // Eigen::Vector4f table_normal(-0.0102523,-0.746435,-0.66538,0.92944); // pancake_fail
   // Eigen::Vector4f table_normal(0.0118185, 0.612902, 0.79007, -0.917831); // pancake 
@@ -137,7 +159,7 @@ int main(int argc, char** argv){
   // Eigen::Vector4f table_normal(0.0102382,0.6985,0.715537,-0.914034); // pancake 0deg moved
   // Eigen::Vector4f table_normal(0.000572634, 0.489801, 0.871834, -0.64807); // euroc_mbpe/test_files/correctly_segmented_box.pcd
   // Eigen::Vector4f table_normal(0.169393, 0.488678, 0.855862, -0.596477); // euroc_mbpe/test_files/correctly_segmented_cylinder.pcd
-  Eigen::Vector4f table_normal(0.000309765, 0.601889, 0.79858, -0.782525); // euroc_mbpe/test_files/correctly_segmented_handlebar.pcd
+  // Eigen::Vector4f table_normal(0.000309765, 0.601889, 0.79858, -0.782525); // euroc_mbpe/test_files/correctly_segmented_handlebar.pcd
  
   ICPFitter ria(input_cloud_voxeled, model_cloud_voxeled, table_normal);
   ria.setMaxICPIterations(60);
