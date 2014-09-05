@@ -141,12 +141,21 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   _upwards_object_s2 = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>);
   _upwards_object_s3 = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>);
 
-  Eigen::Matrix< float, 4, 4 > upwardRotationBox = 
-    rotateAroundCrossProductOfNormals(Eigen::Vector3f(0,-1,0), Eigen::Vector3f(0,0,1));
 
-  pcl::transformPointCloud (*_model_cloud, *_upwards_model, upwardRotationBox);
-  // Store the first transformation of the model
-  rotations_.push_back(upwardRotationBox);
+  // If desired, perform an upward rotation of the model first
+  if(_rotate_model_upwards)
+  {
+    Eigen::Matrix< float, 4, 4 > upwardRotationBox = 
+      rotateAroundCrossProductOfNormals(Eigen::Vector3f(0,-1,0), Eigen::Vector3f(0,0,1));
+
+    pcl::transformPointCloud (*_model_cloud, *_upwards_model, upwardRotationBox);
+    // Store the first transformation of the model
+    rotations_.push_back(upwardRotationBox);
+  }
+  else
+  {
+    pcl::copyPointCloud (*_model_cloud, *_upwards_model);
+  }
 
 
   // Get the (square) dimensions with min max 3d

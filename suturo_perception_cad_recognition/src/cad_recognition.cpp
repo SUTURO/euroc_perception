@@ -163,6 +163,7 @@ int main(int argc, char** argv){
  
   ICPFitter ria(input_cloud_voxeled, model_cloud_voxeled, table_normal);
   ria.setMaxICPIterations(60);
+  ria.rotateModelUp(false);
   boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
   pcl::PointCloud<pcl::PointXYZ>::Ptr model_initial_aligned = ria.execute();
   boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
