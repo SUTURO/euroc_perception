@@ -68,7 +68,14 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
     std::vector<Capability*> object_capabilities;
     for (int j = 0; j < avail_capabilities; j++)
     {
-      object_capabilities.push_back(instantiateCapability((CapabilityType)j, pipeline_data, pipeline_objects[i]));
+      Capability *cap = instantiateCapability((CapabilityType)j, pipeline_data, pipeline_objects[i]);
+      int cap_enabled = capabilityEnabled(pipeline_data->request_parameters_, cap->getName());
+      if (cap_enabled > -1)
+      {
+        //logger.logInfo((boost::format("Capability %s enabled: %s") % cap->getName() % cap_enabled).str());
+        cap->setEnabled(cap_enabled);
+      }
+      object_capabilities.push_back(cap);
     }
     capabilities.push_back(object_capabilities);
     /*
@@ -140,8 +147,11 @@ Pipeline::capabilityEnabled(std::string capability_settings, std::string capabil
   std::vector<std::string> enabled_capabilities = split(capability_settings, ',');
   if (enabled_capabilities.size() == 0)
     return -1;
+  if (capability_settings.compare("get") == 0)
+    return -1;
   return std::find(enabled_capabilities.begin(), enabled_capabilities.end(), capability_name) != enabled_capabilities.end()==0?0:1;
 }
+
 // taken from: http://stackoverflow.com/questions/236129/how-to-split-a-string-in-c
 std::vector<std::string> &Pipeline::split(const std::string &s, char delim, std::vector<std::string> &elems) {
     std::stringstream ss(s);

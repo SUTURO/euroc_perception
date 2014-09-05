@@ -89,6 +89,7 @@ SuturoGripperNode::getGripper(suturo_perception_msgs::GetGripper::Request &req, 
 	idx_++;
 
 	pipelineData_->resetData();
+  pipelineData_->request_parameters_ = req.s;
   
 	ros::Subscriber sub = nodeHandle_.subscribe<sensor_msgs::PointCloud2>(cloudTopic_, 1, boost::bind(&SuturoGripperNode::receive_cloud,this, _1));
 	

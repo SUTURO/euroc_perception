@@ -16,6 +16,9 @@ namespace suturo_perception
       // segmentation results
       pcl::ModelCoefficients::Ptr coefficients_; 
       
+      // service parameter
+      std::string request_parameters_;
+      
       
       PipelineData()
       {
