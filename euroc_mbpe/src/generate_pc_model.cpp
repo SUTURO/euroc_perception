@@ -1,17 +1,9 @@
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <iostream>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-#include <pcl/console/parse.h>
-#include <pcl/filters/filter.h>
-#include <pcl/common/transforms.h>
-#include <math.h>
+#include <euroc_mbpe/generate_pc_model.h>
 
 #define POINTS_PER_BOX 3000
 #define POINTS_PER_CYLINDER 5000
 
-Eigen::Matrix4f getRotationMatrixFromPose(Eigen::Matrix< float, 6, 1 > pose)
+Eigen::Matrix4f GeneratePointCloudModel::getRotationMatrixFromPose(Eigen::Matrix< float, 6, 1 > pose)
 {
   // The first three elments of the given vector are the
   // translations in x/y/z
@@ -59,7 +51,7 @@ Eigen::Matrix4f getRotationMatrixFromPose(Eigen::Matrix< float, 6, 1 > pose)
   return result;
 }
 
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateBox(double size_x, double size_y,
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateBox(double size_x, double size_y,
     double size_z, int total_points)
 {
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -138,7 +130,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateBox(double size_x, double size_y,
   return output_cloud;
 }
 
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateCylinder(double length, double radius, int total_points)
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateCylinder(double length, double radius, int total_points)
 {
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
@@ -208,7 +200,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateCylinder(double length, double ra
   return output_cloud;
 }
 
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateComposed()
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateComposed()
 {
   Eigen::VectorXf pose_cylinder = Eigen::Matrix< float, 6, 1 >::Zero();
   pose_cylinder[0] = pose_cylinder[1] =  pose_cylinder[3] =  pose_cylinder[4] = pose_cylinder[5] = 0;
@@ -240,33 +232,3 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateComposed()
   *result += *box2;
   return result;
 }
-int
-main (int argc, char** argv)
-{
-  // vector of filename indices
-  std::vector<int> filenames;
-  std::string output_filename;
-  filenames = pcl::console::parse_file_extension_argument (argc, argv, ".pcd");
-  if (filenames.size () != 1)
-  {
-    std::cout << "Usage: output_file_path.pcd\n";
-    exit (-1);
-  }
-  output_filename = argv[filenames.at(0)];
-
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-
-  // output_cloud = generateBox(0.05, 0.05, 0.05, 3000);
-  // output_cloud = generateCylinder(0.1, 0.02, 5000);
-  output_cloud = generateComposed();
-
-  // write pcd
-  pcl::PCDWriter writer;
-  std::stringstream ss;
-  ss << output_filename;
-  writer.write(ss.str(), *output_cloud);
-  std::cerr << "Saved " << output_cloud->points.size () << " data points" << std::endl;
-
-  return (0);
-}
-

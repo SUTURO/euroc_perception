@@ -104,8 +104,12 @@ add_library(correspondence_transform
   src/correspondence_transform.cpp
 )
 
+add_library(generate_pc_model_lib
+  src/generate_pc_model.cpp
+)
+
 ## Declare a cpp executable
-add_executable(generate_pc_model src/generate_pc_model.cpp)
+add_executable(generate_pc_model src/generate_pc_model_node.cpp)
 add_executable(ct_visualizer src/ct_visualizer.cpp)
 
 ## Add cmake target dependencies of the executable/library
@@ -113,9 +117,15 @@ add_executable(ct_visualizer src/ct_visualizer.cpp)
 # add_dependencies(euroc_mbpe_node euroc_mbpe_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(generate_pc_model
+target_link_libraries(generate_pc_model_lib
   ${catkin_LIBRARIES}
 )
+
+target_link_libraries(generate_pc_model
+  ${catkin_LIBRARIES}
+  generate_pc_model_lib
+)
+
 
 target_link_libraries(correspondence_transform
   ${catkin_LIBRARIES}
