@@ -19,7 +19,7 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
-#include <pcl/io/vtk_lib_io.h>
+// #include <pcl/io/vtk_lib_io.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/registration/icp.h>
 #include <pcl/registration/icp_nl.h>
@@ -162,8 +162,15 @@ int main(int argc, char** argv){
   // Eigen::Vector4f table_normal(0.000309765, 0.601889, 0.79858, -0.782525); // euroc_mbpe/test_files/correctly_segmented_handlebar.pcd
  
   ICPFitter ria(input_cloud_voxeled, model_cloud_voxeled, table_normal);
-  ria.setMaxICPIterations(60);
-  ria.rotateModelUp(false);
+  if(max_iterations!=-1)
+  {
+    ria.setMaxICPIterations(max_iterations);
+  }
+  else
+  {
+    ria.setMaxICPIterations(60);
+  }
+  // ria.rotateModelUp(false);
   boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
   pcl::PointCloud<pcl::PointXYZ>::Ptr model_initial_aligned = ria.execute();
   boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
@@ -197,6 +204,7 @@ int main(int argc, char** argv){
   }
   // icp.setEuclideanFitnessEpsilon (0.000001f);
   // icp.setEuclideanFitnessEpsilon (0.00000000001f);
+  icp.setEuclideanFitnessEpsilon (0.00001f);
   // icp.setMaxCorrespondenceDistance (0.55);
   // icp.setRANSACOutlierRejectionThreshold(0.10f);
   //
@@ -225,7 +233,7 @@ int main(int argc, char** argv){
   // viewer.createViewPort(0.0,0, 0.25,1, v1 );
   // viewer.addText("Input Cloud", 0.1, 0.1 , "input_cloud_text_id", v1 );
   viewer.createViewPort(0.0,0, 0.33,1, v2 );
-  viewer.addText("Model vs. Input Cloud - Roughly aligned", 0.1, 0.1 , "model_cloud_text_id", v2 );
+  viewer.addText("Model vs. Input Cloud - Roughly aligned (red=model, orange=upwards_model), ", 0.1, 0.1 , "model_cloud_text_id", v2 );
   viewer.addCoordinateSystem(0.3,v2);
   // pcl::PointXYZ a(0,1,0);
   // viewer.addSphere(a,0.5,"sphere",v2);

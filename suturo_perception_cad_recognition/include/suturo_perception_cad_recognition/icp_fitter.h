@@ -61,6 +61,8 @@ class ICPFitter
     pcl::PointCloud<pcl::PointXYZ>::Ptr _upwards_object_s1;
     pcl::PointCloud<pcl::PointXYZ>::Ptr _upwards_object_s2;
     pcl::PointCloud<pcl::PointXYZ>::Ptr _upwards_object_s3;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr _icp_fitted_object;
+
     int _max_icp_iterations;
     double _max_icp_distance;
     double _icp_fitness_score;

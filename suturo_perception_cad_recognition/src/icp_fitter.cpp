@@ -140,6 +140,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   _upwards_object_s1 = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>);
   _upwards_object_s2 = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>);
   _upwards_object_s3 = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>);
+  _icp_fitted_object = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>);
 
 
   // If desired, perform an upward rotation of the model first
@@ -155,6 +156,9 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   else
   {
     pcl::copyPointCloud (*_model_cloud, *_upwards_model);
+    // Add an identity transformation
+    Eigen::Matrix< float, 4, 4 > upwardRotationBox = Eigen::Matrix<float,4,4>::Identity();
+    rotations_.push_back(upwardRotationBox);
   }
 
 
@@ -259,6 +263,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   // icp.setRANSACOutlierRejectionThreshold(0.10f);
   pcl::PointCloud<pcl::PointXYZ>::Ptr Final(new pcl::PointCloud<pcl::PointXYZ>);
   icp.align(*Final);
+  pcl::copyPointCloud(*Final, *_icp_fitted_object);
   std::cout << "has converged:" << icp.hasConverged() << " score: " <<
   icp.getFitnessScore() << std::endl;
   _icp_fitness_score = icp.getFitnessScore();
