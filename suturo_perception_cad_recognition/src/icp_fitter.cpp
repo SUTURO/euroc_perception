@@ -242,8 +242,11 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   icp.setInputTarget(_upwards_model);
   if(_max_icp_iterations != NO_ICP_MAX_ITERATIONS)
     icp.setMaximumIterations(_max_icp_iterations);
+
   // icp.setEuclideanFitnessEpsilon (0.000001f);
-  icp.setMaxCorrespondenceDistance (0.55);
+  if(_max_icp_distance != NO_ICP_DISTANCE)
+    icp.setMaxCorrespondenceDistance (_max_icp_distance);
+
   // icp.setRANSACOutlierRejectionThreshold(0.10f);
   pcl::PointCloud<pcl::PointXYZ>::Ptr Final(new pcl::PointCloud<pcl::PointXYZ>);
   icp.align(*Final);
@@ -355,4 +358,9 @@ double ICPFitter::getFitnessScore()
 void ICPFitter::setMaxCorrespondenceDistance(double v)
 {
   _max_icp_distance = v;
+}
+
+void ICPFitter::rotateModelUp(bool m)
+{
+  _rotate_model_upwards = m;
 }

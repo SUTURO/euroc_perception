@@ -64,6 +64,7 @@ class ICPFitter
     int _max_icp_iterations;
     double _max_icp_distance;
     double _icp_fitness_score;
+    bool _rotate_model_upwards;
     // The transformation that has been done by ICP after the initial alignment
     Eigen::Matrix<float, 4, 4> _icp_transform;
     // The inverse of the last transformation
@@ -77,6 +78,7 @@ class ICPFitter
       _max_icp_iterations = NO_ICP_MAX_ITERATIONS;
       _icp_fitness_score = 99; // Default
       _max_icp_distance = NO_ICP_DISTANCE;
+      _rotate_model_upwards = true;
     }
     // Eigen::Matrix<float, 4, 4>  getTransformation(); // Available after execution
 
@@ -126,6 +128,10 @@ class ICPFitter
     double getFitnessScore();
 
     void setMaxCorrespondenceDistance(double v);
+
+    // Set this to true, if the model is lying on it's face.
+    // The ICP fitter will then turn the model 90 degrees up.
+    void rotateModelUp(bool m);
   
 };
 #endif
