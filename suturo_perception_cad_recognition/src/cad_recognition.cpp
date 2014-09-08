@@ -213,6 +213,8 @@ int main(int argc, char** argv){
   pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
   icp.setInputSource(ria._upwards_object);
   icp.setInputTarget(ria._upwards_model);
+  // icp.setInputTarget(ria._upwards_object);
+  // icp.setInputSource(ria._upwards_model);
   if(max_iterations!=-1)
   {
     std::cout << "Setting max iterations in ICP to: "<< max_iterations << std::endl;
