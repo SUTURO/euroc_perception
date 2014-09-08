@@ -53,6 +53,8 @@ int main(int argc, char** argv){
   int max_iterations=-1;
   int max_distance=-1;
 
+  bool turn_model=false;
+
   // "HashMap" for program parameters
   po::variables_map vm;
   try
@@ -66,7 +68,7 @@ int main(int argc, char** argv){
       ("max-iterations,c", po::value<int>(&max_iterations), "The max iteration count for ICP. Default: 60")
       ("max-correspondence-distance,d", po::value<int>(&max_distance), "The max iteration correspondence distance for ICP. If no value is set, the PCL default will be used")
       ("table_normal,t", po::value<std::string>(&table_normal_string)->required(), "The normal of the surface where the object rests on")
-      ("model-upside,u", po::value<bool>()->zero_tokens(), "Turn the model upwards before running ICP")
+      ("model-upside,u", po::value<bool>()->zero_tokens(), "Turn the model upwards before running ICP - Default=true")
     ;
 
     po::positional_options_description p;
@@ -77,6 +79,10 @@ int main(int argc, char** argv){
       std::cout << "Usage: cad_recognition -i input_cloud.pcd -m cad_model_cloud.pcd -t 'table_normal'" << endl << endl;
       std::cout << desc << "\n";
       return 1;
+    }
+
+    if (vm.count("model-upside")) {
+      turn_model = true;
     }
 
     // Put notify after the help check, so help is display even
@@ -171,7 +177,7 @@ int main(int argc, char** argv){
   {
     ria.setMaxICPIterations(60);
   }
-  ria.rotateModelUp(false);
+  ria.rotateModelUp(turn_model);
   boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
   pcl::PointCloud<pcl::PointXYZ>::Ptr model_initial_aligned = ria.execute();
   boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
