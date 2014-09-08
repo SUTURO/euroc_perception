@@ -66,6 +66,7 @@ int main(int argc, char** argv){
       ("max-iterations,c", po::value<int>(&max_iterations), "The max iteration count for ICP. Default: 60")
       ("max-correspondence-distance,d", po::value<int>(&max_distance), "The max iteration correspondence distance for ICP. If no value is set, the PCL default will be used")
       ("table_normal,t", po::value<std::string>(&table_normal_string)->required(), "The normal of the surface where the object rests on")
+      ("model-upside,u", po::value<bool>()->zero_tokens(), "Turn the model upwards before running ICP")
     ;
 
     po::positional_options_description p;
@@ -170,7 +171,7 @@ int main(int argc, char** argv){
   {
     ria.setMaxICPIterations(60);
   }
-  // ria.rotateModelUp(false);
+  ria.rotateModelUp(false);
   boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
   pcl::PointCloud<pcl::PointXYZ>::Ptr model_initial_aligned = ria.execute();
   boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
