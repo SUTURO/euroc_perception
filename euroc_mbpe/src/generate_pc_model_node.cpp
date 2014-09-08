@@ -27,9 +27,9 @@ main (int argc, char** argv)
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
-  // output_cloud = generateBox(0.05, 0.05, 0.05, 3000);
+  output_cloud = g.generateBox(0.05, 0.05, 0.05, 4000);
   // output_cloud = generateCylinder(0.1, 0.02, 5000);
-  output_cloud = g.generateComposed();
+  // output_cloud = g.generateComposed();
 
   // write pcd
   pcl::PCDWriter writer;
