@@ -8,6 +8,7 @@
 #include <pcl/common/transforms.h>
 #include <math.h>
 #include <euroc_mbpe/generate_pc_model.h>
+#include <suturo_msgs/Task.h>
 
 int
 main (int argc, char** argv)
@@ -27,9 +28,27 @@ main (int argc, char** argv)
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
-  output_cloud = g.generateBox(0.05, 0.05, 0.05, 4000);
+  std::vector<suturo_msgs::Shape> shapes;
+  suturo_msgs::Shape shape1;
+  shape1.type = shape1.BOX;
+  // 0.05 x 0.05 x 0.05
+  shape1.dimensions.push_back(0.05f);
+  shape1.dimensions.push_back(0.05f);
+  shape1.dimensions.push_back(0.05f);
+  shape1.pose.linear.x = 0;
+  shape1.pose.linear.y = 0;
+  shape1.pose.linear.z = 0;
+  shape1.pose.angular.x = 0;
+  shape1.pose.angular.y = 0;
+  shape1.pose.angular.z = 0;
+  shapes.push_back(shape1);
+
   // output_cloud = generateCylinder(0.1, 0.02, 5000);
   // output_cloud = g.generateComposed();
+  output_cloud = g.generateComposed(shapes);
+  // g.generateComposed(shapes);
+
+  // output_cloud = g.generateBox(0.05, 0.05, 0.05, 4000);
 
   // write pcd
   pcl::PCDWriter writer;
