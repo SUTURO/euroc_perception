@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>euroc_mbpe</name>
+  <name>suturo_perception_mbpe</name>
   <version>0.0.0</version>
-  <description>The euroc_mbpe package</description>
+  <description>Modelbased Pose Estimation in the context of the EuRoC Challenge</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
