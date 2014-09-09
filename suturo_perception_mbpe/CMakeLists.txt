@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   perception_utils
   suturo_msgs
+  suturo_perception_cad_recognition
 )
 
 ## System dependencies are found with CMake's conventions
@@ -109,6 +110,10 @@ add_library(generate_pc_model_lib
   src/generate_pc_model.cpp
 )
 
+add_library(model_pose_estimation
+  src/model_pose_estimation.cpp
+)
+
 ## Declare a cpp executable
 add_executable(generate_pc_model src/generate_pc_model_node.cpp)
 add_executable(ct_visualizer src/ct_visualizer.cpp)
@@ -120,6 +125,11 @@ add_executable(ct_visualizer src/ct_visualizer.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(generate_pc_model_lib
   ${catkin_LIBRARIES}
+)
+
+target_link_libraries(model_pose_estimation
+  ${catkin_LIBRARIES}
+  generate_pc_model_lib
 )
 
 target_link_libraries(generate_pc_model
@@ -181,10 +191,11 @@ target_link_libraries(ct_visualizer
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_euroc_mbpe.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+catkin_add_gtest(${PROJECT_NAME}-test test/tests.cpp)
+if(TARGET ${PROJECT_NAME}-test)
+  # target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME}-test model_pose_estimation ${catkin_LIBRARIES})
+endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
