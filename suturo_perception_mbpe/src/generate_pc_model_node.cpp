@@ -30,7 +30,7 @@ main (int argc, char** argv)
 
   std::vector<suturo_msgs::Shape> shapes;
   suturo_msgs::Shape shape1;
-  shape1.type = shape1.BOX;
+  shape1.shape_type = shape1.BOX;
   // 0.05 x 0.05 x 0.05
   shape1.dimensions.push_back(0.05f);
   shape1.dimensions.push_back(0.05f);
@@ -44,7 +44,7 @@ main (int argc, char** argv)
 
   // Define the extra parts on the handlebar
   suturo_msgs::Shape shape2;
-  shape2.type = shape1.BOX;
+  shape2.shape_type = shape1.BOX;
   // 0.05 x 0.05 x 0.05
   shape2.dimensions.push_back(0.05f);
   shape2.dimensions.push_back(0.05f);
@@ -57,7 +57,7 @@ main (int argc, char** argv)
   shape2.pose.angular.z = 0;
 
   suturo_msgs::Shape shape3;
-  shape3.type = shape1.CYLINDER;
+  shape3.shape_type = shape1.CYLINDER;
   shape3.dimensions.push_back(0.3f);
   shape3.dimensions.push_back(0.01f);
   shape3.pose.linear.x = 0;

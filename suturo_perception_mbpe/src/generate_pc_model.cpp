@@ -236,10 +236,10 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateComposed
 {
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr result(new pcl::PointCloud<pcl::PointXYZRGB>);
   for (int i = 0; i < shapes.size(); i++) {
-    std::cout << "Generating shape " << i << " with type " << ((int) shapes.at(i).type);
+    std::cout << "Generating shape " << i << " with type " << ((int) shapes.at(i).shape_type);
     std::cout << std::endl;
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr shape_part(new pcl::PointCloud<pcl::PointXYZRGB>);
-    switch(shapes.at(i).type)
+    switch(shapes.at(i).shape_type)
     {
       case suturo_msgs::Shape::BOX:
         shape_part = generateBox(shapes.at(i).dimensions[0], 
