@@ -181,6 +181,8 @@ int main(int argc, char** argv){
   // Eigen::Vector4f table_normal(0.169393, 0.488678, 0.855862, -0.596477); // euroc_mbpe/test_files/correctly_segmented_cylinder.pcd
   // Eigen::Vector4f table_normal(0.000309765, 0.601889, 0.79858, -0.782525); // euroc_mbpe/test_files/correctly_segmented_handlebar.pcd
  
+  std::cout << "Generated Pointcloud with " << model_cloud_voxeled->points.size() << "pts" << std::endl;
+  std::cout << "Input Pointcloud with " << input_cloud_voxeled->points.size() << "pts" << std::endl;
   ICPFitter ria(input_cloud_voxeled, model_cloud_voxeled, table_normal);
   if(max_iterations!=-1)
   {

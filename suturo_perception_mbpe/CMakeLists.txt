@@ -194,7 +194,7 @@ target_link_libraries(ct_visualizer
 catkin_add_gtest(${PROJECT_NAME}-test test/tests.cpp)
 if(TARGET ${PROJECT_NAME}-test)
   # target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
-  target_link_libraries(${PROJECT_NAME}-test model_pose_estimation ${catkin_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME}-test model_pose_estimation ${catkin_LIBRARIES} suturo_perception_icp_fitter)
 endif()
 
 ## Add folders to be run by python nosetests
