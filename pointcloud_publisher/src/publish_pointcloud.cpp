@@ -41,6 +41,8 @@ int cloud_idx = 0;
 std::string depth_topic = "";
 std::string rgb_topic = "";
 std::string frame = "";
+std::string frame_depth = "";
+std::string frame_rgb = "";
 std::string output_topic = "";
 bool verbose = false;
 
@@ -115,7 +117,7 @@ const cv::Mat &rgb_image, const tf::StampedTransform transform)
      geometry_msgs::PointStamped p1;
      p1.header.seq = seq++;
      p1.header.stamp = ros::Time(0);
-     p1.header.frame_id = "sdepth_pcl";
+     p1.header.frame_id = frame;
      p1.point.x = pPt->x;
      p1.point.y = pPt->y;
      p1.point.z = pPt->z;
@@ -134,8 +136,8 @@ const cv::Mat &rgb_image, const tf::StampedTransform transform)
      while (tries < 5 && !done)
      {
       try{
-        listener.waitForTransform("sdepth_pcl", "srgb", ros::Time(0), ros::Duration(3.0));
-        listener.transformPoint("srgb", p1, p2);
+        listener.waitForTransform(frame, frame_rgb, ros::Time(0), ros::Duration(3.0));
+        listener.transformPoint(frame_rgb, p1, p2);
         //p4 = transform * p3;
         //ROS_INFO("transform point success: (%f, %f, %f)", p2.point.x, p2.point.y, p2.point.z);
         done = true;
@@ -184,7 +186,8 @@ bool getTransform(const ros::NodeHandle &node, const ros::Time &t, tf::StampedTr
   while (node.ok() && tries < 10){
     tf::StampedTransform transform;
     try{
-      listener.lookupTransform("sdepth_pcl", "srgb",
+      listener.waitForTransform(frame, frame_rgb, ros::Time(0), ros::Duration(3.0));
+      listener.lookupTransform(frame, frame_rgb,
                                ros::Time(0), transform);
       ROS_INFO("lookupTransform success!");
       *transform_ = transform;
@@ -201,6 +204,14 @@ bool getTransform(const ros::NodeHandle &node, const ros::Time &t, tf::StampedTr
 
   return false;
 
+}
+
+void printTransform(tf::StampedTransform &transform)
+{ 
+  tf::Vector3 ot = transform.getOrigin();
+  tf::Quaternion qt = transform.getRotation();
+  ROS_INFO("  translation: [ %f , %f , %f ]", ot[0], ot[1], ot[2]);
+  ROS_INFO("  rotation:    [ %f , %f , %f , %f ]", qt.x(), qt.y(), qt.z(), qt.w());
 }
 
 
@@ -236,6 +247,7 @@ void receive_depth_and_rgb_image(
 
   tf::StampedTransform transform;
   getTransform(nodeHandle, depthImage->header.stamp, &transform);
+  printTransform(transform);
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out = 
     depth_project(resized_depth, resized_img, transform);
 
@@ -317,6 +329,7 @@ int main (int argc, char** argv)
     depth_topic = "/euroc_interface_node/cameras/scene_depth_cam";
     rgb_topic = "/euroc_interface_node/cameras/scene_rgb_cam";
     frame = "/sdepth_pcl";
+    frame_rgb = "/srgb";
     output_topic = "/suturo/euroc_scene_cloud";
   }
   else if(desired_cam == "tcp")
@@ -324,6 +337,7 @@ int main (int argc, char** argv)
     depth_topic = "/euroc_interface_node/cameras/tcp_depth_cam";
     rgb_topic = "/euroc_interface_node/cameras/tcp_rgb_cam";
     frame = "/tdepth_pcl";
+    frame_rgb = "/trgb";
     output_topic = "/suturo/euroc_tcp_cloud";
   }
   else
