@@ -46,10 +46,20 @@ std::string frame_rgb = "";
 std::string output_topic = "";
 bool verbose = false;
 
+void printTransform(const tf::StampedTransform &transform)
+{ 
+  tf::Vector3 ot = transform.getOrigin();
+  tf::Quaternion qt = transform.getRotation();
+  //ROS_INFO("  translation: [ %f , %f , %f , %f, %f, %f ]", ot[0], ot[1], ot[2], tf::getYaw(qt), tf::getPitch(qt), tf::getRoll(qt));
+  ROS_INFO("  translation: [ %f , %f , %f ]", ot[0], ot[1], ot[2]);
+  ROS_INFO("  rotation:    [ %f , %f , %f , %f ]", qt.x(), qt.y(), qt.z(), qt.w());
+}
+
 // Thanks for Jan for the code
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr depth_project(const cv::Mat &depth_image_in,
-const cv::Mat &rgb_image, const tf::StampedTransform transform)
+const cv::Mat &rgb_image, const tf::StampedTransform &transform)
 {
+  printTransform(transform);
   cv::Mat depth_image;
   if (depth_image_in.type() == CV_16U)
    depth_image_in.convertTo(depth_image, CV_32F, 0.001, 0.0);
@@ -113,7 +123,6 @@ const cv::Mat &rgb_image, const tf::StampedTransform transform)
      pPt->y = -depth * (v1 - (2*v1 *( y/(double)480) ));
      pPt->x = -depth * (h1 - (2*h1 *( u/(double)640) ));
 
-
      geometry_msgs::PointStamped p1;
      p1.header.seq = seq++;
      p1.header.stamp = ros::Time(0);
@@ -130,14 +139,32 @@ const cv::Mat &rgb_image, const tf::StampedTransform transform)
      //tf::Vector3 p4;
 
      geometry_msgs::PointStamped p2;
+     
+     
+     geometry_msgs::PointStamped p3;
 
+     
      int tries = 0;
      bool done = false;
      while (tries < 5 && !done)
      {
       try{
-        listener.waitForTransform(frame, frame_rgb, ros::Time(0), ros::Duration(3.0));
-        listener.transformPoint(frame_rgb, p1, p2);
+        //listener.waitForTransform(frame, frame_rgb, ros::Time(0), ros::Duration(3.0));
+        //listener.transformPoint(frame_rgb, p1, p3);
+        
+        //tf::StampedTransform t;
+        tf::Stamped<tf::Point> tp1;
+        tf::Stamped<tf::Point> tp2;
+        //listener.waitForTransform(frame, frame_rgb, ros::Time(0), ros::Duration(3.0));
+        tf::pointStampedMsgToTF(p1, tp1);
+        //listener.lookupTransform(frame_rgb, tp1.frame_id_, tp1.stamp_, t);
+        tp2.setData(transform * tp1);
+        pointStampedTFToMsg(tp2, p2);
+        
+       // if (p2.point.x != p3.point.x || p2.point.y != p3.point.y || p2.point.z != p3.point.z)
+       // {
+       //   ROS_INFO("(%f,%f,%f) - (%f,%f,%f)", p2.point.x, p2.point.y, p2.point.z, p3.point.x, p3.point.y, p3.point.z);
+       // }
         //p4 = transform * p3;
         //ROS_INFO("transform point success: (%f, %f, %f)", p2.point.x, p2.point.y, p2.point.z);
         done = true;
@@ -154,13 +181,16 @@ const cv::Mat &rgb_image, const tf::StampedTransform transform)
       pPt->b = 255;
       continue;
      }
-
+    
+     //printTransform(t);
+     
      int pixx = (( 640.0 * ( p2.point.x * h1 - p2.point.y ) ) / ( 2.0 * p2.point.x * h1 ));
      int pixy = ( 480.0 * ( p2.point.x * v1 - p2.point.z ) ) / ( 2.0 * p2.point.x * v1 );
      //int pixx = (( 640.0 * ( p4.m_floats[0] * h1 - p4.m_floats[1] ) ) / ( 2.0 * p4.m_floats[0] * h1 ));
      //int pixy = ( 480.0 * ( p4.m_floats[0] * v1 - p4.m_floats[2] ) ) / ( 2.0 * p4.m_floats[0] * v1 );
      if (pixx < 0 || pixx > 640 || pixy < 0 || pixy > 480)
      {
+       //ROS_INFO("pixx = %d, pixy = %d, (%f,%f,%f) - (%f,%f,%f)", pixx, pixy, p2.point.x, p2.point.y, p2.point.z, p3.point.x, p3.point.y, p3.point.z);
       pPt->r = 255;
       pPt->g = 0;
       pPt->b = 255;
@@ -177,20 +207,18 @@ const cv::Mat &rgb_image, const tf::StampedTransform transform)
   return cloud;
 }
 
-bool getTransform(const ros::NodeHandle &node, const ros::Time &t, tf::StampedTransform *transform_) 
+bool getTransform(const ros::NodeHandle &node, const ros::Time &t, tf::StampedTransform &transform_) 
 {
   tf::TransformListener listener;
 
   int tries = 0;
   ros::Rate rate(10.0);
   while (node.ok() && tries < 10){
-    tf::StampedTransform transform;
     try{
-      listener.waitForTransform(frame, frame_rgb, ros::Time(0), ros::Duration(3.0));
-      listener.lookupTransform(frame, frame_rgb,
-                               ros::Time(0), transform);
+      listener.waitForTransform(frame_rgb, frame, ros::Time(0), ros::Duration(3.0));
+      listener.lookupTransform(frame_rgb, frame,
+                               ros::Time(0), transform_);
       ROS_INFO("lookupTransform success!");
-      *transform_ = transform;
       return true;
     }
     catch (tf::TransformException &ex) {
@@ -204,14 +232,6 @@ bool getTransform(const ros::NodeHandle &node, const ros::Time &t, tf::StampedTr
 
   return false;
 
-}
-
-void printTransform(tf::StampedTransform &transform)
-{ 
-  tf::Vector3 ot = transform.getOrigin();
-  tf::Quaternion qt = transform.getRotation();
-  ROS_INFO("  translation: [ %f , %f , %f ]", ot[0], ot[1], ot[2]);
-  ROS_INFO("  rotation:    [ %f , %f , %f , %f ]", qt.x(), qt.y(), qt.z(), qt.w());
 }
 
 
@@ -246,7 +266,7 @@ void receive_depth_and_rgb_image(
   resized_depth = depth_ptr->image.clone();
 
   tf::StampedTransform transform;
-  getTransform(nodeHandle, depthImage->header.stamp, &transform);
+  getTransform(nodeHandle, depthImage->header.stamp, transform);
   printTransform(transform);
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out = 
     depth_project(resized_depth, resized_img, transform);
