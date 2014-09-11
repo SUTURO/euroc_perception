@@ -29,6 +29,7 @@ public:
 	  logger_ = suturo_perception::Logger("SuturoPerceptionMPE");
     generated_models_ = boost::shared_ptr<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> >(new std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> );
     voxel_size_ = 0;
+    dump_icp_fitter_pointclouds_ = false;
   }
 
   //  This should be the observed pointcloud
@@ -50,6 +51,11 @@ public:
   // If the model AND the input cloud should be downsampled before the pose estimation
   // pass a value != 0 .
   void setVoxelSize(double size);
+
+  // Should we call ICPFitter::dumpPointClouds() after execute() has been finished?
+  // This writes a pointcloud for every transformation step
+  // in suturo_perception_cad_recognition/dumps/
+  void setDumpICPFitterPointclouds(bool b);
 
   void execute();
 
@@ -91,6 +97,7 @@ private:
   boost::shared_ptr<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> > generated_models_;
   suturo_perception::Logger logger_;
   GeneratePointCloudModel model_generator_;
+  bool dump_icp_fitter_pointclouds_;
 
   // Delete every model and create new ones
   void generateModels();

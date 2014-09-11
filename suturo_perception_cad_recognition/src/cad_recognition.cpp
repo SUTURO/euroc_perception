@@ -199,6 +199,7 @@ int main(int argc, char** argv){
   boost::posix_time::time_duration d = end - start;
   float diff = (float)d.total_microseconds() / (float)1000;
   std::cout << "Runtime for ICPFitter execute(): " << diff << "ms" << std::endl;
+  ria.dumpPointClouds();
 
   Eigen::Matrix<float, 4, 4> initial_alignment_rotation = 
     ria.getRotation();

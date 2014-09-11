@@ -39,6 +39,9 @@
 #include <pcl/features/fpfh.h>
 #include <pcl/features/shot.h>
 #include <suturo_perception_match_cuboid/cuboid_matcher.h>
+#include <ctime>
+#include <ros/ros.h>
+#include <ros/package.h>
 
 using namespace boost;
 using namespace std;
@@ -62,6 +65,9 @@ class ICPFitter
     pcl::PointCloud<pcl::PointXYZ>::Ptr _upwards_object_s2;
     pcl::PointCloud<pcl::PointXYZ>::Ptr _upwards_object_s3;
     pcl::PointCloud<pcl::PointXYZ>::Ptr _icp_fitted_object;
+    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> _object_transformation_steps;
+    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> _model_transformation_steps;
+
 
     int _max_icp_iterations;
     double _max_icp_distance;
@@ -134,7 +140,10 @@ class ICPFitter
     // Set this to true, if the model is lying on it's face.
     // The ICP fitter will then turn the model 90 degrees up.
     void rotateModelUp(bool m);
-  
+ 
+    // Dump every pointcloud from _object_transformation_steps and _model_transformation_steps
+    // to suturo_perception_cad_recognition/dumps/
+    void dumpPointClouds();
 };
 #endif
 

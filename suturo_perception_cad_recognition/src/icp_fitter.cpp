@@ -142,6 +142,13 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   _upwards_object_s3 = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>);
   _icp_fitted_object = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>);
 
+  // Hold a pointer to every pointcloud, that represents a step in the
+  // fitting process
+  _model_transformation_steps.clear();
+  _object_transformation_steps.clear();
+  // Add the initial pointclouds
+  _model_transformation_steps.push_back(_model_cloud);
+  _object_transformation_steps.push_back(_cloud_in);
 
   // If desired, perform an upward rotation of the model first
   if(_rotate_model_upwards)
@@ -150,6 +157,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
       rotateAroundCrossProductOfNormals(Eigen::Vector3f(0,-1,0), Eigen::Vector3f(0,0,1));
 
     pcl::transformPointCloud (*_model_cloud, *_upwards_model, upwardRotationBox);
+    _model_transformation_steps.push_back(_upwards_model);
     // Store the first transformation of the model
     rotations_.push_back(upwardRotationBox);
   }
@@ -159,6 +167,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
     // Add an identity transformation
     Eigen::Matrix< float, 4, 4 > upwardRotationBox = Eigen::Matrix<float,4,4>::Identity();
     rotations_.push_back(upwardRotationBox);
+    _model_transformation_steps.push_back(_upwards_model);
   }
 
 
@@ -198,16 +207,16 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
 
   Eigen::Matrix< float, 4, 4 > transformationRotateObject = 
     rotateAroundCrossProductOfNormals(rotation_base_vector, table_normal);
-
-  // Move the rotated object cloud to the center
   pcl::transformPointCloud (*_cloud_in, *_upwards_object, transformationRotateObject);   
   pcl::transformPointCloud (*_cloud_in, *_upwards_object_s1, transformationRotateObject);   
+  _object_transformation_steps.push_back(_upwards_object_s1);
+
+  // Move the rotated object cloud to the origin of the coordinate system
   Eigen::Vector4f input_cloud_centroid, rotated_input_cloud_centroid, 
     model_cloud_centroid, diff_of_centroids;
   pcl::compute3DCentroid(*_cloud_in, input_cloud_centroid); 
   pcl::compute3DCentroid(*_upwards_object, rotated_input_cloud_centroid); 
   diff_of_centroids = Eigen::Vector4f(0,0,0,0) - rotated_input_cloud_centroid;
-  
   Eigen::Matrix< float, 4, 4 > transform = 
     getTranslationMatrix(
         diff_of_centroids[0],
@@ -215,6 +224,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
         diff_of_centroids[2]);
   pcl::transformPointCloud(*_upwards_object, *_upwards_object_s2,transform);
   pcl::transformPointCloud(*_upwards_object, *_upwards_object,transform);
+  _object_transformation_steps.push_back(_upwards_object_s2);
 
   // Estimate the dimensions of the object
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points_object (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -235,18 +245,18 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
     getTranslationMatrix(0,translate_upwards,0);
   pcl::transformPointCloud(*_upwards_object, *_upwards_object_s3, transformUpwards);
   pcl::transformPointCloud(*_upwards_object, *_upwards_object, transformUpwards);
+  _object_transformation_steps.push_back(_upwards_object_s3);
 
   // Store the transposed matrix of the height-fitting transformation
+  std::cout << "Height Adjustment:" << std::endl; 
   std::cout << transformUpwards << std::endl; 
-  std::cout << transformUpwards.inverse() << std::endl;
-
   translations_.push_back(transformUpwards.inverse() ); 
   // Store the transposed matrix of the centroid alignment
   translations_.push_back(transform.inverse());
   // Store the transposed matrix of the rotation to fit the table normal
   rotations_.push_back(transformationRotateObject.transpose() ); 
 
-  // Use ICP for the final alignment
+  // Use ICP for the final alignment, after the object has been initially aligned.
   pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
   icp.setInputSource(_upwards_object);
   icp.setInputTarget(_upwards_model);
@@ -261,11 +271,11 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   pcl::PointCloud<pcl::PointXYZ>::Ptr Final(new pcl::PointCloud<pcl::PointXYZ>);
   icp.align(*Final);
   pcl::copyPointCloud(*Final, *_icp_fitted_object);
+  _object_transformation_steps.push_back(_icp_fitted_object);
   std::cout << "has converged:" << icp.hasConverged() << " score: " <<
   icp.getFitnessScore() << std::endl;
   _icp_fitness_score = icp.getFitnessScore();
   std::cout << icp.getFinalTransformation() << std::endl;
-  // boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
   _icp_transform = icp.getFinalTransformation();
   _icp_transform_inverse = icp.getFinalTransformation().inverse();
 
@@ -374,4 +384,30 @@ void ICPFitter::setMaxCorrespondenceDistance(double v)
 void ICPFitter::rotateModelUp(bool m)
 {
   _rotate_model_upwards = m;
+}
+
+void ICPFitter::dumpPointClouds()
+{
+  // Prefix the files with the current timestamp
+  std::string package_path = ros::package::getPath("suturo_perception_cad_recognition");
+  std::string dump_folder = "/dumps/";
+  std::time_t t = std::time(0);
+
+  for (int i = 0; i < _object_transformation_steps.size(); i++) {
+    // write pcd
+    pcl::PCDWriter writer;
+    std::stringstream ss;
+    ss << package_path << dump_folder << t << "_object_s_"<< i << ".pcd";
+    writer.write(ss.str(), *_object_transformation_steps.at(i));
+    // std::cerr << "Saved " << output_cloud_->points.size () << " data points" << std::endl;
+  }
+
+  for (int i = 0; i < _model_transformation_steps.size(); i++) {
+    // write pcd
+    pcl::PCDWriter writer;
+    std::stringstream ss;
+    ss << package_path << dump_folder << t << "_model_s_"<< i << ".pcd";
+    writer.write(ss.str(), *_model_transformation_steps.at(i));
+    // std::cerr << "Saved " << output_cloud_->points.size () << " data points" << std::endl;
+  }
 }

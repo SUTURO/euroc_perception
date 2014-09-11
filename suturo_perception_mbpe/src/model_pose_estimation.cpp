@@ -101,6 +101,10 @@ void ModelPoseEstimation::execute()
 
     if(fitter.getFitnessScore() < fitness_score_)
       fitness_score_ = fitter.getFitnessScore();
+
+    // Dump the pointclouds that ICPFitter generated during it's execution
+    // TODO: check bool for activation
+    fitter.dumpPointClouds();
    
   }
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
@@ -135,4 +139,10 @@ void ModelPoseEstimation::generateModels()
       std::cout << "Generated Pointcloud with " << shape->points.size() << "pts" << std::endl;
     }
   }
+}
+
+
+void ModelPoseEstimation::setDumpICPFitterPointclouds(bool b)
+{
+  dump_icp_fitter_pointclouds_ = b;
 }
