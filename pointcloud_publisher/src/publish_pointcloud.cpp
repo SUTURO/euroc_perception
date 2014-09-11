@@ -20,16 +20,13 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
-#include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 
 #include <boost/program_options.hpp>
 
 namespace enc = sensor_msgs::image_encodings;
 namespace po = boost::program_options;
 using namespace boost;
-
-//Declare a string with the name of the window that we will create using OpenCV where processed images will be displayed.
-static const char WINDOW[] = "Depth Image";
 
 ros::Publisher pub_cloud;
 
@@ -44,37 +41,40 @@ bool verbose = false;
 
 // Thanks for Jan for the code
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr depth_project(const cv::Mat &depth_image_in,
-const cv::Mat &rgb_image)
+const cv::Mat &rgb_image, const tf::StampedTransform transform)
 {
- cv::Mat depth_image;
- if (depth_image_in.type() == CV_16U)
+  cv::Mat depth_image;
+  if (depth_image_in.type() == CV_16U)
    depth_image_in.convertTo(depth_image, CV_32F, 0.001, 0.0);
- else
+  else
    depth_image = depth_image_in;
 
- pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
- // TODO cloud->header.stamp = time;
- cloud->height = depth_image.rows;
- cloud->width = depth_image.cols;
- // cloud->is_dense = false;
- cloud->is_dense = true; // The PC should be dense, since you use the image coords to index the points
- cloud->points.resize(cloud->height * cloud->width);
- register const float
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+  // TODO cloud->header.stamp = time;
+  cloud->height = depth_image.rows;
+  cloud->width = depth_image.cols;
+  // cloud->is_dense = false;
+  cloud->is_dense = true; // The PC should be dense, since you use the image coords to index the points
+  cloud->points.resize(cloud->height * cloud->width);
+  register const float
      constant = 1.0f / (0.8203125 * cloud->width),
      bad_point = std::numeric_limits<float>::quiet_NaN();
- register const int
+  register const int
      centerX = (cloud->width >> 1),
      centerY = (cloud->height >> 1);
 
- // DO THE M(A|E)TH
-double fov_v = 0.817109355f;
-double fov_h = 1.047f;
-double h1 = tan(fov_h/2);
-double v1 = tan(fov_v/2);
+  // DO THE M(A|E)TH
+  double fov_v = 0.817109355f;
+  double fov_h = 1.047f;
+  double h1 = tan(fov_h/2);
+  double v1 = tan(fov_v/2);
+
+  int seq = 0;
+  tf::TransformListener listener;
 
 #pragma omp parallel for
- for (int y = 0; y < depth_image.rows; ++y)
- {
+  for (int y = 0; y < depth_image.rows; ++y)
+  {
    pcl::PointXYZRGB *pPt = &cloud->points[y * depth_image.cols];
 
    const float *pDepth = depth_image.ptr<float>(y);
@@ -82,9 +82,11 @@ double v1 = tan(fov_v/2);
 
    for (register int u = 0; u < centerX*2; ++u, ++pPt, ++pDepth, ++pBGR)
    {
+     /*
      pPt->r = pBGR->val[2];
      pPt->g = pBGR->val[1];
      pPt->b = pBGR->val[0];
+     */
 
      float depth = *pDepth;
      // Check for invalid measurements
@@ -103,15 +105,75 @@ double v1 = tan(fov_v/2);
      pPt->z = depth;
      pPt->y = -depth * (v1 - (2*v1 *( y/(double)480) ));
      pPt->x = -depth * (h1 - (2*h1 *( u/(double)640) ));
+
+
+     geometry_msgs::PointStamped p1;
+     p1.header.seq = seq++;
+     p1.header.stamp = ros::Time(0);
+     p1.header.frame_id = "sdepth_pcl";
+     p1.point.x = pPt->x;
+     p1.point.y = pPt->y;
+     p1.point.z = pPt->z;
+
+     geometry_msgs::PointStamped p2;
+
+     try{
+       listener.transformPoint("srgb", p1, p2);
+       //ROS_INFO("transform point success: (%f, %f, %f)", p2.point.x, p2.point.y, p2.point.z);
+     } catch (...) {
+       //ROS_ERROR("transform point failed!");
+       //ros::Duration(1.0).sleep();
+       pPt->r = 255;
+       pPt->g = 0;
+       pPt->b = 255;
+       continue;
+     } 
+
+     cv::Vec3b bgrPixel = rgb_image.at<cv::Vec3b>(p2.point.y, p2.point.z);
+     pPt->r = bgrPixel.val[2];
+     pPt->g = bgrPixel.val[1];
+     pPt->b = bgrPixel.val[0];
+
    }
- }
- return cloud;
+  }
+  return cloud;
 }
+
+bool getTransform(const ros::NodeHandle &node, const ros::Time &t, tf::StampedTransform *transform_) 
+{
+  tf::TransformListener listener;
+
+  int tries = 0;
+  ros::Rate rate(10.0);
+  while (node.ok() && tries < 10){
+    tf::StampedTransform transform;
+    try{
+      listener.lookupTransform("sdepth_pcl", "srgb",
+                               ros::Time(0), transform);
+      ROS_INFO("lookupTransform success!");
+      *transform_ = transform;
+      return true;
+    }
+    catch (tf::TransformException &ex) {
+      ROS_ERROR("%s",ex.what());
+      ros::Duration(1.0).sleep();
+    }
+
+    rate.sleep();
+    tries++;
+  }
+
+  return false;
+
+}
+
 
 /*
  * Receive callback for the /camera/depth_registered/points subscription
  */
-void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
+void receive_depth_and_rgb_image(
+    const ros::NodeHandle &nodeHandle,
+    const sensor_msgs::ImageConstPtr& depthImage,
 		const sensor_msgs::ImageConstPtr& inputImage)
 {
   if(verbose)
@@ -135,8 +197,10 @@ void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
   resized_img = img_ptr->image.clone();
   resized_depth = depth_ptr->image.clone();
 
+  tf::StampedTransform transform;
+  getTransform(nodeHandle, depthImage->header.stamp, &transform);
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out = 
-    depth_project(resized_depth, resized_img);
+    depth_project(resized_depth, resized_img, transform);
 
 	// write pcd
   // pcl::PCDWriter writer;
@@ -147,9 +211,6 @@ void receive_depth_and_rgb_image(const sensor_msgs::ImageConstPtr& depthImage,
   if(verbose)
     std::cerr << "Saved " << cloud_out->points.size () << " data points" << std::endl;
 	
-	// cv::imshow(WINDOW, img_ptr->image);
-  // cv::waitKey(3);
-  
   sensor_msgs::PointCloud2 pub_message;
   pcl::toROSMsg(*cloud_out, pub_message );
   pub_message.header.frame_id = frame;
@@ -244,10 +305,7 @@ int main (int argc, char** argv)
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> MySyncPolicy;
   message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), depth_sub, image_sub);
 
-  sync.registerCallback(boost::bind(&receive_depth_and_rgb_image, _1, _2));
-
-	cv::namedWindow(WINDOW, CV_WINDOW_AUTOSIZE);
-	cv::destroyWindow(WINDOW);
+  sync.registerCallback(boost::bind(&receive_depth_and_rgb_image, n, _1, _2));
 
   pub_cloud = n.advertise<sensor_msgs::PointCloud2> (output_topic, 1);
 
