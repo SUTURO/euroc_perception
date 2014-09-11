@@ -195,11 +195,11 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
     rotation_base_vector[0] = rotation_base_vector[2] = 0;
     rotation_base_vector[1] = 1;
   }
-  // Eigen::Matrix< float, 4, 4 > transformationRotateObject = 
-  //   rotateAroundCrossProductOfNormals(Eigen::Vector3f(0,1,0), table_normal);
+
   Eigen::Matrix< float, 4, 4 > transformationRotateObject = 
     rotateAroundCrossProductOfNormals(rotation_base_vector, table_normal);
 
+  // Move the rotated object cloud to the center
   pcl::transformPointCloud (*_cloud_in, *_upwards_object, transformationRotateObject);   
   pcl::transformPointCloud (*_cloud_in, *_upwards_object_s1, transformationRotateObject);   
   Eigen::Vector4f input_cloud_centroid, rotated_input_cloud_centroid, 
@@ -207,8 +207,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   pcl::compute3DCentroid(*_cloud_in, input_cloud_centroid); 
   pcl::compute3DCentroid(*_upwards_object, rotated_input_cloud_centroid); 
   diff_of_centroids = Eigen::Vector4f(0,0,0,0) - rotated_input_cloud_centroid;
-  // Eigen::Affine3f transform = pcl::getTransformation(diff_of_centroids[0],
-  //     diff_of_centroids[1], diff_of_centroids[2],0,0,0);
+  
   Eigen::Matrix< float, 4, 4 > transform = 
     getTranslationMatrix(
         diff_of_centroids[0],
@@ -232,8 +231,6 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
 
   // Translate the object to align it with the top of the model
   float translate_upwards = model_height - object_height;
-  // Eigen::Affine3f transformUpwards = pcl::getTransformation( 0,
-  //     translate_upwards,0,0,0,0);
   Eigen::Matrix< float, 4, 4 > transformUpwards = 
     getTranslationMatrix(0,translate_upwards,0);
   pcl::transformPointCloud(*_upwards_object, *_upwards_object_s3, transformUpwards);

@@ -29,7 +29,6 @@ public:
 	  logger_ = suturo_perception::Logger("SuturoPerceptionMPE");
     generated_models_ = boost::shared_ptr<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> >(new std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> );
     voxel_size_ = 0;
-
   }
 
   //  This should be the observed pointcloud
