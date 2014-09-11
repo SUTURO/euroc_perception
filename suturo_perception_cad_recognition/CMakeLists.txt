@@ -90,7 +90,7 @@ find_package(Boost REQUIRED COMPONENTS system program_options thread)
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES suturo_perception_cad_recognition
-#  CATKIN_DEPENDS pcl pcl_ros roscpp
+  CATKIN_DEPENDS suturo_perception_match_cuboid
 #  DEPENDS system_lib
 )
 

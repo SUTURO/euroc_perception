@@ -1,6 +1,6 @@
-#include <euroc_mbpe/generate_pc_model.h>
+#include <suturo_perception_mbpe/generate_pc_model.h>
 
-#define POINTS_PER_BOX 3000
+#define POINTS_PER_BOX 4000
 #define POINTS_PER_CYLINDER 5000
 
 Eigen::Matrix4f GeneratePointCloudModel::getRotationMatrixFromPose(Eigen::Matrix< float, 6, 1 > pose)
@@ -230,5 +230,50 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateComposed
   result = cylinder;
   *result += *box1;
   *result += *box2;
+  return result;
+}
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateComposed(std::vector<suturo_msgs::Shape>  &shapes)
+{
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr result(new pcl::PointCloud<pcl::PointXYZRGB>);
+  for (int i = 0; i < shapes.size(); i++) {
+    std::cout << "Generating shape " << i << " with type " << ((int) shapes.at(i).shape_type);
+    std::cout << std::endl;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr shape_part(new pcl::PointCloud<pcl::PointXYZRGB>);
+    switch(shapes.at(i).shape_type)
+    {
+      case suturo_msgs::Shape::BOX:
+        shape_part = generateBox(shapes.at(i).dimensions[0], 
+            shapes.at(i).dimensions[1],
+            shapes.at(i).dimensions[2],
+            POINTS_PER_BOX);
+        break;
+      case suturo_msgs::Shape::CYLINDER:
+        shape_part = generateCylinder(shapes.at(i).dimensions[0], 
+            shapes.at(i).dimensions[1], POINTS_PER_CYLINDER);
+        break;
+
+    }
+
+    // Check if the pose is !=0 and a transformation is necessary
+    if(shapes.at(i).pose.linear.x != 0   || 
+        shapes.at(i).pose.linear.y != 0  || 
+        shapes.at(i).pose.linear.z != 0  || 
+        shapes.at(i).pose.angular.x != 0 || 
+        shapes.at(i).pose.angular.y != 0 || 
+        shapes.at(i).pose.angular.z != 0  )
+    {
+      
+      Eigen::VectorXf pose = Eigen::Matrix< float, 6, 1 >::Zero();
+      pose[0] = shapes.at(i).pose.linear.x;
+      pose[1] = shapes.at(i).pose.linear.y;
+      pose[2] = shapes.at(i).pose.linear.z;
+      pose[3] = shapes.at(i).pose.angular.x;
+      pose[4] = shapes.at(i).pose.angular.y;
+      pose[5] = shapes.at(i).pose.angular.z;
+      pcl::transformPointCloud(*shape_part, *shape_part, getRotationMatrixFromPose(pose) );
+    }
+    *result += *shape_part;
+
+  }
   return result;
 }

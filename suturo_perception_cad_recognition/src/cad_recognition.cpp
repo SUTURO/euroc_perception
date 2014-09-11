@@ -50,8 +50,12 @@ int main(int argc, char** argv){
   std::string cad_model_pc_filename;
   std::string input_pc_filename;
   std::string table_normal_string;
+  std::string downsample_size;
   int max_iterations=-1;
   int max_distance=-1;
+
+  bool turn_model=false;
+  bool use_leaf_size=false;
 
   // "HashMap" for program parameters
   po::variables_map vm;
@@ -66,6 +70,8 @@ int main(int argc, char** argv){
       ("max-iterations,c", po::value<int>(&max_iterations), "The max iteration count for ICP. Default: 60")
       ("max-correspondence-distance,d", po::value<int>(&max_distance), "The max iteration correspondence distance for ICP. If no value is set, the PCL default will be used")
       ("table_normal,t", po::value<std::string>(&table_normal_string)->required(), "The normal of the surface where the object rests on")
+      ("downsample-size,l", po::value<std::string>(&downsample_size), "The leaf size for the downsampling process - Default = 0.005f")
+      ("model-upside,u", po::value<bool>()->zero_tokens(), "Turn the model upwards before running ICP - Default=false")
     ;
 
     po::positional_options_description p;
@@ -76,6 +82,14 @@ int main(int argc, char** argv){
       std::cout << "Usage: cad_recognition -i input_cloud.pcd -m cad_model_cloud.pcd -t 'table_normal'" << endl << endl;
       std::cout << desc << "\n";
       return 1;
+    }
+
+    if (vm.count("model-upside")) {
+      turn_model = true;
+    }
+
+    if (vm.count("downsample-size")) {
+      use_leaf_size = true;
     }
 
     // Put notify after the help check, so help is display even
@@ -122,9 +136,15 @@ int main(int argc, char** argv){
   // Downsample both clouds
   pcl::VoxelGrid<pcl::PointXYZ> sor;
   sor.setInputCloud (input_cloud);
-  // #define LEAF_SIZE 0.01f
+
   #define LEAF_SIZE 0.005f
-  sor.setLeafSize (LEAF_SIZE, LEAF_SIZE, LEAF_SIZE);
+  if(!use_leaf_size)
+  {
+    sor.setLeafSize (LEAF_SIZE, LEAF_SIZE, LEAF_SIZE);
+  }else{
+    double size = atof(downsample_size.c_str());
+    sor.setLeafSize (size, size, size);
+  }
   sor.filter (*input_cloud_voxeled);
 
   sor.setInputCloud (model_cloud);
@@ -161,6 +181,8 @@ int main(int argc, char** argv){
   // Eigen::Vector4f table_normal(0.169393, 0.488678, 0.855862, -0.596477); // euroc_mbpe/test_files/correctly_segmented_cylinder.pcd
   // Eigen::Vector4f table_normal(0.000309765, 0.601889, 0.79858, -0.782525); // euroc_mbpe/test_files/correctly_segmented_handlebar.pcd
  
+  std::cout << "Generated Pointcloud with " << model_cloud_voxeled->points.size() << "pts" << std::endl;
+  std::cout << "Input Pointcloud with " << input_cloud_voxeled->points.size() << "pts" << std::endl;
   ICPFitter ria(input_cloud_voxeled, model_cloud_voxeled, table_normal);
   if(max_iterations!=-1)
   {
@@ -170,7 +192,7 @@ int main(int argc, char** argv){
   {
     ria.setMaxICPIterations(60);
   }
-  // ria.rotateModelUp(false);
+  ria.rotateModelUp(turn_model);
   boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
   pcl::PointCloud<pcl::PointXYZ>::Ptr model_initial_aligned = ria.execute();
   boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
@@ -193,6 +215,8 @@ int main(int argc, char** argv){
   pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
   icp.setInputSource(ria._upwards_object);
   icp.setInputTarget(ria._upwards_model);
+  // icp.setInputTarget(ria._upwards_object);
+  // icp.setInputSource(ria._upwards_model);
   if(max_iterations!=-1)
   {
     std::cout << "Setting max iterations in ICP to: "<< max_iterations << std::endl;

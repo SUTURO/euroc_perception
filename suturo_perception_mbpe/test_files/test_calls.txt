@@ -1,0 +1,18 @@
+# Success on 2014-09-08
+# Box
+ rosrun suturo_perception_cad_recognition cad_recognition -m 005x005x005-box.pcd -i correctly_segmented_box.pcd -c 60 -t "0.000572634, 0.489801, 0.871834, -0.64807" -l "0.003"
+has converged:1 score: 1.75375e-06
+
+ rosrun suturo_perception_cad_recognition cad_recognition -m 005x005x005-box.pcd -i correctly_segmented_box.pcd -c 60 -t "0.000572634, 0.489801, 0.871834, -0.64807" -l "0.005" -u
+# has converged:1 score: 4.05129e-06
+
+# Cylinder
+rosrun suturo_perception_cad_recognition cad_recognition -m 0.1x0.02-cylinder.pcd -i correctly_segmented_cylinder.pcd -c 60 -t "0.169393, 0.488678, 0.855862, -0.596477" -l "0.009"
+# has converged:1 score: 1.33174e-05 
+
+# Handlebar
+ rosrun suturo_perception_cad_recognition cad_recognition -m handlebar_model.pcd -i correctly_segmented_handlebar.pcd -c 60 -t "0.000309765, 0.601889, 0.79858, -0.782525" -l "0.009"
+# has converged:1 score: 1.2985e-05 
+
+rosrun suturo_perception_cad_recognition cad_recognition -m handlebar_model.pcd -i correctly_segmented_handlebar.pcd -c 60 -t "0.000309765, 0.601889, 0.79858, -0.782525" -l "0.003"
+has converged:1 score: 2.18079e-06

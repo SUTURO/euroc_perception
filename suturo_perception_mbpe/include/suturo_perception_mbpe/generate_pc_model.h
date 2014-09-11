@@ -9,6 +9,8 @@
 #include <pcl/filters/filter.h>
 #include <pcl/common/transforms.h>
 #include <math.h>
+#include <suturo_msgs/Task.h>
+
 class GeneratePointCloudModel
 {
   private:
@@ -20,5 +22,6 @@ class GeneratePointCloudModel
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateCylinder(double length, double radius, int total_points);
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateComposed();
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateComposed(std::vector<suturo_msgs::Shape>  &shapes);
 };
 #endif
