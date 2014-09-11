@@ -18,7 +18,7 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 # enable openmp
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -march=native -mno-avx")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
 SET(CMAKE_BUILD_TYPE Release)	# Mandatory for openmp!
 

@@ -24,11 +24,16 @@
 
 #include <boost/program_options.hpp>
 
+#include <perception_utils/logger.h>
+
 namespace enc = sensor_msgs::image_encodings;
 namespace po = boost::program_options;
 using namespace boost;
+using namespace suturo_perception;
 
 ros::Publisher pub_cloud;
+
+Logger logger("publish_pointcloud");
 
 int cloud_idx = 0;
 
@@ -114,26 +119,57 @@ const cv::Mat &rgb_image, const tf::StampedTransform transform)
      p1.point.x = pPt->x;
      p1.point.y = pPt->y;
      p1.point.z = pPt->z;
+     
+     //tf::Vector3 p3;
+     //p3.m_floats[0] = pPt->x;
+     //p3.m_floats[1] = pPt->y;
+     //p3.m_floats[2] = pPt->z;
+     
+     //tf::Vector3 p4;
 
      geometry_msgs::PointStamped p2;
 
-     try{
-       listener.transformPoint("srgb", p1, p2);
-       //ROS_INFO("transform point success: (%f, %f, %f)", p2.point.x, p2.point.y, p2.point.z);
-     } catch (...) {
-       //ROS_ERROR("transform point failed!");
-       //ros::Duration(1.0).sleep();
-       pPt->r = 255;
-       pPt->g = 0;
-       pPt->b = 255;
-       continue;
-     } 
+     int tries = 0;
+     bool done = false;
+     while (tries < 5 && !done)
+     {
+      try{
+        listener.waitForTransform("sdepth_pcl", "srgb", ros::Time(0), ros::Duration(3.0));
+        listener.transformPoint("srgb", p1, p2);
+        //p4 = transform * p3;
+        //ROS_INFO("transform point success: (%f, %f, %f)", p2.point.x, p2.point.y, p2.point.z);
+        done = true;
+      } catch (...) {
+      } 
+      tries++;
+     }
+     if (!done)
+     {
+      //ROS_ERROR("transform point failed!");
+      //ros::Duration(1.0).sleep();
+      pPt->r = 255;
+      pPt->g = 0;
+      pPt->b = 255;
+      continue;
+     }
 
-     cv::Vec3b bgrPixel = rgb_image.at<cv::Vec3b>(p2.point.y, p2.point.z);
-     pPt->r = bgrPixel.val[2];
-     pPt->g = bgrPixel.val[1];
-     pPt->b = bgrPixel.val[0];
-
+     int pixx = (( 640.0 * ( p2.point.x * h1 - p2.point.y ) ) / ( 2.0 * p2.point.x * h1 ));
+     int pixy = ( 480.0 * ( p2.point.x * v1 - p2.point.z ) ) / ( 2.0 * p2.point.x * v1 );
+     //int pixx = (( 640.0 * ( p4.m_floats[0] * h1 - p4.m_floats[1] ) ) / ( 2.0 * p4.m_floats[0] * h1 ));
+     //int pixy = ( 480.0 * ( p4.m_floats[0] * v1 - p4.m_floats[2] ) ) / ( 2.0 * p4.m_floats[0] * v1 );
+     if (pixx < 0 || pixx > 640 || pixy < 0 || pixy > 480)
+     {
+      pPt->r = 255;
+      pPt->g = 0;
+      pPt->b = 255;
+     }
+     else
+     {
+      cv::Vec3b bgrPixel = rgb_image.at<cv::Vec3b>(pixy, pixx);
+      pPt->r = bgrPixel.val[2];
+      pPt->g = bgrPixel.val[1];
+      pPt->b = bgrPixel.val[0];
+     }
    }
   }
   return cloud;
@@ -176,6 +212,7 @@ void receive_depth_and_rgb_image(
     const sensor_msgs::ImageConstPtr& depthImage,
 		const sensor_msgs::ImageConstPtr& inputImage)
 {
+  boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
   if(verbose)
     std::cout << "Receiving images" << std::endl;
 
@@ -216,6 +253,9 @@ void receive_depth_and_rgb_image(
   pub_message.header.frame_id = frame;
   pub_message.header.stamp = depthImage->header.stamp;
   pub_cloud.publish(pub_message);
+  
+  boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
+  logger.logTime(s, e, "generate pointcloud");
 }
 
 int main (int argc, char** argv)
