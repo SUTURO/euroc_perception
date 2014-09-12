@@ -203,17 +203,17 @@ int main(int argc, char** argv){
   } 
 
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud (new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr model_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
   // pcl::PolygonMesh::Ptr model_mesh (new pcl::PolygonMesh);
 
   boost::posix_time::ptime file_load_start = boost::posix_time::microsec_clock::local_time();
-  if (pcl::io::loadPCDFile<pcl::PointXYZ> (input_pc_filename, *input_cloud) == -1) //* load the file
+  if (pcl::io::loadPCDFile<pcl::PointXYZRGB> (input_pc_filename, *input_cloud) == -1) //* load the file
   {
     PCL_ERROR ("Couldn't read input file\n");
     exit (-1);
   }
-  if (pcl::io::loadPCDFile<pcl::PointXYZ> (cad_model_pc_filename, *model_cloud) == -1) //* load the file
+  if (pcl::io::loadPCDFile<pcl::PointXYZRGB> (cad_model_pc_filename, *model_cloud) == -1) //* load the file
   {
     PCL_ERROR ("Couldn't read cad model file (points)\n");
     exit (-1);
@@ -257,11 +257,11 @@ int main(int argc, char** argv){
   //   exit (-1);
   // }
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_voxeled (new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud_voxeled (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud_voxeled (new pcl::PointCloud<pcl::PointXYZRGB>);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr model_cloud_voxeled (new pcl::PointCloud<pcl::PointXYZRGB>);
 
   // Downsample both clouds
-  pcl::VoxelGrid<pcl::PointXYZ> sor;
+  pcl::VoxelGrid<pcl::PointXYZRGB> sor;
   sor.setInputCloud (input_cloud);
 
   #define LEAF_SIZE 0.005f
@@ -310,11 +310,11 @@ int main(int argc, char** argv){
  
   std::cout << "Generated Pointcloud with " << model_cloud_voxeled->points.size() << "pts" << std::endl;
   std::cout << "Input Pointcloud with " << input_cloud_voxeled->points.size() << "pts" << std::endl;
-    // pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
-    // pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
-    // copyPointCloud(*input_cloud, *input_cloud_xyz);
-    // copyPointCloud(*generated_models_->at(i), *model_cloud_xyz);
-  ICPFitter ria(input_cloud_voxeled, model_cloud_voxeled, table_normal);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
+  copyPointCloud(*input_cloud_voxeled, *input_cloud_xyz);
+  copyPointCloud(*model_cloud_voxeled, *model_cloud_xyz);
+  ICPFitter ria(input_cloud_xyz, model_cloud_xyz, table_normal);
   if(max_iterations!=-1)
   {
     ria.setMaxICPIterations(max_iterations);
@@ -343,10 +343,11 @@ int main(int argc, char** argv){
 
 
   // Refine the result with ICP
-
+  std::cout << "ICP 2" << std::endl;
   pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
-  icp.setInputSource(ria._upwards_object);
-  icp.setInputTarget(ria._upwards_model);
+  // icp.setInputSource(ria._upwards_object);
+  // icp.setInputTarget(ria._upwards_model);
+  /*
   // icp.setInputTarget(ria._upwards_object);
   // icp.setInputSource(ria._upwards_model);
   if(max_iterations!=-1)
@@ -367,104 +368,104 @@ int main(int argc, char** argv){
   // Observation: The fitness score should be below 1e-5
   
   pcl::PointCloud<pcl::PointXYZ>::Ptr Final(new pcl::PointCloud<pcl::PointXYZ>);
-  icp.align(*Final);
+  // icp.align(*Final);
   std::cout << "has converged:" << icp.hasConverged() << " score: " <<
   icp.getFitnessScore() << std::endl;
   std::cout << icp.getFinalTransformation() << std::endl;
-
-
-  // Check the result of the calculated transformation
-  pcl::PointCloud<pcl::PointXYZ>::Ptr model_initial_transformed (new pcl::PointCloud<pcl::PointXYZ>);
-
-  Eigen::Matrix<float, 4, 4> icp_transform = icp.getFinalTransformation();
-  Eigen::Matrix<float, 4, 4> icp_transform_inverse = icp.getFinalTransformation().inverse();
-  pcl::transformPointCloud(*model_cloud_voxeled, *model_initial_transformed, ria.rotations_.at(0) );
-  pcl::transformPointCloud(*model_initial_transformed, *model_initial_transformed,icp_transform_inverse );
-  pcl::transformPointCloud(*model_initial_transformed, *model_initial_transformed, initial_alignment_translation );
-  pcl::transformPointCloud(*model_initial_transformed, *model_initial_transformed, ria.rotations_.at(1) );
-
-
-  pcl::visualization::PCLVisualizer viewer;
-  int v1,v2,v3,v4;
-  // viewer.createViewPort(0.0,0, 0.25,1, v1 );
-  // viewer.addText("Input Cloud", 0.1, 0.1 , "input_cloud_text_id", v1 );
-  viewer.createViewPort(0.0,0, 0.33,1, v2 );
-  viewer.addText("Model vs. Input Cloud - Roughly aligned (red=model, orange=upwards_model), ", 0.1, 0.1 , "model_cloud_text_id", v2 );
-  viewer.addCoordinateSystem(0.3,v2);
-  // pcl::PointXYZ a(0,1,0);
-  // viewer.addSphere(a,0.5,"sphere",v2);
-  viewer.createViewPort(0.33,0, 0.66  ,1, v3 );
-  viewer.addCoordinateSystem(0.3,v3);
-  viewer.addText("ICP (yellow=ICP result, green=input, orange=model)", 0.1, 0.1 , "icp_text", v3 );
-  viewer.createViewPort(0.66,0, 1  ,1, v4 );
-  viewer.addCoordinateSystem(0.3,v4);
-  viewer.addText("Pose estimation", 0.1, 0.1 , "pose_text", v4 );
-
-  // Viewport 2
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> green_color(input_cloud, 0, 255, 0);
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red_color(model_cloud, 255, 0, 0);
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> upwards_color(ria._upwards_model, 255, 125, 0);
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> upwards_object(ria._upwards_object, 128, 255, 0);
-  viewer.addPointCloud<pcl::PointXYZ> (input_cloud, green_color, "input_cloud_id2",v2);
-  viewer.addPointCloud<pcl::PointXYZ> (model_cloud, red_color, "model_cloud_id",v2);
-  viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_model, upwards_color, "upwards_color",v2);
-  viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_object, upwards_object, "upwards_object",v2);
-  drawNormalizedVector(viewer, Eigen::Vector3f(0,0,0), Eigen::Vector3f(0,0,1), "norm_at_origin", v2);
-  drawNormalizedVector(viewer, Eigen::Vector3f(0,0,0),
-      Eigen::Vector3f(table_normal[0],table_normal[1],table_normal[2])
-      ,"table_normal", v2);
-
-
-  // Viewport 3
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> yellow_color(Final, 255, 255, 0);
-  viewer.addPointCloud<pcl::PointXYZ> (Final, yellow_color,"refined_aligned_cloud_id",v3);
-  viewer.addPointCloud<pcl::PointXYZ> (input_cloud, green_color,"original_cloud_vs_refined_aligned_id",v3);
-  viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_model, upwards_color, "upwards_model_vs_refined_cloud",v3);
-
-  // Viewport 4
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> pink_color(ria._upwards_object_s2, 255, 187, 255);
-  // viewer.addPointCloud<pcl::PointXYZ> (Final, yellow_color,"refined_aligned_cloud_id",v3);
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red_init(model_initial_aligned, 255, 255, 0);
-  viewer.addPointCloud<pcl::PointXYZ> (input_cloud, green_color,"original_cloud_vs_pose",v4);
-  viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_object_s1, green_color,"upwards object s1",v4);
-  viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_object_s2, pink_color,"upwards object s2",v4);
-  viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_object_s3, green_color,"upwards object s3",v4);
-  viewer.addPointCloud<pcl::PointXYZ> (model_initial_transformed, red_init, "model_cloud_id_v4",v4);
-  // viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_model, upwards_color, "upwards_model_vs_refined_cloud",v3);
-  viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_model, upwards_color, "upwards_color_v4",v4);
-  viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_object, upwards_object, "upwards_object_v4",v4);
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr model_icp_transformed (new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::transformPointCloud(*ria._upwards_model, *model_icp_transformed,icp_transform_inverse );
-  viewer.addPointCloud<pcl::PointXYZ> (model_icp_transformed, "model_icp_transformed",v4);
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr model_icp_transformed_s2 (new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::transformPointCloud(*ria._upwards_model, *model_icp_transformed_s2,icp_transform_inverse );
-  pcl::transformPointCloud(*model_icp_transformed_s2, *model_icp_transformed_s2, ria.translations_.at(0) );
-  viewer.addPointCloud<pcl::PointXYZ> (model_icp_transformed_s2, "model_transformed_s2",v4);
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr model_icp_transformed_s3 (new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::transformPointCloud(*ria._upwards_model, *model_icp_transformed_s3,icp_transform_inverse );
-  pcl::transformPointCloud(*model_icp_transformed_s3, *model_icp_transformed_s3, ria.translations_.at(0) );
-  pcl::transformPointCloud(*model_icp_transformed_s3, *model_icp_transformed_s3, ria.translations_.at(1) );
-  viewer.addPointCloud<pcl::PointXYZ> (model_icp_transformed_s3, "model_transformed_s3",v4);
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr model_icp_transformed_s4 (new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::transformPointCloud(*ria._upwards_model, *model_icp_transformed_s4, 
-      ria.rotations_.at(1) *
-      ria.translations_.at(1) * ria.translations_.at(0) * icp_transform_inverse );
-  viewer.addPointCloud<pcl::PointXYZ> (model_icp_transformed_s4, "model_transformed_s4",v4);
-
-  // Transform object center
-  pcl::PointXYZ a(0,0,0);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr origin (new pcl::PointCloud<pcl::PointXYZ>);
-  origin->push_back(a);
-  pcl::transformPointCloud(*origin, *origin, 
-      ria.rotations_.at(1) *
-      ria.translations_.at(1) * ria.translations_.at(0) * icp_transform_inverse );
-  viewer.addSphere(origin->at(0),0.03,"sphere2",v4);
-
-  viewer.spin();
-
-  return 0;
+  */
+// 
+//   // Check the result of the calculated transformation
+//   pcl::PointCloud<pcl::PointXYZ>::Ptr model_initial_transformed (new pcl::PointCloud<pcl::PointXYZ>);
+// 
+//   Eigen::Matrix<float, 4, 4> icp_transform = icp.getFinalTransformation();
+//   Eigen::Matrix<float, 4, 4> icp_transform_inverse = icp.getFinalTransformation().inverse();
+//   pcl::transformPointCloud(*model_cloud_voxeled, *model_initial_transformed, ria.rotations_.at(0) );
+//   pcl::transformPointCloud(*model_initial_transformed, *model_initial_transformed,icp_transform_inverse );
+//   pcl::transformPointCloud(*model_initial_transformed, *model_initial_transformed, initial_alignment_translation );
+//   pcl::transformPointCloud(*model_initial_transformed, *model_initial_transformed, ria.rotations_.at(1) );
+// 
+// 
+//   pcl::visualization::PCLVisualizer viewer;
+//   int v1,v2,v3,v4;
+//   // viewer.createViewPort(0.0,0, 0.25,1, v1 );
+//   // viewer.addText("Input Cloud", 0.1, 0.1 , "input_cloud_text_id", v1 );
+//   viewer.createViewPort(0.0,0, 0.33,1, v2 );
+//   viewer.addText("Model vs. Input Cloud - Roughly aligned (red=model, orange=upwards_model), ", 0.1, 0.1 , "model_cloud_text_id", v2 );
+//   viewer.addCoordinateSystem(0.3,v2);
+//   // pcl::PointXYZ a(0,1,0);
+//   // viewer.addSphere(a,0.5,"sphere",v2);
+//   viewer.createViewPort(0.33,0, 0.66  ,1, v3 );
+//   viewer.addCoordinateSystem(0.3,v3);
+//   viewer.addText("ICP (yellow=ICP result, green=input, orange=model)", 0.1, 0.1 , "icp_text", v3 );
+//   viewer.createViewPort(0.66,0, 1  ,1, v4 );
+//   viewer.addCoordinateSystem(0.3,v4);
+//   viewer.addText("Pose estimation", 0.1, 0.1 , "pose_text", v4 );
+// 
+//   // Viewport 2
+//   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> green_color(input_cloud, 0, 255, 0);
+//   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red_color(model_cloud, 255, 0, 0);
+//   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> upwards_color(ria._upwards_model, 255, 125, 0);
+//   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> upwards_object(ria._upwards_object, 128, 255, 0);
+//   viewer.addPointCloud<pcl::PointXYZ> (input_cloud, green_color, "input_cloud_id2",v2);
+//   viewer.addPointCloud<pcl::PointXYZ> (model_cloud, red_color, "model_cloud_id",v2);
+//   viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_model, upwards_color, "upwards_color",v2);
+//   viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_object, upwards_object, "upwards_object",v2);
+//   drawNormalizedVector(viewer, Eigen::Vector3f(0,0,0), Eigen::Vector3f(0,0,1), "norm_at_origin", v2);
+//   drawNormalizedVector(viewer, Eigen::Vector3f(0,0,0),
+//       Eigen::Vector3f(table_normal[0],table_normal[1],table_normal[2])
+//       ,"table_normal", v2);
+// 
+// 
+//   // Viewport 3
+//   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> yellow_color(Final, 255, 255, 0);
+//   viewer.addPointCloud<pcl::PointXYZ> (Final, yellow_color,"refined_aligned_cloud_id",v3);
+//   viewer.addPointCloud<pcl::PointXYZ> (input_cloud, green_color,"original_cloud_vs_refined_aligned_id",v3);
+//   viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_model, upwards_color, "upwards_model_vs_refined_cloud",v3);
+// 
+//   // Viewport 4
+//   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> pink_color(ria._upwards_object_s2, 255, 187, 255);
+//   // viewer.addPointCloud<pcl::PointXYZ> (Final, yellow_color,"refined_aligned_cloud_id",v3);
+//   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red_init(model_initial_aligned, 255, 255, 0);
+//   viewer.addPointCloud<pcl::PointXYZ> (input_cloud, green_color,"original_cloud_vs_pose",v4);
+//   viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_object_s1, green_color,"upwards object s1",v4);
+//   viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_object_s2, pink_color,"upwards object s2",v4);
+//   viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_object_s3, green_color,"upwards object s3",v4);
+//   viewer.addPointCloud<pcl::PointXYZ> (model_initial_transformed, red_init, "model_cloud_id_v4",v4);
+//   // viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_model, upwards_color, "upwards_model_vs_refined_cloud",v3);
+//   viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_model, upwards_color, "upwards_color_v4",v4);
+//   viewer.addPointCloud<pcl::PointXYZ> (ria._upwards_object, upwards_object, "upwards_object_v4",v4);
+// 
+//   pcl::PointCloud<pcl::PointXYZ>::Ptr model_icp_transformed (new pcl::PointCloud<pcl::PointXYZ>);
+//   pcl::transformPointCloud(*ria._upwards_model, *model_icp_transformed,icp_transform_inverse );
+//   viewer.addPointCloud<pcl::PointXYZ> (model_icp_transformed, "model_icp_transformed",v4);
+// 
+//   pcl::PointCloud<pcl::PointXYZ>::Ptr model_icp_transformed_s2 (new pcl::PointCloud<pcl::PointXYZ>);
+//   pcl::transformPointCloud(*ria._upwards_model, *model_icp_transformed_s2,icp_transform_inverse );
+//   pcl::transformPointCloud(*model_icp_transformed_s2, *model_icp_transformed_s2, ria.translations_.at(0) );
+//   viewer.addPointCloud<pcl::PointXYZ> (model_icp_transformed_s2, "model_transformed_s2",v4);
+// 
+//   pcl::PointCloud<pcl::PointXYZ>::Ptr model_icp_transformed_s3 (new pcl::PointCloud<pcl::PointXYZ>);
+//   pcl::transformPointCloud(*ria._upwards_model, *model_icp_transformed_s3,icp_transform_inverse );
+//   pcl::transformPointCloud(*model_icp_transformed_s3, *model_icp_transformed_s3, ria.translations_.at(0) );
+//   pcl::transformPointCloud(*model_icp_transformed_s3, *model_icp_transformed_s3, ria.translations_.at(1) );
+//   viewer.addPointCloud<pcl::PointXYZ> (model_icp_transformed_s3, "model_transformed_s3",v4);
+// 
+//   pcl::PointCloud<pcl::PointXYZ>::Ptr model_icp_transformed_s4 (new pcl::PointCloud<pcl::PointXYZ>);
+//   pcl::transformPointCloud(*ria._upwards_model, *model_icp_transformed_s4, 
+//       ria.rotations_.at(1) *
+//       ria.translations_.at(1) * ria.translations_.at(0) * icp_transform_inverse );
+//   viewer.addPointCloud<pcl::PointXYZ> (model_icp_transformed_s4, "model_transformed_s4",v4);
+// 
+//   // Transform object center
+//   pcl::PointXYZ a(0,0,0);
+//   pcl::PointCloud<pcl::PointXYZ>::Ptr origin (new pcl::PointCloud<pcl::PointXYZ>);
+//   origin->push_back(a);
+//   pcl::transformPointCloud(*origin, *origin, 
+//       ria.rotations_.at(1) *
+//       ria.translations_.at(1) * ria.translations_.at(0) * icp_transform_inverse );
+//   viewer.addSphere(origin->at(0),0.03,"sphere2",v4);
+// 
+//   viewer.spin();
+// 
+//   return 0;
 };
