@@ -5,7 +5,7 @@
 #include <suturo_msgs/Task.h>
 #include <suturo_perception_cad_recognition/icp_fitter.h>
 #include "perception_utils/logger.h"
-#include <suturo_perception_mbpe/generate_pc_model.h>
+#include <suturo_perception_cad_recognition/generate_pc_model.h>
 #include <boost/algorithm/string.hpp>
 
 /*
@@ -57,6 +57,9 @@ public:
   // in suturo_perception_cad_recognition/dumps/
   void setDumpICPFitterPointclouds(bool b);
 
+  // Delete every model and create new ones
+  void generateModels();
+
   void execute();
 
   /*
@@ -82,6 +85,9 @@ public:
   // The pose will be the one of the best matching model
   // Available after execute()
   Eigen::VectorXf getEstimatedPose();
+
+  boost::shared_ptr<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> > getGeneratedModels();
+
 private:
   /* data */
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud_;
@@ -98,9 +104,6 @@ private:
   suturo_perception::Logger logger_;
   GeneratePointCloudModel model_generator_;
   bool dump_icp_fitter_pointclouds_;
-
-  // Delete every model and create new ones
-  void generateModels();
 
 
 };

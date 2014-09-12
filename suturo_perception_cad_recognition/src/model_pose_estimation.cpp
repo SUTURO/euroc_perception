@@ -1,4 +1,4 @@
-#include <suturo_perception_mbpe/model_pose_estimation.h>
+#include <suturo_perception_cad_recognition/model_pose_estimation.h>
 
 
 void ModelPoseEstimation::setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
@@ -145,4 +145,9 @@ void ModelPoseEstimation::generateModels()
 void ModelPoseEstimation::setDumpICPFitterPointclouds(bool b)
 {
   dump_icp_fitter_pointclouds_ = b;
+}
+
+boost::shared_ptr<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> > ModelPoseEstimation::getGeneratedModels()
+{
+  return generated_models_;
 }
