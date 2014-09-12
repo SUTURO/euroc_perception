@@ -105,6 +105,9 @@ void ModelPoseEstimation::execute()
     // Dump the pointclouds that ICPFitter generated during it's execution
     // TODO: check bool for activation
     fitter.dumpPointClouds();
+    // Workaround for a strange error ... The ICPFitter behaves
+    // differently when you instantiate the standard ICP around it ...
+    // pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
    
   }
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();

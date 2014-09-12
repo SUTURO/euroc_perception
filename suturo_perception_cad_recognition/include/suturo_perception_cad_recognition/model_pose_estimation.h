@@ -7,7 +7,9 @@
 #include "perception_utils/logger.h"
 #include <suturo_perception_cad_recognition/generate_pc_model.h>
 #include <boost/algorithm/string.hpp>
-
+// #include <pcl/registration/icp.h>
+#include <pcl/registration/icp_nl.h>
+// #include <pcl/registration/ia_ransac.h>
 /*
  * This class defines the interface for the perception pipeline.
  * It passes a set of suturo_msgs::Object to the constructor.
