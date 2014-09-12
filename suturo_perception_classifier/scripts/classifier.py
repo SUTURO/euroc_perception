@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 
 from __future__ import division
-from suturo_perception_classifier.classifier import Classifier
+from suturo_perception_classifier.classifier import Classifier as CF
 import numpy as np
 import rospy
 import cv2
@@ -18,7 +18,7 @@ def dump(request):
 
 
 def main():
-    c = Classifier()
+    c = CF()
     rospy.init_node("Classifier", anonymous=True)
     # Create the service
     rospy.loginfo("Starting Classifier")
