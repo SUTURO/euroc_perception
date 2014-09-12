@@ -28,53 +28,64 @@ main (int argc, char** argv)
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
-  std::vector<suturo_msgs::Shape> shapes;
-  suturo_msgs::Shape shape1;
-  shape1.shape_type = shape1.BOX;
+  std::vector<shape_msgs::SolidPrimitive> primitives;
+  std::vector<geometry_msgs::Pose> primitive_poses;
+	shape_msgs::SolidPrimitive shape1;
+	geometry_msgs::Pose pose1;
+  shape1.type = shape1.BOX;
   // 0.05 x 0.05 x 0.05
   shape1.dimensions.push_back(0.05f);
   shape1.dimensions.push_back(0.05f);
   shape1.dimensions.push_back(0.05f);
-  shape1.pose.linear.x = 0;
-  shape1.pose.linear.y = 0;
-  shape1.pose.linear.z = 0;
-  shape1.pose.angular.x = 0;
-  shape1.pose.angular.y = 0;
-  shape1.pose.angular.z = 0;
+  pose1.position.x = 0;
+  pose1.position.y = 0;
+  pose1.position.z = 0;
+  pose1.orientation.x = 0;
+  pose1.orientation.y = 0;
+  pose1.orientation.z = 0;
+  pose1.orientation.w = 1;
 
   // Define the extra parts on the handlebar
-  suturo_msgs::Shape shape2;
-  shape2.shape_type = shape1.BOX;
+  shape_msgs::SolidPrimitive shape2;
+	geometry_msgs::Pose pose2;
+  shape2.type = shape2.BOX;
   // 0.05 x 0.05 x 0.05
   shape2.dimensions.push_back(0.05f);
   shape2.dimensions.push_back(0.05f);
   shape2.dimensions.push_back(0.05f);
-  shape2.pose.linear.x = 0;
-  shape2.pose.linear.y = 0;
-  shape2.pose.linear.z = 0.35f;
-  shape2.pose.angular.x = 0;
-  shape2.pose.angular.y = 0;
-  shape2.pose.angular.z = 0;
+  pose2.position.x = 0;
+  pose2.position.y = 0;
+  pose2.position.z = 0.35f;
+  pose2.orientation.x = 0;
+  pose2.orientation.y = 0;
+  pose2.orientation.z = 0;
+  pose2.orientation.w = 1;
 
-  suturo_msgs::Shape shape3;
-  shape3.shape_type = shape1.CYLINDER;
+  shape_msgs::SolidPrimitive shape3;
+	geometry_msgs::Pose pose3;
+  shape3.type = shape3.CYLINDER;
   shape3.dimensions.push_back(0.3f);
   shape3.dimensions.push_back(0.01f);
-  shape3.pose.linear.x = 0;
-  shape3.pose.linear.y = 0;
-  shape3.pose.linear.z = 0.175f;
-  shape3.pose.angular.x = 0;
-  shape3.pose.angular.y = 0;
-  shape3.pose.angular.z = 0;
+  pose3.position.x = 0;
+  pose3.position.y = 0;
+  pose3.position.z = 0.175f;
+  pose3.orientation.x = 0;
+  pose3.orientation.y = 0;
+  pose3.orientation.z = 0;
+  pose3.orientation.w = 1;
 
-  shapes.push_back(shape1);
-  shapes.push_back(shape2);
-  shapes.push_back(shape3);
+  primitives.push_back(shape1);
+  primitives.push_back(shape2);
+  primitives.push_back(shape3);
+
+  primitive_poses.push_back(pose1);
+  primitive_poses.push_back(pose2);
+  primitive_poses.push_back(pose3);
 
   // output_cloud = generateCylinder(0.1, 0.02, 5000);
   // output_cloud = g.generateComposed();
-  output_cloud = g.generateComposed(shapes);
-  // g.generateComposed(shapes);
+  output_cloud = g.generateComposed(primitives, primitive_poses);
+  // g.generateComposed(primitives);
 
   // output_cloud = g.generateBox(0.05, 0.05, 0.05, 4000);
 

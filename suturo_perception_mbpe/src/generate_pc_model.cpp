@@ -232,44 +232,44 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateComposed
   *result += *box2;
   return result;
 }
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateComposed(std::vector<suturo_msgs::Shape>  &shapes)
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateComposed(std::vector<shape_msgs::SolidPrimitive>  &primitives, std::vector<geometry_msgs::Pose> &poses)
 {
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr result(new pcl::PointCloud<pcl::PointXYZRGB>);
-  for (int i = 0; i < shapes.size(); i++) {
-    std::cout << "Generating shape " << i << " with type " << ((int) shapes.at(i).shape_type);
+  for (int i = 0; i < primitives.size(); i++) {
+    std::cout << "Generating shape " << i << " with type " << ((int) primitives.at(i).type);
     std::cout << std::endl;
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr shape_part(new pcl::PointCloud<pcl::PointXYZRGB>);
-    switch(shapes.at(i).shape_type)
+    switch(primitives.at(i).type)
     {
-      case suturo_msgs::Shape::BOX:
-        shape_part = generateBox(shapes.at(i).dimensions[0], 
-            shapes.at(i).dimensions[1],
-            shapes.at(i).dimensions[2],
+      case shape_msgs::SolidPrimitive::BOX:
+        shape_part = generateBox(primitives.at(i).dimensions[0], 
+            primitives.at(i).dimensions[1],
+            primitives.at(i).dimensions[2],
             POINTS_PER_BOX);
         break;
-      case suturo_msgs::Shape::CYLINDER:
-        shape_part = generateCylinder(shapes.at(i).dimensions[0], 
-            shapes.at(i).dimensions[1], POINTS_PER_CYLINDER);
+      case shape_msgs::SolidPrimitive::CYLINDER:
+        shape_part = generateCylinder(primitives.at(i).dimensions[0], 
+            primitives.at(i).dimensions[1], POINTS_PER_CYLINDER);
         break;
 
     }
 
     // Check if the pose is !=0 and a transformation is necessary
-    if(shapes.at(i).pose.linear.x != 0   || 
-        shapes.at(i).pose.linear.y != 0  || 
-        shapes.at(i).pose.linear.z != 0  || 
-        shapes.at(i).pose.angular.x != 0 || 
-        shapes.at(i).pose.angular.y != 0 || 
-        shapes.at(i).pose.angular.z != 0  )
+    if(poses.at(i).position.x != 0   || 
+        poses.at(i).position.y != 0  || 
+        poses.at(i).position.z != 0  || 
+        poses.at(i).orientation.x != 0 || 
+        poses.at(i).orientation.y != 0 || 
+        poses.at(i).orientation.z != 0  )
     {
       
       Eigen::VectorXf pose = Eigen::Matrix< float, 6, 1 >::Zero();
-      pose[0] = shapes.at(i).pose.linear.x;
-      pose[1] = shapes.at(i).pose.linear.y;
-      pose[2] = shapes.at(i).pose.linear.z;
-      pose[3] = shapes.at(i).pose.angular.x;
-      pose[4] = shapes.at(i).pose.angular.y;
-      pose[5] = shapes.at(i).pose.angular.z;
+      pose[0] = poses.at(i).position.x;
+      pose[1] = poses.at(i).position.y;
+      pose[2] = poses.at(i).position.z;
+      pose[3] = poses.at(i).orientation.x;
+      pose[4] = poses.at(i).orientation.y;
+      pose[5] = poses.at(i).orientation.z;
       pcl::transformPointCloud(*shape_part, *shape_part, getRotationMatrixFromPose(pose) );
     }
     *result += *shape_part;

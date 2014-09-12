@@ -120,7 +120,7 @@ void ModelPoseEstimation::generateModels()
   }
   generated_models_->clear();  
   for (int i = 0; i < objects_->size(); i++) {
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr shape = model_generator_.generateComposed(objects_->at(i).shapes);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr shape = model_generator_.generateComposed(objects_->at(i).primitives, objects_->at(i).primitive_poses);
 
     if(voxel_size_ != 0)
     {

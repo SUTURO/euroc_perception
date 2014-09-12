@@ -64,19 +64,22 @@ int main(int argc, const char *argv[])
   obj.description="a red cube";
   obj.surface_material = suturo_msgs::Object::ALUMINIUM;
 
-  suturo_msgs::Shape shape1;
-  shape1.shape_type = shape1.BOX;
+  shape_msgs::SolidPrimitive shape1;
+	geometry_msgs::Pose pose;
+  shape1.type = shape1.BOX;
   // 0.05 x 0.05 x 0.05
   shape1.dimensions.push_back(0.05f);
   shape1.dimensions.push_back(0.05f);
   shape1.dimensions.push_back(0.05f);
-  shape1.pose.linear.x = 0;
-  shape1.pose.linear.y = 0;
-  shape1.pose.linear.z = 0;
-  shape1.pose.angular.x = 0;
-  shape1.pose.angular.y = 0;
-  shape1.pose.angular.z = 0;
-  obj.shapes.push_back(shape1);
+  pose.position.x = 0;
+  pose.position.y = 0;
+  pose.position.z = 0;
+  pose.orientation.x = 0;
+  pose.orientation.y = 0;
+  pose.orientation.z = 0;
+  pose.orientation.w = 1;
+  obj.primitives.push_back(shape1);
+  obj.primitive_poses.push_back(pose);
   objects->push_back(obj);
   // shapes->push_back(shape1);
 

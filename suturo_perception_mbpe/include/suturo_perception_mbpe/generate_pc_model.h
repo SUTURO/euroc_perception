@@ -22,6 +22,6 @@ class GeneratePointCloudModel
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateCylinder(double length, double radius, int total_points);
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateComposed();
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateComposed(std::vector<suturo_msgs::Shape>  &shapes);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateComposed(std::vector<shape_msgs::SolidPrimitive>  &primitives, std::vector<geometry_msgs::Pose> &poses);
 };
 #endif
