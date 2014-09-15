@@ -315,7 +315,47 @@ int main(int argc, char** argv){
   pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
   copyPointCloud(*input_cloud_voxeled, *input_cloud_xyz);
+  // copyPointCloud(*model_cloud_voxeled, *model_cloud_xyz);
   copyPointCloud(*model_cloud_voxeled, *model_cloud_xyz);
+
+  std::cout << "Comparing models: " << std::endl;
+  std::cout << model_cloud_voxeled->points.size() << "vs.";
+  std::cout << mpe.getGeneratedModels()->at(0)->points.size() << std::endl;
+
+  std::cout << "Difference Count: " << std::endl;
+  for (int i = 0; i < model_cloud_voxeled->points.size(); i++) {
+    if(
+        (model_cloud_voxeled->points.at(i).x != mpe.getGeneratedModels()->at(0)->points.at(i).x) ||
+        (model_cloud_voxeled->points.at(i).y != mpe.getGeneratedModels()->at(0)->points.at(i).y) ||
+        (model_cloud_voxeled->points.at(i).z != mpe.getGeneratedModels()->at(0)->points.at(i).z) )
+    {
+      std::cout << "X";
+      std::cout << model_cloud_voxeled->points.at(i).x << " ";
+      std::cout << model_cloud_voxeled->points.at(i).y << " ";
+      std::cout << model_cloud_voxeled->points.at(i).z << " ";
+      std::cout << mpe.getGeneratedModels()->at(0)->points.at(i).x << " ";
+      std::cout << mpe.getGeneratedModels()->at(0)->points.at(i).y << " ";
+      std::cout << mpe.getGeneratedModels()->at(0)->points.at(i).z << " ";
+      std::cout << std::endl;
+    }
+  }
+  std::cout << std::endl;
+
+  // for (int i = 0; i < 10; i++) {
+  //   std::cout << model_cloud_voxeled->points.at(i).x << " ";
+  //   std::cout << model_cloud_voxeled->points.at(i).y << " ";
+  //   std::cout << model_cloud_voxeled->points.at(i).z << " ";
+  //   std::cout << std::endl;
+  // }
+
+  // for (int i = 0; i < 10; i++) {
+  //   std::cout << mpe.getGeneratedModels()->at(0)->points.at(i).x << " ";
+  //   std::cout << mpe.getGeneratedModels()->at(0)->points.at(i).y << " ";
+  //   std::cout << mpe.getGeneratedModels()->at(0)->points.at(i).z << " ";
+  //   std::cout << std::endl;
+  // }
+  // Use the generated model
+  // copyPointCloud(*mpe.getGeneratedModels()->at(0), *model_cloud_xyz);
 
   ICPFitter ria(input_cloud_xyz, model_cloud_xyz, table_normal);
   if(max_iterations!=-1)

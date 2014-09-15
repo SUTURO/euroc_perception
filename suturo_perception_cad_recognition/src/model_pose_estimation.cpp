@@ -100,14 +100,24 @@ void ModelPoseEstimation::execute()
     logger_.logTime(s_icp, e_icp, "Time for ICPFitter::execute()");
 
     if(fitter.getFitnessScore() < fitness_score_)
+    {
       fitness_score_ = fitter.getFitnessScore();
+      // Get the orientation of the aligned object.
+      Eigen::Quaternionf orientation = fitter.getOrientation(); 
+      // Get the origin of the aligned object.
+      pcl::PointXYZ origin = fitter.getOrigin(); 
+
+      estimated_pose_ = Eigen::VectorXf();
+    }
 
     // Dump the pointclouds that ICPFitter generated during it's execution
     // TODO: check bool for activation
     fitter.dumpPointClouds();
     // Workaround for a strange error ... The ICPFitter behaves
     // differently when you instantiate the standard ICP around it ...
+    // Be careful when you comment this in .....
     // pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
+    //
    
   }
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();

@@ -108,6 +108,8 @@ include_directories(
 ## Declare a cpp library
 add_library(suturo_perception_icp_fitter
    src/icp_fitter.cpp
+	 #	 src/model_pose_estimation.cpp
+	 #	 src/generate_pc_model.cpp
 )
 
 ## Declare a cpp executable
@@ -212,10 +214,11 @@ target_link_libraries(generate_pc_model
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_suturo_perception_cad_recognition.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+catkin_add_gtest(${PROJECT_NAME}-test tests/tests.cpp)
+if(TARGET ${PROJECT_NAME}-test)
+	#target_link_libraries(${PROJECT_NAME}-test suturo_perception_icp_fitter ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+   target_link_libraries(${PROJECT_NAME}-test suturo_perception_icp_fitter ${catkin_LIBRARIES} ${Boost_LIBRARIES} model_pose_estimation)
+endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
