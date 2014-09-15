@@ -106,8 +106,17 @@ void ModelPoseEstimation::execute()
       Eigen::Quaternionf orientation = fitter.getOrientation(); 
       // Get the origin of the aligned object.
       pcl::PointXYZ origin = fitter.getOrigin(); 
+      std::cout << "Pose: " << orientation.x() << " " << orientation.y() << " " << orientation.z() << " " << orientation.w() << " " << origin << std::endl;
 
-      estimated_pose_ = Eigen::VectorXf();
+      estimated_pose_ = Eigen::VectorXf(7);
+      estimated_pose_[0] = origin.x;
+      estimated_pose_[1] = origin.y;
+      estimated_pose_[2] = origin.z;
+
+      estimated_pose_[3] = orientation.x();
+      estimated_pose_[4] = orientation.y();
+      estimated_pose_[5] = orientation.z();
+      estimated_pose_[6] = orientation.w();
     }
 
     // Dump the pointclouds that ICPFitter generated during it's execution

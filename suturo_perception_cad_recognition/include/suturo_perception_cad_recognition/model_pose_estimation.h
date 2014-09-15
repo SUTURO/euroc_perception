@@ -83,7 +83,7 @@ public:
   // Available after execute()
   double getFitnessScore();
 
-  // Get the pose (x,y,z + quaternion) as a 7-dimensional vector.
+  // Get the pose (x,y,z, quaternion.x, quaternion.y, quaternion.z, quaternion.w ) as a 7-dimensional vector.
   // The pose will be the one of the best matching model
   // Available after execute()
   Eigen::VectorXf getEstimatedPose();
