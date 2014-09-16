@@ -1,4 +1,4 @@
-#include <suturo_perception_mbpe/model_pose_estimation.h>
+#include <suturo_perception_cad_recognition/model_pose_estimation.h>
 
 
 void ModelPoseEstimation::setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)
@@ -100,11 +100,33 @@ void ModelPoseEstimation::execute()
     logger_.logTime(s_icp, e_icp, "Time for ICPFitter::execute()");
 
     if(fitter.getFitnessScore() < fitness_score_)
+    {
       fitness_score_ = fitter.getFitnessScore();
+      // Get the orientation of the aligned object.
+      Eigen::Quaternionf orientation = fitter.getOrientation(); 
+      // Get the origin of the aligned object.
+      pcl::PointXYZ origin = fitter.getOrigin(); 
+      std::cout << "Pose: " << orientation.x() << " " << orientation.y() << " " << orientation.z() << " " << orientation.w() << " " << origin << std::endl;
+
+      estimated_pose_ = Eigen::VectorXf(7);
+      estimated_pose_[0] = origin.x;
+      estimated_pose_[1] = origin.y;
+      estimated_pose_[2] = origin.z;
+
+      estimated_pose_[3] = orientation.x();
+      estimated_pose_[4] = orientation.y();
+      estimated_pose_[5] = orientation.z();
+      estimated_pose_[6] = orientation.w();
+    }
 
     // Dump the pointclouds that ICPFitter generated during it's execution
     // TODO: check bool for activation
     fitter.dumpPointClouds();
+    // Workaround for a strange error ... The ICPFitter behaves
+    // differently when you instantiate the standard ICP around it ...
+    // Be careful when you comment this in .....
+    // pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
+    //
    
   }
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
@@ -145,4 +167,14 @@ void ModelPoseEstimation::generateModels()
 void ModelPoseEstimation::setDumpICPFitterPointclouds(bool b)
 {
   dump_icp_fitter_pointclouds_ = b;
+}
+
+boost::shared_ptr<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> > ModelPoseEstimation::getGeneratedModels()
+{
+  return generated_models_;
+}
+
+std::string ModelPoseEstimation::getName()
+{
+  return "ModelPoseEstimation";
 }

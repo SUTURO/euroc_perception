@@ -1,4 +1,4 @@
-#include <suturo_perception_mbpe/generate_pc_model.h>
+#include <suturo_perception_cad_recognition/generate_pc_model.h>
 
 #define POINTS_PER_BOX 4000
 #define POINTS_PER_CYLINDER 5000

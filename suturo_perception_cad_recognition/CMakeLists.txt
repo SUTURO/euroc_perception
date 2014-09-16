@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   perception_utils
   suturo_perception_match_cuboid
+  shape_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -108,11 +109,28 @@ include_directories(
 ## Declare a cpp library
 add_library(suturo_perception_icp_fitter
    src/icp_fitter.cpp
+	 #	 src/model_pose_estimation.cpp
+	 #	 src/generate_pc_model.cpp
 )
 
 ## Declare a cpp executable
 add_executable(cad_recognition src/cad_recognition.cpp)
 add_executable(convert_ply_to_pcd src/convert_ply_to_pcd.cpp)
+
+add_library(generate_pc_model_lib
+  src/generate_pc_model.cpp
+)
+
+add_library(model_pose_estimation
+  src/model_pose_estimation.cpp
+)
+
+#add_executable(mpe_prototype
+#  src/mpe_prototype.cpp
+#)
+
+## Declare a cpp executable
+add_executable(generate_pc_model src/generate_pc_model_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -134,6 +152,28 @@ target_link_libraries(convert_ply_to_pcd
    ${catkin_LIBRARIES}
 )
 
+
+target_link_libraries(generate_pc_model_lib
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(model_pose_estimation
+  ${catkin_LIBRARIES}
+   ${Boost_LIBRARIES}
+  generate_pc_model_lib
+	suturo_perception_icp_fitter
+)
+
+#target_link_libraries(mpe_prototype
+#  ${catkin_LIBRARIES}
+#   ${Boost_LIBRARIES}
+#  model_pose_estimation
+#)
+
+target_link_libraries(generate_pc_model
+  ${catkin_LIBRARIES}
+  generate_pc_model_lib
+)
 
 #############
 ## Install ##
@@ -175,10 +215,11 @@ target_link_libraries(convert_ply_to_pcd
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_suturo_perception_cad_recognition.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+catkin_add_gtest(${PROJECT_NAME}-test tests/tests.cpp)
+if(TARGET ${PROJECT_NAME}-test)
+	#target_link_libraries(${PROJECT_NAME}-test suturo_perception_icp_fitter ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+   target_link_libraries(${PROJECT_NAME}-test suturo_perception_icp_fitter ${catkin_LIBRARIES} ${Boost_LIBRARIES} model_pose_estimation)
+endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)

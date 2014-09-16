@@ -5,9 +5,12 @@
 #include <suturo_msgs/Task.h>
 #include <suturo_perception_cad_recognition/icp_fitter.h>
 #include "perception_utils/logger.h"
-#include <suturo_perception_mbpe/generate_pc_model.h>
+#include <suturo_perception_cad_recognition/generate_pc_model.h>
 #include <boost/algorithm/string.hpp>
-
+// #include <pcl/registration/icp.h>
+#include <pcl/registration/icp_nl.h>
+#include <perception_utils/capability.hpp>
+// #include <pcl/registration/ia_ransac.h>
 /*
  * This class defines the interface for the perception pipeline.
  * It passes a set of suturo_msgs::Object to the constructor.
@@ -15,11 +18,13 @@
  * online and will try to estimate the pose of a given PointCloud
  * against the given models.
  */
-class ModelPoseEstimation {
+class ModelPoseEstimation : public suturo_perception::Capability
+{
 public:
   // The objects are the Object specification from the parsed
   // YAML description of the EuRoC Task
-  ModelPoseEstimation (boost::shared_ptr<std::vector<suturo_msgs::Object> > objects)
+  ModelPoseEstimation (boost::shared_ptr<std::vector<suturo_msgs::Object> > objects,suturo_perception::PipelineData::Ptr pipelineData, suturo_perception::PipelineObject::Ptr pipelineObject) : 
+  suturo_perception::Capability(pipelineData, pipelineObject)
   {
     success_threshold_ = 1e-5;
     best_fit_model_ = 0;
@@ -57,6 +62,9 @@ public:
   // in suturo_perception_cad_recognition/dumps/
   void setDumpICPFitterPointclouds(bool b);
 
+  // Delete every model and create new ones
+  void generateModels();
+
   void execute();
 
   /*
@@ -78,10 +86,16 @@ public:
   // Available after execute()
   double getFitnessScore();
 
-  // Get the pose (x,y,z + quaternion) as a 7-dimensional vector.
+  // Get the pose (x,y,z, quaternion.x, quaternion.y, quaternion.z, quaternion.w ) as a 7-dimensional vector.
   // The pose will be the one of the best matching model
   // Available after execute()
   Eigen::VectorXf getEstimatedPose();
+
+  boost::shared_ptr<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> > getGeneratedModels();
+
+  // Returns the name of this class
+  std::string getName();
+
 private:
   /* data */
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud_;
@@ -98,9 +112,6 @@ private:
   suturo_perception::Logger logger_;
   GeneratePointCloudModel model_generator_;
   bool dump_icp_fitter_pointclouds_;
-
-  // Delete every model and create new ones
-  void generateModels();
 
 
 };

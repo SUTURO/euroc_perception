@@ -7,7 +7,7 @@
 #include <pcl/filters/filter.h>
 #include <pcl/common/transforms.h>
 #include <math.h>
-#include <suturo_perception_mbpe/generate_pc_model.h>
+#include <suturo_perception_cad_recognition/generate_pc_model.h>
 #include <suturo_msgs/Task.h>
 
 int
