@@ -30,6 +30,7 @@
 #include <boost/algorithm/string.hpp>
 #include <suturo_perception_cad_recognition/model_pose_estimation.h>
 #include <shape_msgs/SolidPrimitive.h>
+#include <perception_utils/capability.hpp>
 
 #define CAD_RECOGNITION_TEST_ACCEPTABLE_POINT_ERROR 0.005f
 #define CAD_RECOGNITION_TEST_ACCEPTABLE_ORIENTATION_ERROR 0.04f
@@ -105,7 +106,9 @@ TEST(suturo_perception_mbpe, pose_estimation_cube)
   obj.primitive_poses.push_back(pose1);
   objects->push_back(obj);
 
-  ModelPoseEstimation mpe(objects);
+  suturo_perception::PipelineData::Ptr data_;
+  suturo_perception::PipelineObject::Ptr object_;
+  ModelPoseEstimation mpe(objects,data_,object_);
   mpe.setInputCloud(input_cloud);
   mpe.setSurfaceNormal(table_normal);
   mpe.setVoxelSize(0.003f);
@@ -170,7 +173,9 @@ TEST(suturo_perception_mbpe, pose_estimation_cylinder)
   obj.primitive_poses.push_back(pose1);
   objects->push_back(obj);
 
-  ModelPoseEstimation mpe(objects);
+  suturo_perception::PipelineData::Ptr data_;
+  suturo_perception::PipelineObject::Ptr object_;
+  ModelPoseEstimation mpe(objects,data_,object_);
   mpe.setInputCloud(input_cloud);
   mpe.setSurfaceNormal(table_normal);
   mpe.setVoxelSize(0.003f);
@@ -267,7 +272,9 @@ TEST(suturo_perception_mbpe, pose_estimation_handlebar)
   obj.primitive_poses.push_back(pose3);
   objects->push_back(obj);
 
-  ModelPoseEstimation mpe(objects);
+  suturo_perception::PipelineData::Ptr data_;
+  suturo_perception::PipelineObject::Ptr object_;
+  ModelPoseEstimation mpe(objects,data_,object_);
   mpe.setInputCloud(input_cloud);
   mpe.setSurfaceNormal(table_normal);
   mpe.setVoxelSize(0.003f);

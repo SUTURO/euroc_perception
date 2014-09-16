@@ -9,6 +9,7 @@
 #include <boost/algorithm/string.hpp>
 // #include <pcl/registration/icp.h>
 #include <pcl/registration/icp_nl.h>
+#include <perception_utils/capability.hpp>
 // #include <pcl/registration/ia_ransac.h>
 /*
  * This class defines the interface for the perception pipeline.
@@ -17,11 +18,13 @@
  * online and will try to estimate the pose of a given PointCloud
  * against the given models.
  */
-class ModelPoseEstimation {
+class ModelPoseEstimation : public suturo_perception::Capability
+{
 public:
   // The objects are the Object specification from the parsed
   // YAML description of the EuRoC Task
-  ModelPoseEstimation (boost::shared_ptr<std::vector<suturo_msgs::Object> > objects)
+  ModelPoseEstimation (boost::shared_ptr<std::vector<suturo_msgs::Object> > objects,suturo_perception::PipelineData::Ptr pipelineData, suturo_perception::PipelineObject::Ptr pipelineObject) : 
+  suturo_perception::Capability(pipelineData, pipelineObject)
   {
     success_threshold_ = 1e-5;
     best_fit_model_ = 0;
@@ -89,6 +92,9 @@ public:
   Eigen::VectorXf getEstimatedPose();
 
   boost::shared_ptr<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> > getGeneratedModels();
+
+  // Returns the name of this class
+  std::string getName();
 
 private:
   /* data */

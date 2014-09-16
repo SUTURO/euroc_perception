@@ -173,3 +173,8 @@ boost::shared_ptr<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> > ModelPos
 {
   return generated_models_;
 }
+
+std::string ModelPoseEstimation::getName()
+{
+  return "ModelPoseEstimation";
+}
