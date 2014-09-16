@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   perception_utils
   suturo_perception_match_cuboid
+  shape_msgs
 )
 
 ## System dependencies are found with CMake's conventions

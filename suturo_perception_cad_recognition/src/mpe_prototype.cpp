@@ -91,20 +91,6 @@
 // }
 //
 //
-/*
- * This node uses the ICPFitter library to estimate
- * the pose of a segmented, partial pointcloud against a 
- * CAD Model. The results will be visualized as follows:
- *   1) The input cloud and the cloud of the CAD model
- *   2) The input cloud against the ICP-fitted model (after the initial alignment)
- *   3) Visualization of each step during the pose estimation process.
- *
- * The CAD model has to be subsampled as a Pointcloud and be
- * passed to this node.
- * You can subsample a CAD model with CloudCompare (http://www.danielgm.net/cc/)
- * Future releases of this software may automate this step.
- */
-
 #include <ros/ros.h>
 #include <iostream>
 #include <tf/transform_listener.h>
@@ -140,6 +126,7 @@ void drawNormalizedVector(pcl::visualization::PCLVisualizer &viewer, Eigen::Vect
 }
 
 int main(int argc, char** argv){
+/*
   std::string cad_model_pc_filename;
   std::string input_pc_filename;
   std::string table_normal_string;
@@ -390,32 +377,32 @@ int main(int argc, char** argv){
   pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
   // icp.setInputSource(ria._upwards_object);
   // icp.setInputTarget(ria._upwards_model);
-  /*
-  // icp.setInputTarget(ria._upwards_object);
-  // icp.setInputSource(ria._upwards_model);
-  if(max_iterations!=-1)
-  {
-    std::cout << "Setting max iterations in ICP to: "<< max_iterations << std::endl;
-    icp.setMaximumIterations(max_iterations);
-  }
-  else
-  {
-    icp.setMaximumIterations(60);
-  }
-  // icp.setEuclideanFitnessEpsilon (0.000001f);
-  // icp.setEuclideanFitnessEpsilon (0.00000000001f);
-  icp.setEuclideanFitnessEpsilon (0.00001f);
-  // icp.setMaxCorrespondenceDistance (0.55);
-  // icp.setRANSACOutlierRejectionThreshold(0.10f);
-  //
-  // Observation: The fitness score should be below 1e-5
   
-  pcl::PointCloud<pcl::PointXYZ>::Ptr Final(new pcl::PointCloud<pcl::PointXYZ>);
-  // icp.align(*Final);
-  std::cout << "has converged:" << icp.hasConverged() << " score: " <<
-  icp.getFitnessScore() << std::endl;
-  std::cout << icp.getFinalTransformation() << std::endl;
-  */
+  // // icp.setInputTarget(ria._upwards_object);
+  // // icp.setInputSource(ria._upwards_model);
+  // if(max_iterations!=-1)
+  // {
+  //   std::cout << "Setting max iterations in ICP to: "<< max_iterations << std::endl;
+  //   icp.setMaximumIterations(max_iterations);
+  // }
+  // else
+  // {
+  //   icp.setMaximumIterations(60);
+  // }
+  // // icp.setEuclideanFitnessEpsilon (0.000001f);
+  // // icp.setEuclideanFitnessEpsilon (0.00000000001f);
+  // icp.setEuclideanFitnessEpsilon (0.00001f);
+  // // icp.setMaxCorrespondenceDistance (0.55);
+  // // icp.setRANSACOutlierRejectionThreshold(0.10f);
+  // //
+  // // Observation: The fitness score should be below 1e-5
+  // 
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr Final(new pcl::PointCloud<pcl::PointXYZ>);
+  // // icp.align(*Final);
+  // std::cout << "has converged:" << icp.hasConverged() << " score: " <<
+  // icp.getFitnessScore() << std::endl;
+  // std::cout << icp.getFinalTransformation() << std::endl;
+  
 // 
 //   // Check the result of the calculated transformation
 //   pcl::PointCloud<pcl::PointXYZ>::Ptr model_initial_transformed (new pcl::PointCloud<pcl::PointXYZ>);
@@ -511,4 +498,5 @@ int main(int argc, char** argv){
 //   viewer.spin();
 // 
 //   return 0;
+*/
 };

@@ -29,6 +29,7 @@
 // #include <suturo_perception_cad_recognition/icp_fitter.h>
 #include <boost/algorithm/string.hpp>
 #include <suturo_perception_cad_recognition/model_pose_estimation.h>
+#include <shape_msgs/SolidPrimitive.h>
 
 #define CAD_RECOGNITION_TEST_ACCEPTABLE_POINT_ERROR 0.005f
 #define CAD_RECOGNITION_TEST_ACCEPTABLE_ORIENTATION_ERROR 0.04f
@@ -86,21 +87,23 @@ TEST(suturo_perception_mbpe, pose_estimation_cube)
   obj.description="a red cube";
   obj.surface_material = suturo_msgs::Object::ALUMINIUM;
 
-  suturo_msgs::Shape shape1;
-  shape1.shape_type = shape1.BOX;
+  shape_msgs::SolidPrimitive shape1;
+	geometry_msgs::Pose pose1;
+  shape1.type = shape1.BOX;
   // 0.05 x 0.05 x 0.05
   shape1.dimensions.push_back(0.05f);
   shape1.dimensions.push_back(0.05f);
   shape1.dimensions.push_back(0.05f);
-  shape1.pose.linear.x = 0;
-  shape1.pose.linear.y = 0;
-  shape1.pose.linear.z = 0;
-  shape1.pose.angular.x = 0;
-  shape1.pose.angular.y = 0;
-  shape1.pose.angular.z = 0;
-  obj.shapes.push_back(shape1);
+  pose1.position.x = 0;
+  pose1.position.y = 0;
+  pose1.position.z = 0;
+  pose1.orientation.x = 0;
+  pose1.orientation.y = 0;
+  pose1.orientation.z = 0;
+  pose1.orientation.w = 1;
+  obj.primitives.push_back(shape1);
+  obj.primitive_poses.push_back(pose1);
   objects->push_back(obj);
-  // shapes->push_back(shape1);
 
   ModelPoseEstimation mpe(objects);
   mpe.setInputCloud(input_cloud);
@@ -150,20 +153,22 @@ TEST(suturo_perception_mbpe, pose_estimation_cylinder)
   obj.description="a green cylinder";
   obj.surface_material = suturo_msgs::Object::ALUMINIUM;
 
-  suturo_msgs::Shape shape1;
-  shape1.shape_type = shape1.CYLINDER;
+  shape_msgs::SolidPrimitive shape1;
+	geometry_msgs::Pose pose1;
+  shape1.type = shape1.CYLINDER;
   // 0.1 x 0.02
   shape1.dimensions.push_back(0.1f);
   shape1.dimensions.push_back(0.02f);
-  shape1.pose.linear.x = 0;
-  shape1.pose.linear.y = 0;
-  shape1.pose.linear.z = 0;
-  shape1.pose.angular.x = 0;
-  shape1.pose.angular.y = 0;
-  shape1.pose.angular.z = 0;
-  obj.shapes.push_back(shape1);
+  pose1.position.x = 0;
+  pose1.position.y = 0;
+  pose1.position.z = 0;
+  pose1.orientation.x = 0;
+  pose1.orientation.y = 0;
+  pose1.orientation.z = 0;
+  pose1.orientation.w = 1;
+  obj.primitives.push_back(shape1);
+  obj.primitive_poses.push_back(pose1);
   objects->push_back(obj);
-  // shapes->push_back(shape1);
 
   ModelPoseEstimation mpe(objects);
   mpe.setInputCloud(input_cloud);
@@ -213,48 +218,53 @@ TEST(suturo_perception_mbpe, pose_estimation_handlebar)
   obj.description="a blue compound of a cylinder with two cubes";
   obj.surface_material = suturo_msgs::Object::ALUMINIUM;
 
-  std::vector<suturo_msgs::Shape> shapes;
-  suturo_msgs::Shape shape1;
-  shape1.shape_type = shape1.BOX;
+  shape_msgs::SolidPrimitive shape1, shape2, shape3;
+	geometry_msgs::Pose pose1, pose2, pose3;
+  shape1.type = shape1.BOX;
   // 0.05 x 0.05 x 0.05
   shape1.dimensions.push_back(0.05f);
   shape1.dimensions.push_back(0.05f);
   shape1.dimensions.push_back(0.05f);
-  shape1.pose.linear.x = 0;
-  shape1.pose.linear.y = 0;
-  shape1.pose.linear.z = 0;
-  shape1.pose.angular.x = 0;
-  shape1.pose.angular.y = 0;
-  shape1.pose.angular.z = 0;
+  pose1.position.x = 0;
+  pose1.position.y = 0;
+  pose1.position.z = 0;
+  pose1.orientation.x = 0;
+  pose1.orientation.y = 0;
+  pose1.orientation.z = 0;
+  pose1.orientation.w = 1;
 
   // Define the extra parts on the handlebar
-  suturo_msgs::Shape shape2;
-  shape2.shape_type = shape1.BOX;
+  shape2.type = shape1.BOX;
   // 0.05 x 0.05 x 0.05
   shape2.dimensions.push_back(0.05f);
   shape2.dimensions.push_back(0.05f);
   shape2.dimensions.push_back(0.05f);
-  shape2.pose.linear.x = 0;
-  shape2.pose.linear.y = 0;
-  shape2.pose.linear.z = 0.35f;
-  shape2.pose.angular.x = 0;
-  shape2.pose.angular.y = 0;
-  shape2.pose.angular.z = 0;
+  pose2.position.x = 0;
+  pose2.position.y = 0;
+  pose2.position.z = 0.35f;
+  pose2.orientation.x = 0;
+  pose2.orientation.y = 0;
+  pose2.orientation.z = 0;
+  pose2.orientation.w = 1;
 
-  suturo_msgs::Shape shape3;
-  shape3.shape_type = shape1.CYLINDER;
+  shape3.type = shape1.CYLINDER;
   shape3.dimensions.push_back(0.3f);
   shape3.dimensions.push_back(0.01f);
-  shape3.pose.linear.x = 0;
-  shape3.pose.linear.y = 0;
-  shape3.pose.linear.z = 0.175f;
-  shape3.pose.angular.x = 0;
-  shape3.pose.angular.y = 0;
-  shape3.pose.angular.z = 0;
+  pose3.position.x = 0;
+  pose3.position.y = 0;
+  pose3.position.z = 0.175f;
+  pose3.orientation.x = 0;
+  pose3.orientation.y = 0;
+  pose3.orientation.z = 0;
+  pose3.orientation.w = 1;
 
-  obj.shapes.push_back(shape1);
-  obj.shapes.push_back(shape2);
-  obj.shapes.push_back(shape3);
+
+  obj.primitives.push_back(shape1);
+  obj.primitives.push_back(shape2);
+  obj.primitives.push_back(shape3);
+  obj.primitive_poses.push_back(pose1);
+  obj.primitive_poses.push_back(pose2);
+  obj.primitive_poses.push_back(pose3);
   objects->push_back(obj);
 
   ModelPoseEstimation mpe(objects);
