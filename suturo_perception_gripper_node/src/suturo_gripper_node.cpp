@@ -166,6 +166,7 @@ SuturoGripperNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCl
   ProjectionSegmenter projection_segmenter;
   if (!projection_segmenter.segment(cloud_in, pipelineData_, pipelineObjects_))
   {
+    logger.logInfo("segmentation failed");
     return;
   }
   std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_points_clusters =
