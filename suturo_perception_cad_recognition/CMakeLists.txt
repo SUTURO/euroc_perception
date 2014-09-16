@@ -125,9 +125,9 @@ add_library(model_pose_estimation
   src/model_pose_estimation.cpp
 )
 
-add_executable(mpe_prototype
-  src/mpe_prototype.cpp
-)
+#add_executable(mpe_prototype
+#  src/mpe_prototype.cpp
+#)
 
 ## Declare a cpp executable
 add_executable(generate_pc_model src/generate_pc_model_node.cpp)
@@ -164,11 +164,11 @@ target_link_libraries(model_pose_estimation
 	suturo_perception_icp_fitter
 )
 
-target_link_libraries(mpe_prototype
-  ${catkin_LIBRARIES}
-   ${Boost_LIBRARIES}
-  model_pose_estimation
-)
+#target_link_libraries(mpe_prototype
+#  ${catkin_LIBRARIES}
+#   ${Boost_LIBRARIES}
+#  model_pose_estimation
+#)
 
 target_link_libraries(generate_pc_model
   ${catkin_LIBRARIES}
