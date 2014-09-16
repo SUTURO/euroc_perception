@@ -3,6 +3,7 @@
 #include <suturo_perception_match_cuboid/cuboid_matcher.h>
 #include <suturo_perception_centroid_calc/centroid_calc.h>
 #include <suturo_perception_shape_detection/shape_detector.h>
+#include <suturo_perception_color_analysis/color_analysis.h>
 
 #include <boost/asio.hpp>
 
@@ -28,6 +29,12 @@ Pipeline::instantiateCapability(CapabilityType type, PipelineData::Ptr data, Pip
     case SHAPE_DETECTOR:
     return new ShapeDetector(data, obj);
     break;
+
+    case COLOR_ANALYSIS:
+    return new ColorAnalysis(data, obj);
+    break;
+
+    // INFO: ADD YOUR NEW CAPABILITY HERE (don't forget to include it)
 
     default:
     return NULL;
@@ -78,11 +85,6 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
       object_capabilities.push_back(cap);
     }
     capabilities.push_back(object_capabilities);
-    /*
-    cmvec.push_back(new CuboidMatcher(pipeline_objects[i]));
-    ccvec.push_back(new CentroidCalc(pipeline_objects[i]));
-    sdvec.push_back(new ShapeDetector(pipeline_objects[i]));
-    */
   }
   
   // post work to threadpool
@@ -93,25 +95,6 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
       if (capabilities[i][j]->isEnabled())
         ioService.post(boost::bind(&Capability::execute, capabilities[i][j]));
     }
-    /*
-    // cuboid calculation
-    CuboidMatcher *cm = cmvec.at(i);
-    cm->setMode(CUBOID_MATCHER_MODE_WITH_COEFFICIENTS);
-    cm->setTableCoefficients(pipeline_data->coefficients_);
-    cm->setInputCloud(pipeline_objects[i]->get_pointCloud());
-    if (cm->isEnabled())
-      ioService.post(boost::bind(&CuboidMatcher::execute, cm, pipeline_objects[i]->get_c_cuboid()));
-    
-    // centroid calculation
-    CentroidCalc *cc = ccvec.at(i);
-    if (cc->isEnabled())
-      ioService.post(boost::bind(&CentroidCalc::execute, cc));
-    
-    // shape detection
-    ShapeDetector *sd = sdvec.at(i);
-    if (sd->isEnabled())
-      ioService.post(boost::bind(&ShapeDetector::execute, sd));
-    */
   }
   
   //boost::this_thread::sleep(boost::posix_time::microseconds(1000));
@@ -128,16 +111,6 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
     {
       delete capabilities[i][j];
     }
-    /*
-    Cuboid::Ptr c = pipeline_objects[i]->get_c_cuboid();
-    std::cout << "Cuboid statistics: ";
-    std::cout << "Width: " << c->length1 << " Height: " << c->length2 << " Depth: " << c->length3 << " Volume: " << c->volume;
-    std::cout << " m^3" << "O: " << c->orientation.w() << " " << c->orientation.x() << " " << c->orientation.y() << " " << c->orientation.z() << std::endl;
-    
-    delete cmvec.at(i);
-    delete ccvec.at(i);
-    delete sdvec.at(i);
-    */
   }
 }
 

@@ -19,6 +19,7 @@ namespace suturo_perception
         CUBOID_MATCHER, 
         CENTROID_CALC, 
         SHAPE_DETECTOR, 
+        COLOR_ANALYSIS,
         
         LAST_CAPABILITY 
       };

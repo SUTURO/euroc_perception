@@ -32,6 +32,9 @@ namespace suturo_perception
         c_cuboid->length3 = -1;
         c_cuboid->volume = -1;
         c_shape = None;
+        c_avg_col_h = -1;
+        c_avg_col_s = -1.0;
+        c_avg_col_v = -1.0;
 
         logger = Logger("pipeline_object");
       };
@@ -73,6 +76,24 @@ namespace suturo_perception
         return c_shape; 
       };
 
+      int get_c_avg_col_h() const
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex); 
+        return c_avg_col_h; 
+      };
+
+      double get_c_avg_col_s() const
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex); 
+        return c_avg_col_s; 
+      };
+
+      double get_c_avg_col_v() const
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex); 
+        return c_avg_col_v; 
+      };
+
       // Threadsafe setters
       void set_c_id(int value)
       {
@@ -103,6 +124,21 @@ namespace suturo_perception
       {
         boost::lock_guard<boost::signals2::mutex> lock(*mutex);
         c_shape = value;
+      };
+      void set_c_avg_col_h(int value)
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex);
+        c_avg_col_h = value;
+      };
+      void set_c_avg_col_s(double value)
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex);
+        c_avg_col_s = value;
+      };
+      void set_c_avg_col_v(double value)
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex);
+        c_avg_col_v = value;
       };
 
       suturo_perception_msgs::EurocObject toEurocObject()
@@ -156,6 +192,11 @@ namespace suturo_perception
           default:
             obj.c_shape = suturo_perception_msgs::EurocObject::SHAPE_UNKNOWN;
         }
+
+        // average color
+        obj.c_avg_col_h = c_avg_col_h;
+        obj.c_avg_col_s = c_avg_col_s;
+        obj.c_avg_col_v = c_avg_col_v;
         return obj;
       }
     
@@ -166,6 +207,9 @@ namespace suturo_perception
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloud;
       Cuboid::Ptr c_cuboid;
       Shape c_shape;
+      int c_avg_col_h;
+      double c_avg_col_s;
+      double c_avg_col_v;
 
       boost::shared_ptr<boost::signals2::mutex> mutex;
 
