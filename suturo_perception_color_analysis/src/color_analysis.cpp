@@ -5,10 +5,10 @@ using namespace suturo_perception;
 ColorAnalysis::ColorAnalysis(PipelineData::Ptr data, PipelineObject::Ptr obj) : Capability(data, obj)
 {
   logger = Logger("color_analysis");
-  s_lower_threshold = 0.2;
-  s_upper_threshold = 0.8;
-  v_lower_threshold = 0.2;
-  v_upper_threshold = 0.8;
+  s_lower_threshold = 0.0;
+  s_upper_threshold = 1.0;
+  v_lower_threshold = 0.0;
+  v_upper_threshold = 1.0;
 }
 
 HSVColor
@@ -28,13 +28,19 @@ ColorAnalysis::getAverageColorHSV(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr c
   double avg_col_h = 0.0;
   avg_col.s = 0.0;
   avg_col.v = 0.0;
+  //int points_dropped = 0;
   for(int i = 0; i < cloud_in->points.size(); ++i)
   {
     uint32_t rgb = *reinterpret_cast<int*>(&cloud_in->points[i].rgb);
     HSVColor hsv_col = convertRGBToHSV(rgb);
 
+    /*
     if (!inHSVThreshold(hsv_col))
-      continue;
+    {
+      points_dropped++;
+      //continue;
+    }
+    */
 
     avg_col_h += hsv_col.h / (double)cloud_in->points.size();
     avg_col.s += hsv_col.s / (double)cloud_in->points.size();
@@ -43,6 +49,7 @@ ColorAnalysis::getAverageColorHSV(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr c
 
   avg_col.h = (uint32_t) avg_col_h;
 
+  //logger.logInfo((boost::format("points dropped: %s") % points_dropped).str());
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
   logger.logTime(s, e, "getAverageColorHSVQuality()");
 
@@ -185,21 +192,10 @@ ColorAnalysis::execute()
   // Get average color of the object
   HSVColor averageColorHSVQuality = getAverageColorHSV(pipelineObject_->get_pointCloud());
 
-  /*
-  // update perceived object
-  perceivedObject.set_c_color_average_r((averageColor >> 16) & 0x0000ff);
-  perceivedObject.set_c_color_average_g((averageColor >> 8)  & 0x0000ff);
-  perceivedObject.set_c_color_average_b((averageColor)       & 0x0000ff);
-  perceivedObject.set_c_color_average_h(averageColorHSV.h);
-  perceivedObject.set_c_color_average_s(averageColorHSV.s);
-  perceivedObject.set_c_color_average_v(averageColorHSV.v);
-  perceivedObject.set_c_color_average_qh(averageColorHSVQuality.h);
-  perceivedObject.set_c_color_average_qs(averageColorHSVQuality.s);
-  perceivedObject.set_c_color_average_qv(averageColorHSVQuality.v);
-  perceivedObject.set_c_hue_histogram(hueHistogram);
-  perceivedObject.set_c_hue_histogram_quality(histogramQuality);
-  perceivedObject.set_c_hue_histogram_image(histogram_image);
-  */
+  // update pipeline object
+  pipelineObject_->set_c_avg_col_h(averageColorHSVQuality.h);
+  pipelineObject_->set_c_avg_col_s(averageColorHSVQuality.s);
+  pipelineObject_->set_c_avg_col_v(averageColorHSVQuality.v);
 }
 
 bool

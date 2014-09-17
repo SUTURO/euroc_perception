@@ -39,3 +39,18 @@ target_link_libraries(suturo_perception_color_analysis
   ${Boost_LIBRARIES}
   ${OpenCV_LIBS} 
 )
+
+catkin_add_gtest(${PROJECT_NAME}-test 
+  test/test.cpp
+)
+if(TARGET ${PROJECT_NAME}-test)
+  target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME} ${catkin_LIBRARIES})
+  
+  find_package(PCL REQUIRED COMPONENTS)
+  find_package(OpenCV REQUIRED )
+
+  include_directories(${PCL_INCLUDE_DIRS})
+  link_directories(${PCL_LIBRARY_DIRS} ${OpenCV_LIBS})
+  add_definitions(${PCL_DEFINITIONS})
+endif()
+
