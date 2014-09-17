@@ -30,9 +30,6 @@ def main():
 
 
 if __name__ == "__main__":
-    a = CollisionObject()
-    a.
-    print dir(a)
     try:
         main()
     except rospy.ROSInterruptException:
