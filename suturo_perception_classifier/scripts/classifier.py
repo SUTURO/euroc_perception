@@ -12,6 +12,8 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from suturo_perception_msgs.msg import EurocObject
 from suturo_perception_msgs.srv import Classifier
+from std_msgs.msg import _ColorRGBA
+from moveit_msgs.msg import CollisionObject
 
 def dump(request):
  return request
@@ -28,6 +30,9 @@ def main():
 
 
 if __name__ == "__main__":
+    a = CollisionObject()
+    a.
+    print dir(a)
     try:
         main()
     except rospy.ROSInterruptException:
