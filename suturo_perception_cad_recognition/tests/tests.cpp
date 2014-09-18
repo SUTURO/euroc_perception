@@ -297,6 +297,83 @@ TEST(suturo_perception_mbpe, pose_estimation_handlebar)
   SUCCEED();
 }
 
+TEST(suturo_perception_mbpe, nan_handling)
+{
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+
+  // Fill in the cloud data
+  input_cloud->width    = 5;
+  input_cloud->height   = 1;
+  input_cloud->is_dense = false;
+  input_cloud->points.resize (input_cloud->width * input_cloud->height);
+
+  for (size_t i = 0; i < input_cloud->points.size ()-1; ++i)
+  {
+    input_cloud->points[i].x = 1024 * rand () / (RAND_MAX + 1.0f);
+    input_cloud->points[i].y = 1024 * rand () / (RAND_MAX + 1.0f);
+    input_cloud->points[i].z = 1024 * rand () / (RAND_MAX + 1.0f);
+  }
+  // Produce NaN
+  input_cloud->points[4].x = 0.0 / 0.0;
+  input_cloud->points[4].y = 0.0 / 0.0;
+  input_cloud->points[4].z = 0.0 / 0.0;
+
+  // std::string package_path = ros::package::getPath("suturo_perception_mbpe");
+  // // std::string modelpath  = "test_files/005box_4000pts.pcd";
+  // std::string objectpath = "test_files/correctly_segmented_box.pcd";
+  // std::string object_table_normal_path = "test_files/correctly_segmented_box.pcd_table_normal";
+
+  // if (pcl::io::loadPCDFile<pcl::PointXYZRGB> (package_path + "/" + objectpath, *input_cloud) == -1)
+  // {
+  //   PCL_ERROR ("Couldn't read input file\n");
+  //   exit (-1);
+  // }
+
+  std::string package_path = ros::package::getPath("suturo_perception_mbpe");
+  std::string object_table_normal_path = "test_files/correctly_segmented_box.pcd_table_normal";
+  Eigen::Vector4f table_normal = getTableNormalFromStringLine(object_table_normal_path,package_path);
+  std::cout << "Using table normal: " << table_normal << std::endl;
+
+  // Prepare the model that should be matched against the input cloud
+  boost::shared_ptr<std::vector<suturo_msgs::Object> > objects(new std::vector<suturo_msgs::Object>);
+  suturo_msgs::Object obj;
+  obj.name="red_cube";
+  obj.color="ff0000";
+  obj.description="a red cube";
+  obj.surface_material = suturo_msgs::Object::ALUMINIUM;
+
+  shape_msgs::SolidPrimitive shape1;
+	geometry_msgs::Pose pose1;
+  shape1.type = shape1.BOX;
+  // 0.05 x 0.05 x 0.05
+  shape1.dimensions.push_back(0.05f);
+  shape1.dimensions.push_back(0.05f);
+  shape1.dimensions.push_back(0.05f);
+  pose1.position.x = 0;
+  pose1.position.y = 0;
+  pose1.position.z = 0;
+  pose1.orientation.x = 0;
+  pose1.orientation.y = 0;
+  pose1.orientation.z = 0;
+  pose1.orientation.w = 1;
+  obj.primitives.push_back(shape1);
+  obj.primitive_poses.push_back(pose1);
+  objects->push_back(obj);
+
+  suturo_perception::PipelineData::Ptr data_;
+  suturo_perception::PipelineObject::Ptr object_;
+  ModelPoseEstimation mpe(objects,data_,object_);
+  mpe.setInputCloud(input_cloud);
+  mpe.setSurfaceNormal(table_normal);
+  mpe.setRemoveNaNs(true);
+  mpe.execute();
+
+  std::cout << "Fitness for nan matching: " << mpe.getFitnessScore() << std::endl;
+  // The estimation should be succesful
+	ASSERT_FALSE( mpe.poseEstimationSuccessful() );
+  SUCCEED();
+}
+
 
 // TODO
 // Tests for

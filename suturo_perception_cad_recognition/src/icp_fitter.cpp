@@ -141,7 +141,10 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   _upwards_object_s2 = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>);
   _upwards_object_s3 = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>);
   _icp_fitted_object = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>);
-
+  std::stringstream ss;
+  ss << "Amount of points in the input cloud: ";
+  ss << _cloud_in->points.size() << std::endl; 
+  logger_.logInfo(ss.str());
   // Hold a pointer to every pointcloud, that represents a step in the
   // fitting process
   _model_transformation_steps.clear();
@@ -179,10 +182,13 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   float model_height = c.length2;
   float model_width  = c.length1;
   float model_depth  = c.length3;
-  std::cout << "Dimensions of the model: ";
-  std::cout << model_height << " "; 
-  std::cout << model_width << " "; 
-  std::cout << model_depth << std::endl; 
+
+  ss.str("");
+  ss << "Dimensions of the model: ";
+  ss << model_height << " "; 
+  ss << model_width << " "; 
+  ss << model_depth << std::endl; 
+  logger_.logInfo(ss.str());
 
   // Rotate the object and try to get the dimensions
   Eigen::Vector3f table_normal(

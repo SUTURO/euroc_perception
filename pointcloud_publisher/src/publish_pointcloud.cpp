@@ -134,9 +134,11 @@ void receive_depth_and_rgb_image(
   pub_cloud.publish(pub_message);
   
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
-  std::stringstream ss;
-  ss << "generate pointcloud on " << output_topic;
-  logger.logTime(s, e, ss.str());
+  // Commented by PM. Generates a huge amount of output that interferes
+  // with the pipeline output
+  // std::stringstream ss;
+  // ss << "generate pointcloud on " << output_topic;
+  // logger.logTime(s, e, ss.str());
 }
 
 int main (int argc, char** argv)
