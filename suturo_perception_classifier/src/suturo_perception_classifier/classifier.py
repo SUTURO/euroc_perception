@@ -48,7 +48,7 @@ class Classifier(object):
         if len(object.primitives) == 1:
             primitive = object.primitives[0]
             print(primitive.dimensions)
-            dimensions = primitive.dimensions
+            dimensions = list(primitive.dimensions)
             dimensions.sort()
             if primitive.type == 3:
                 z = dimensions[0]
@@ -61,7 +61,7 @@ class Classifier(object):
         if len(object.primitives) > 1:
             z, y, x = 0, 0, 0
             for primitive in object.primitives:
-                dimensions = primitive.dimensions
+                dimensions = list(primitive.dimensions)
                 dimensions.sort()
                 if primitive.type == 3:
                     z += dimensions[0]
