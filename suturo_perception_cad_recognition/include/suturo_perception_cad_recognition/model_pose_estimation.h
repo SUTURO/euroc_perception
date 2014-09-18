@@ -14,6 +14,7 @@
 #include <shape_tools/solid_primitive_dims.h>
 #include <moveit_msgs/CollisionObject.h>
 #include <geometry_msgs/Quaternion.h>
+#include <tf/transform_broadcaster.h>
 
 // #include <pcl/registration/ia_ransac.h>
 /*

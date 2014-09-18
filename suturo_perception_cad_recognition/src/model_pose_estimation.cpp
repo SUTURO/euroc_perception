@@ -82,7 +82,8 @@ void ModelPoseEstimation::execute()
     std::cout << "Downsampled Object Pointcloud has " << input_cloud->points.size() << "pts" << std::endl;
   }
 
-  for (int i = 0; i < objects_->size(); i++) {
+  for (int i = 0; i < objects_->size(); i++) 
+  {
     // Is the current index a "model of interest"?
     if(models_of_interest_.size()!=0 &&
         std::find(models_of_interest_.begin(), models_of_interest_.end(), i)==models_of_interest_.end())
@@ -130,6 +131,8 @@ void ModelPoseEstimation::execute()
       estimated_pose_[4] = orientation.y();
       estimated_pose_[5] = orientation.z();
       estimated_pose_[6] = orientation.w();
+
+      best_fit_model_ = i;
     }
 
     // Dump the pointclouds that ICPFitter generated during it's execution
@@ -143,46 +146,90 @@ void ModelPoseEstimation::execute()
     // pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
     //
     //
-    if(pipeline_mode_)
-    {
-      // Store results if we are running in the suturo_perception pipeline
-      if(poseEstimationSuccessful())
-      {
-        boost::shared_ptr<moveit_msgs::CollisionObject> co(new moveit_msgs::CollisionObject);
-        // moveit_msgs::CollisionObject co;
-        co->header.stamp = ros::Time::now();
-        co->header.frame_id = "/tdepth_pcl";
-        co->operation = moveit_msgs::CollisionObject::ADD;
-        co->primitives.resize(1);
-        co->primitives[0].type = shape_msgs::SolidPrimitive::BOX;
-        co->primitives[0].dimensions.resize(shape_tools::SolidPrimitiveDimCount<shape_msgs::SolidPrimitive::BOX>::value);
-        co->primitive_poses.resize(1);
-        co->id = "box";
-
-        co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_X] = 0.05;
-        co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Y] = 0.05;
-        co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Z] = 0.05;
-        co->primitive_poses[0].position.x = estimated_pose_[0];
-        co->primitive_poses[0].position.y = estimated_pose_[1];
-        co->primitive_poses[0].position.z = estimated_pose_[2];
-        geometry_msgs::Quaternion q;
-        q.x = estimated_pose_[3];
-        q.y = estimated_pose_[4];
-        q.z = estimated_pose_[5]; 
-        q.w = estimated_pose_[6];
-        co->primitive_poses[0].orientation = q;
-
-        pipelineObject_->set_c_mpe_object(co);
-        pipelineObject_->set_c_mpe_success(true);
-      }
-      else
-      {
-        // TODO Set false to mpe_success
-        pipelineObject_->set_c_mpe_success(true);
-      }
-
-    }
    
+  }
+
+  // Store the result
+  if(pipeline_mode_)
+  {
+    // Store results if we are running in the suturo_perception pipeline
+    if(poseEstimationSuccessful())
+    {
+
+      // Get the informations from the best fit model
+
+  // boost::shared_ptr<std::vector<suturo_msgs::Object> > objects_;
+
+
+
+
+
+      boost::shared_ptr<moveit_msgs::CollisionObject> co(new moveit_msgs::CollisionObject);
+      co->header.stamp = ros::Time::now();
+      co->header.frame_id = "/tdepth_pcl";
+      co->operation = moveit_msgs::CollisionObject::ADD;
+
+      /*
+      // Convert suturo_msg Object to CollisionObject
+      suturo_msgs::Object &o = objects_->at(best_fit_model_);
+      co->primitives.resize(o.primitives.size());
+      co->primitive_poses.resize(o.primitive_poses.size());
+      for (int i = 0; i < o.primitives.size(); i++)
+      {
+        // co->primitives[i].type = shape_msgs::SolidPrimitive::BOX;
+        // co->primitives[i].type = o.primitives[i].type;
+        // co->primitives[i].dimensions.resize ( o.primitives.dimensions.size() );
+        co->primitives[i] = o.primitives[i];
+        co->primitive_poses[i] = o.primitive_poses[i];
+
+        // Thanks to moritz 
+        // Convert the original pose of every building block of the model
+        // to the matched pose
+        tf::Vector3 offset(o.primitive_poses[i].position.x,o.primitive_poses[i].position.y,o.primitive_poses[i].position.z);
+        tf::Quaternion real_pose( estimated_pose_[3], estimated_pose_[4], estimated_pose_[5], estimated_pose_[6]);
+        tf::Vector3 rotatedOffset = tf::quatRotate(real_pose, offset);
+        o.primitive_poses[i].position.x = estimated_pose_[0] + rotatedOffset.x();
+        o.primitive_poses[i].position.y = estimated_pose_[1] + rotatedOffset.y();
+        o.primitive_poses[i].position.z = estimated_pose_[2] + rotatedOffset.z();
+
+        o.primitive_poses[i].orientation.x = real_pose.x();
+        o.primitive_poses[i].orientation.y = real_pose.y();
+        o.primitive_poses[i].orientation.z = real_pose.z();
+        o.primitive_poses[i].orientation.w = real_pose.w();
+
+
+      }
+      co->id = o.name;
+      */
+
+      // ** CUBE ONLY ** 
+      co->primitives.resize(1);
+      co->primitives[0].type = shape_msgs::SolidPrimitive::BOX;
+      co->primitives[0].dimensions.resize(shape_tools::SolidPrimitiveDimCount<shape_msgs::SolidPrimitive::BOX>::value);
+      co->primitive_poses.resize(1);
+      co->id = "box";
+
+      co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_X] = 0.05;
+      co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Y] = 0.05;
+      co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Z] = 0.05;
+      co->primitive_poses[0].position.x = estimated_pose_[0];
+      co->primitive_poses[0].position.y = estimated_pose_[1];
+      co->primitive_poses[0].position.z = estimated_pose_[2];
+      geometry_msgs::Quaternion q;
+      q.x = estimated_pose_[3];
+      q.y = estimated_pose_[4];
+      q.z = estimated_pose_[5]; 
+      q.w = estimated_pose_[6];
+      co->primitive_poses[0].orientation = q;
+
+      pipelineObject_->set_c_mpe_object(co);
+      pipelineObject_->set_c_mpe_success(true);
+    }
+    else
+    {
+      pipelineObject_->set_c_mpe_success(false);
+    }
+
   }
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
   logger_.logTime(s, e, "Time for execute()");
