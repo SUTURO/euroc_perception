@@ -168,11 +168,12 @@ class Classifier(object):
         r = bgr_color[0][0][2]
         g = bgr_color[0][0][1]
         b = bgr_color[0][0][0]
-        edges = unclassified_object.primitives[0].dimensions
+        edges = list(unclassified_object.object.primitives[0].dimensions)
         edges.sort()
         classifyable_unclassified_object = [r, g, b] + edges
         class_name = self.clf.predict(classifyable_unclassified_object)
         unclassified_object.c_type = class_dict[class_name[0]]
         resp = ClassifierResponse()
         resp.classifiedObject = unclassified_object
+        print class_name
         return resp

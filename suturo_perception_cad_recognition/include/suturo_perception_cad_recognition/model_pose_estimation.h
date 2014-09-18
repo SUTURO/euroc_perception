@@ -44,6 +44,7 @@ public:
       surface_normal[1] = pipelineData->coefficients_->values.at(1);
       surface_normal[2] = pipelineData->coefficients_->values.at(2);
       surface_normal[3] = pipelineData->coefficients_->values.at(3);
+      surface_normal_ = surface_normal;
       input_cloud_ = pipelineObject->get_pointCloud();
     }
 
@@ -56,6 +57,7 @@ public:
     generated_models_ = boost::shared_ptr<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> >(new std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> );
     voxel_size_ = 0;
     dump_icp_fitter_pointclouds_ = false;
+    remove_nans_ = false;
   }
 
   //  This should be the observed pointcloud
@@ -85,6 +87,10 @@ public:
 
   // Delete every model and create new ones
   void generateModels();
+
+  // Remove NaNs from the input cloud before the fitting process starts
+  // Default: false
+  void setRemoveNaNs(bool b);
 
   void execute();
 
@@ -136,6 +142,7 @@ private:
   bool dump_icp_fitter_pointclouds_;
   // true, if the caller has passed pipelineData AND pipelineObjects that are != NULL
   bool pipeline_mode_;
+  bool remove_nans_;
 
 
 };

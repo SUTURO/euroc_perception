@@ -42,6 +42,7 @@
 #include <ctime>
 #include <ros/ros.h>
 #include <ros/package.h>
+#include "perception_utils/logger.h"
 
 using namespace boost;
 using namespace std;
@@ -52,6 +53,7 @@ class ICPFitter
   #define NO_ICP_MAX_ITERATIONS -1
   #define NO_ICP_DISTANCE -1
   protected:
+    suturo_perception::Logger logger_;
     Eigen::Vector4f _table_normal;
 
   public:
@@ -87,6 +89,7 @@ class ICPFitter
       _icp_fitness_score = 99; // Default
       _max_icp_distance = NO_ICP_DISTANCE;
       _rotate_model_upwards = true;
+      logger_ = suturo_perception::Logger("ICPFitter");
     }
     // Eigen::Matrix<float, 4, 4>  getTransformation(); // Available after execution
 

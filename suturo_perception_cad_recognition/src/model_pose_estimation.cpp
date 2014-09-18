@@ -49,13 +49,26 @@ Eigen::VectorXf ModelPoseEstimation::getEstimatedPose()
 
 void ModelPoseEstimation::execute()
 {
-
+  std::stringstream ss;
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
   // Reset fitness score
   fitness_score_ = 999;
 
   generateModels();
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud = input_cloud_;
+
+  if(remove_nans_)
+  {
+    std::vector<int> indices;
+    pcl::removeNaNFromPointCloud(*input_cloud,*input_cloud, indices);
+    ss << "removeNaNFromPointCloud removed " << indices.size() << "pts" << std::endl;
+    logger_.logInfo(ss.str());
+
+    ss.str("");
+    ss << "Input Points after removal " << input_cloud->points.size() << "pts" << std::endl;
+    logger_.logInfo(ss.str());
+    ss.str("");
+  }
   // Downsample the input cloud if desired
   if(voxel_size_ != 0)
   {
@@ -179,4 +192,10 @@ boost::shared_ptr<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> > ModelPos
 std::string ModelPoseEstimation::getName()
 {
   return "ModelPoseEstimation";
+}
+
+
+void ModelPoseEstimation::setRemoveNaNs(bool b)
+{
+  remove_nans_ = b;
 }

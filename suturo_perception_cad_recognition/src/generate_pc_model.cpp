@@ -65,6 +65,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateBox(doub
   output_cloud->resize(total_points + 60*8); // additional points for each side
   output_cloud->width = output_cloud->points.size();
   output_cloud->height = 1;
+  output_cloud->is_dense = true;
 
   // Write yz Planes
   int pt_idx = 0;
@@ -150,6 +151,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateCylinder
   output_cloud->resize(total_points*2); 
   output_cloud->width = output_cloud->points.size();
   output_cloud->height = 1;
+  output_cloud->is_dense = true;
 
   // // Write circles 
   int pt_idx = 0;
@@ -230,6 +232,8 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateComposed
   result = cylinder;
   *result += *box1;
   *result += *box2;
+
+  result->is_dense=true;
   return result;
 }
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateComposed(std::vector<shape_msgs::SolidPrimitive>  &primitives, std::vector<geometry_msgs::Pose> &poses)
