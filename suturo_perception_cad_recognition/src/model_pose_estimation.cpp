@@ -142,6 +142,20 @@ void ModelPoseEstimation::execute()
     // Be careful when you comment this in .....
     // pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
     //
+    //
+    if(pipeline_mode_)
+    {
+      // Store results if we are running in the suturo_perception pipeline
+      if(poseEstimationSuccessful())
+      {
+        // pipelineObject_->set_mpe_object();
+      }
+      else
+      {
+        // TODO Set false to mpe_success
+      }
+
+    }
    
   }
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();

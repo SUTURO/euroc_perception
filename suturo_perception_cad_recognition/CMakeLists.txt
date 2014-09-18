@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   perception_utils
   suturo_perception_match_cuboid
   shape_msgs
+  moveit_ros_planning_interface
 )
 
 ## System dependencies are found with CMake's conventions

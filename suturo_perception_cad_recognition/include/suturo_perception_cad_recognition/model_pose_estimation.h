@@ -10,6 +10,10 @@
 // #include <pcl/registration/icp.h>
 #include <pcl/registration/icp_nl.h>
 #include <perception_utils/capability.hpp>
+
+#include <shape_tools/solid_primitive_dims.h>
+#include <moveit_msgs/CollisionObject.h>
+
 // #include <pcl/registration/ia_ransac.h>
 /*
  * This class defines the interface for the perception pipeline.
