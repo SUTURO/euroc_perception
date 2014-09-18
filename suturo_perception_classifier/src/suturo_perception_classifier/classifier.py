@@ -8,6 +8,7 @@ import rospy
 import cv2
 from suturo_msgs.msg import Task
 from sklearn import tree
+from suturo_perception_msgs.srv import ClassifierResponse
 
 
 class Classifier(object):
@@ -71,9 +72,7 @@ class Classifier(object):
                     if y < 2 * dimensions[1]: y = dimensions[1]
             return [x, y, z]
 
-
     def randomize_objects(self, objects, number, size_treshold, color_treshold):
-
         for object in objects:
             randomized = []
             for i in range(0, number):
@@ -160,17 +159,20 @@ class Classifier(object):
 
     def classify_object(self, object):
         class_dict = {'red_cube': 1, 'green_cylinder': 2, 'blue_handle': 0}
-        h = object.c_avg_col_h
-        s = object.c_avg_col_s
-        v = object.c_avg_col_v
+        unclassified_object = object.unclassifiedObject
+        h = unclassified_object.c_avg_col_h
+        s = unclassified_object.c_avg_col_s
+        v = unclassified_object.c_avg_col_v
         hsv_color = np.uint8([[[h, s, v]]])
         bgr_color = cv2.cvtColor(hsv_color, cv2.COLOR_HSV2BGR)
-        r = bgr_color[2]
-        g = bgr_color[1]
-        b = bgr_color[0]
-        edges = object.primitives[0].dimensions
+        r = bgr_color[0][0][2]
+        g = bgr_color[0][0][1]
+        b = bgr_color[0][0][0]
+        edges = unclassified_object.primitives[0].dimensions
         edges.sort()
-        classifyable_object = [r, g, b] + edges
-        class_name = self.clf.predict(classifyable_object)
-        object.c_type = class_dict[class_name[0]]
-        return object
+        classifyable_unclassified_object = [r, g, b] + edges
+        class_name = self.clf.predict(classifyable_unclassified_object)
+        unclassified_object.c_type = class_dict[class_name[0]]
+        resp = ClassifierResponse()
+        resp.classifiedObject = unclassified_object
+        return resp
