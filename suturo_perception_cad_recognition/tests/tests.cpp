@@ -468,13 +468,97 @@ TEST(suturo_perception_mbpe, pose_estimation_box_against_multiple_models)
   SUCCEED();
 }
 
+TEST(suturo_perception_mbpe, pose_estimation_box_against_multiple_models_but_ignore_the_best)
+{
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+  std::string package_path = ros::package::getPath("suturo_perception_mbpe");
+  // std::string modelpath  = "test_files/005box_4000pts.pcd";
+  std::string objectpath = "test_files/correctly_segmented_box.pcd";
+  std::string object_table_normal_path = "test_files/correctly_segmented_box.pcd_table_normal";
+
+  if (pcl::io::loadPCDFile<pcl::PointXYZRGB> (package_path + "/" + objectpath, *input_cloud) == -1)
+  {
+    PCL_ERROR ("Couldn't read input file\n");
+    exit (-1);
+  }
+
+  Eigen::Vector4f table_normal = getTableNormalFromStringLine(object_table_normal_path,package_path);
+  std::cout << "Using table normal: " << table_normal << std::endl;
+
+  // Prepare the model that should be matched against the input cloud
+  boost::shared_ptr<std::vector<suturo_msgs::Object> > objects(new std::vector<suturo_msgs::Object>);
+  suturo_msgs::Object obj;
+  obj.name="red_cube";
+  obj.color="ff0000";
+  obj.description="a red cube";
+  obj.surface_material = suturo_msgs::Object::ALUMINIUM;
+
+  shape_msgs::SolidPrimitive shape1;
+	geometry_msgs::Pose pose1;
+  shape1.type = shape1.BOX;
+  // 0.05 x 0.05 x 0.05
+  shape1.dimensions.push_back(0.05f);
+  shape1.dimensions.push_back(0.05f);
+  shape1.dimensions.push_back(0.05f);
+  pose1.position.x = 0;
+  pose1.position.y = 0;
+  pose1.position.z = 0;
+  pose1.orientation.x = 0;
+  pose1.orientation.y = 0;
+  pose1.orientation.z = 0;
+  pose1.orientation.w = 1;
+  obj.primitives.push_back(shape1);
+  obj.primitive_poses.push_back(pose1);
+
+
+  suturo_msgs::Object cobj;
+  cobj.name="green_cylinder";
+  cobj.color="00ff00";
+  cobj.description="a green cylinder";
+  cobj.surface_material = suturo_msgs::Object::ALUMINIUM;
+
+  shape_msgs::SolidPrimitive shape2;
+  geometry_msgs::Pose pose2;
+  shape2.type = shape2.CYLINDER;
+  // 0.1 x 0.02
+  shape2.dimensions.push_back(0.1f);
+  shape2.dimensions.push_back(0.02f);
+  pose2.position.x = 0;
+  pose2.position.y = 0;
+  pose2.position.z = 0;
+  pose2.orientation.x = 0;
+  pose2.orientation.y = 0;
+  pose2.orientation.z = 0;
+  pose2.orientation.w = 1;
+  cobj.primitives.push_back(shape2);
+  cobj.primitive_poses.push_back(pose2);
+
+  objects->push_back(obj);
+  objects->push_back(cobj);
+
+  suturo_perception::PipelineData::Ptr data_;
+  suturo_perception::PipelineObject::Ptr object_;
+  ModelPoseEstimation mpe(objects,data_,object_);
+  mpe.setInputCloud(input_cloud);
+  mpe.setSurfaceNormal(table_normal);
+  mpe.setVoxelSize(0.003f);
+  std::vector<int> modelsOfInterest;
+  modelsOfInterest.push_back(1); // only match against the cylinder (and fail)
+  mpe.setModelsOfInterest(modelsOfInterest);
+  mpe.execute();
+
+  // The estimation should be succesful
+	ASSERT_FALSE( mpe.poseEstimationSuccessful() );
+
+  SUCCEED();
+}
+
 
 // TODO
 // Tests for
 // - no surface normal set
 // - no input pointcloud set
 // - empty/null pointcloud
-// - Avoidance of single models
 
 int main(int argc, char **argv) 
 {
