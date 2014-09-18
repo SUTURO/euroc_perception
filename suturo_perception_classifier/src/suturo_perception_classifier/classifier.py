@@ -19,19 +19,17 @@ class Classifier(object):
 
     def __init__(self):
         # rospy.loginfo("Starting ColorDetector")
-        rospy.init_node('listener', anonymous=True)
         rospy.Subscriber("/suturo/yaml_pars0r", Task, self.set_yaml_infos)
         self.clf = tree.DecisionTreeClassifier()
-        # rospy.Service("/suturo/yaml_pars0r", Task, self.set_yaml_infos)
         # spin the wheel
-        rospy.spin()
+        # rospy.spin()
 
     def set_yaml_infos(self, data):
         objects = data.objects
         self.original_objects = objects
         all_data = {}
         for object in objects:
-            print object
+            # print object
             name = object.name
             color = object.color
             primitive = object.primitives
