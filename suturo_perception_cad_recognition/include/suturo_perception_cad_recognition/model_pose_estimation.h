@@ -117,6 +117,7 @@ public:
   // Returns the name of this class
   std::string getName();
 
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 private:
   /* data */
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud_;
