@@ -189,10 +189,10 @@ class Classifier(object):
         return resp
 
     def lolloosed(self, r,g,b):
-        if r > 130 and g < 130 and b < 130:
+        if r > 100 and g < 100 and b < 100:
             return ['red_cube']
-        if r < 130 and g > 130 and b < 130:
+        if r < 100 and g > 100 and b < 100:
             return ['green_cylinder']
-        if r < 130 and g < 130 and b > 130:
+        if r < 100 and g < 100 and b > 100:
             return ['blue_handle']
         return ['unkown']
