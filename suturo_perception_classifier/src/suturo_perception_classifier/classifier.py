@@ -180,7 +180,7 @@ class Classifier(object):
         print [h, s, v]
         classifyable_unclassified_object = [h, s, v]# + edges
         class_name = self.clf.predict(classifyable_unclassified_object)
-        unclassified_object.c_type = class_dict[class_name[0]]
+        unclassified_object.c_shape = class_dict[class_name[0]]
         unclassified_object.object.id = class_name[0]
         resp = ClassifierResponse()
         resp.classifiedObject = unclassified_object
