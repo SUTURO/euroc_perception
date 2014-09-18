@@ -210,6 +210,9 @@ namespace suturo_perception
         obj.c_avg_col_h = c_avg_col_h;
         obj.c_avg_col_s = c_avg_col_s;
         obj.c_avg_col_v = c_avg_col_v;
+        
+        // mbpe_object
+        obj.mbpe_object = *c_mbpe_object;
         return obj;
       }
     
