@@ -3,11 +3,8 @@
 #include <suturo_perception_match_cuboid/cuboid_matcher.h>
 #include <suturo_perception_centroid_calc/centroid_calc.h>
 #include <suturo_perception_shape_detection/shape_detector.h>
-<<<<<<< HEAD
 #include <suturo_perception_color_analysis/color_analysis.h>
-=======
 #include <suturo_perception_cad_recognition/model_pose_estimation.h>
->>>>>>> integrated MPE in perception pipeline
 
 #include <boost/asio.hpp>
 
