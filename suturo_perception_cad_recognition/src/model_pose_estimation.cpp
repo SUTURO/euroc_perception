@@ -148,11 +148,37 @@ void ModelPoseEstimation::execute()
       // Store results if we are running in the suturo_perception pipeline
       if(poseEstimationSuccessful())
       {
-        // pipelineObject_->set_mpe_object();
+        boost::shared_ptr<moveit_msgs::CollisionObject> co(new moveit_msgs::CollisionObject);
+        // moveit_msgs::CollisionObject co;
+        co->header.stamp = ros::Time::now();
+        co->header.frame_id = "/tdepth_pcl";
+        co->operation = moveit_msgs::CollisionObject::ADD;
+        co->primitives.resize(1);
+        co->primitives[0].type = shape_msgs::SolidPrimitive::BOX;
+        co->primitives[0].dimensions.resize(shape_tools::SolidPrimitiveDimCount<shape_msgs::SolidPrimitive::BOX>::value);
+        co->primitive_poses.resize(1);
+        co->id = "box";
+
+        co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_X] = 0.05;
+        co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Y] = 0.05;
+        co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Z] = 0.05;
+        co->primitive_poses[0].position.x = estimated_pose_[0];
+        co->primitive_poses[0].position.y = estimated_pose_[1];
+        co->primitive_poses[0].position.z = estimated_pose_[2];
+        geometry_msgs::Quaternion q;
+        q.x = estimated_pose_[3];
+        q.y = estimated_pose_[4];
+        q.z = estimated_pose_[5]; 
+        q.w = estimated_pose_[6];
+        co->primitive_poses[0].orientation = q;
+
+        pipelineObject_->set_c_mpe_object(co);
+        pipelineObject_->set_c_mpe_success(true);
       }
       else
       {
         // TODO Set false to mpe_success
+        pipelineObject_->set_c_mpe_success(true);
       }
 
     }

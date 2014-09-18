@@ -57,6 +57,30 @@ int main(int argc, char **argv)
           ROS_INFO(" |-|-|-> orientation (x,y,z,w): (%f,%f,%f,%f)", obj.object.primitive_poses[k].orientation.x, obj.object.primitive_poses[k].orientation.y, obj.object.primitive_poses[k].orientation.z, obj.object.primitive_poses[k].orientation.w );
         }
 
+
+        ROS_INFO(" |-> ModelPose Success: %x", obj.mpe_success);
+        ROS_INFO(" |-> ModelPose Object:");
+        ROS_INFO(" |-|-> primitives: %d", obj.mpe_object.primitives.size());
+        for (int j = 0; j < obj.mpe_object.primitives.size(); j++)
+        {
+          ROS_INFO(" |-|-|-> type: %d", obj.mpe_object.primitives[j].type);
+          if (obj.mpe_object.primitives[j].type == shape_msgs::SolidPrimitive::BOX)
+          {
+            ROS_INFO(" |-|-|-> BOX (x,y,z): (%f,%f,%f)", obj.mpe_object.primitives[j].dimensions[shape_msgs::SolidPrimitive::BOX_X], obj.mpe_object.primitives[j].dimensions[shape_msgs::SolidPrimitive::BOX_Y], obj.mpe_object.primitives[j].dimensions[shape_msgs::SolidPrimitive::BOX_Z]); 
+          }
+          if (obj.mpe_object.primitives[j].type == shape_msgs::SolidPrimitive::CYLINDER)
+          {
+            ROS_INFO(" |-|-|-> CYLINDER height: %f", obj.mpe_object.primitives[j].dimensions[shape_msgs::SolidPrimitive::CYLINDER_HEIGHT]); 
+            ROS_INFO(" |-|-|-> CYLINDER radius: %f", obj.mpe_object.primitives[j].dimensions[shape_msgs::SolidPrimitive::CYLINDER_RADIUS]); 
+          }
+        }
+        ROS_INFO(" |-|-> primitive_poses: %d", obj.mpe_object.primitive_poses.size());
+        for (int k = 0; k < obj.mpe_object.primitive_poses.size(); k++)
+        {
+          ROS_INFO(" |-|-|-> position (x,y,z): (%f,%f,%f)", obj.mpe_object.primitive_poses[k].position.x, obj.mpe_object.primitive_poses[k].position.y, obj.mpe_object.primitive_poses[k].position.z );
+          ROS_INFO(" |-|-|-> orientation (x,y,z,w): (%f,%f,%f,%f)", obj.mpe_object.primitive_poses[k].orientation.x, obj.mpe_object.primitive_poses[k].orientation.y, obj.mpe_object.primitive_poses[k].orientation.z, obj.mpe_object.primitive_poses[k].orientation.w );
+        }
+
         ROS_INFO("~~~");
       }
       ROS_INFO_STREAM("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");

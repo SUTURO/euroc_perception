@@ -13,6 +13,7 @@
 
 #include <shape_tools/solid_primitive_dims.h>
 #include <moveit_msgs/CollisionObject.h>
+#include <geometry_msgs/Quaternion.h>
 
 // #include <pcl/registration/ia_ransac.h>
 /*
