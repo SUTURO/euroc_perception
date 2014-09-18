@@ -35,7 +35,7 @@ include_directories(
 set(PUBLISH_POINTCLOUD_FILES
   src/publish_pointcloud.cpp
   src/projector.cpp
-  include/projector.h
+  include/suturo_pointcloud_publisher/projector.h
 )
 
 add_executable(publish_pointcloud ${PUBLISH_POINTCLOUD_FILES})

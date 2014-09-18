@@ -25,7 +25,7 @@
 
 #include <perception_utils/logger.h>
 
-#include "projector.h"
+#include "suturo_pointcloud_publisher/projector.h"
 
 namespace enc = sensor_msgs::image_encodings;
 namespace po = boost::program_options;
@@ -46,37 +46,7 @@ std::string frame_rgb = "";
 std::string output_topic = "";
 bool verbose = false;
 
-void printTransform(const tf::StampedTransform &transform)
-{ 
-  tf::Vector3 ot = transform.getOrigin();
-  tf::Quaternion qt = transform.getRotation();
-  ROS_INFO("  translation: [ %f , %f , %f ]", ot[0], ot[1], ot[2]);
-  ROS_INFO("  rotation:    [ %f , %f , %f , %f ]", qt.x(), qt.y(), qt.z(), qt.w());
-}
 
-bool getTransform(const ros::NodeHandle &node, const ros::Time &t, tf::StampedTransform &transform_) 
-{
-  tf::TransformListener listener;
-  int tries = 0;
-  ros::Rate rate(10.0);
-  while (node.ok() && tries < 10)
-  {
-    try
-    {
-      listener.waitForTransform(frame_rgb, frame, ros::Time(0), ros::Duration(3.0));
-      listener.lookupTransform(frame_rgb, frame, ros::Time(0), transform_);
-      return true;
-    }
-    catch (tf::TransformException &ex) 
-    {
-      ROS_ERROR("%s",ex.what());
-      ros::Duration(1.0).sleep();
-    }
-    rate.sleep();
-    tries++;
-  }
-  return false;
-}
 
 
 /*
@@ -110,11 +80,11 @@ void receive_depth_and_rgb_image(
   resized_depth = depth_ptr->image.clone();
 
   tf::StampedTransform transform;
-  getTransform(nodeHandle, depthImage->header.stamp, transform);
+  CloudProjector::getTransform(nodeHandle, frame_rgb, frame, transform);
   if (verbose)
-    printTransform(transform);
+    CloudProjector::printTransform(transform);
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out = 
-    CloudProjector::depth_project(resized_depth, resized_img, transform);
+    CloudProjector::depthProject(resized_depth, resized_img, transform);
 
 	// write pcd
   // pcl::PCDWriter writer;
