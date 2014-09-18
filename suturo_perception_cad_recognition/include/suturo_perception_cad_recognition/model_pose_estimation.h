@@ -23,9 +23,30 @@ class ModelPoseEstimation : public suturo_perception::Capability
 public:
   // The objects are the Object specification from the parsed
   // YAML description of the EuRoC Task
+  //
+  // Note: Pass empty Pointers to ignore the pipelinedata and pipelineobject
   ModelPoseEstimation (boost::shared_ptr<std::vector<suturo_msgs::Object> > objects,suturo_perception::PipelineData::Ptr pipelineData, suturo_perception::PipelineObject::Ptr pipelineObject) : 
   suturo_perception::Capability(pipelineData, pipelineObject)
   {
+
+    if(pipelineData == NULL || pipelineObject == NULL)
+    {
+      std::cout << "pipeline_mode_ = false" << std::endl;
+      pipeline_mode_ = false;
+    }
+    else
+    {
+      std::cout << "pipeline_mode_ = true" << std::endl;
+      pipeline_mode_ = true;
+      // Get the relevant parameters from the pipeline data
+      Eigen::Vector4f surface_normal;
+      surface_normal[0] = pipelineData->coefficients_->values.at(0);
+      surface_normal[1] = pipelineData->coefficients_->values.at(1);
+      surface_normal[2] = pipelineData->coefficients_->values.at(2);
+      surface_normal[3] = pipelineData->coefficients_->values.at(3);
+      input_cloud_ = pipelineObject->get_pointCloud();
+    }
+
     success_threshold_ = 1e-5;
     best_fit_model_ = 0;
     fitness_score_ = 0;
@@ -54,7 +75,7 @@ public:
   void setSurfaceNormal(Eigen::Vector4f normal);
 
   // If the model AND the input cloud should be downsampled before the pose estimation
-  // pass a value != 0 .
+  // pass a value != 0 . The default is 0.003f. Pass 0 to disable the voxeling.
   void setVoxelSize(double size);
 
   // Should we call ICPFitter::dumpPointClouds() after execute() has been finished?
@@ -112,6 +133,8 @@ private:
   suturo_perception::Logger logger_;
   GeneratePointCloudModel model_generator_;
   bool dump_icp_fitter_pointclouds_;
+  // true, if the caller has passed pipelineData AND pipelineObjects that are != NULL
+  bool pipeline_mode_;
 
 
 };

@@ -3,7 +3,11 @@
 #include <suturo_perception_match_cuboid/cuboid_matcher.h>
 #include <suturo_perception_centroid_calc/centroid_calc.h>
 #include <suturo_perception_shape_detection/shape_detector.h>
+<<<<<<< HEAD
 #include <suturo_perception_color_analysis/color_analysis.h>
+=======
+#include <suturo_perception_cad_recognition/model_pose_estimation.h>
+>>>>>>> integrated MPE in perception pipeline
 
 #include <boost/asio.hpp>
 
@@ -16,6 +20,35 @@ Pipeline::Pipeline()
 Capability* 
 Pipeline::instantiateCapability(CapabilityType type, PipelineData::Ptr data, PipelineObject::Ptr obj, bool enabled)
 {
+  // Simple Testcase for now - Use only one model!!!!
+  //
+  // Prepare the model that should be matched against the input cloud
+  boost::shared_ptr<std::vector<suturo_msgs::Object> > objects(new std::vector<suturo_msgs::Object>);
+  suturo_msgs::Object sobj;
+  sobj.name="red_cube";
+  sobj.color="ff0000";
+  sobj.description="a red cube";
+  sobj.surface_material = suturo_msgs::Object::ALUMINIUM;
+
+  shape_msgs::SolidPrimitive shape1;
+  geometry_msgs::Pose pose1;
+  shape1.type = shape1.BOX;
+  // 0.05 x 0.05 x 0.05
+  shape1.dimensions.push_back(0.05f);
+  shape1.dimensions.push_back(0.05f);
+  shape1.dimensions.push_back(0.05f);
+  pose1.position.x = 0;
+  pose1.position.y = 0;
+  pose1.position.z = 0;
+  pose1.orientation.x = 0;
+  pose1.orientation.y = 0;
+  pose1.orientation.z = 0;
+  pose1.orientation.w = 1;
+  sobj.primitives.push_back(shape1);
+  sobj.primitive_poses.push_back(pose1);
+  objects->push_back(sobj);
+  ModelPoseEstimation* mpe;
+  // Return the desired capability instance
   switch (type)
   {
     case CUBOID_MATCHER:
@@ -32,6 +65,13 @@ Pipeline::instantiateCapability(CapabilityType type, PipelineData::Ptr data, Pip
 
     case COLOR_ANALYSIS:
     return new ColorAnalysis(data, obj);
+    break;
+
+    case MODEL_POSE:
+      mpe = new ModelPoseEstimation(objects, data, obj);
+      mpe->setDumpICPFitterPointclouds(true); // Enable debugging. This will save pointclouds
+                  // to suturo_perception_cad_recognition/dumps
+      return mpe;
     break;
 
     // INFO: ADD YOUR NEW CAPABILITY HERE (don't forget to include it)

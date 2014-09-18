@@ -86,9 +86,9 @@ void ModelPoseEstimation::execute()
     pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
     copyPointCloud(*input_cloud, *input_cloud_xyz);
     copyPointCloud(*generated_models_->at(i), *model_cloud_xyz);
-    std::cout << "Copied Model Pointcloud has " << model_cloud_xyz->points.size() << "pts" << std::endl;
-    std::cout << "Copied Object Pointcloud has " << input_cloud_xyz->points.size() << "pts" << std::endl;
-    std::cout << "Using surface normal: " << surface_normal_ << std::endl;
+    // std::cout << "Copied Model Pointcloud has " << model_cloud_xyz->points.size() << "pts" << std::endl;
+    // std::cout << "Copied Object Pointcloud has " << input_cloud_xyz->points.size() << "pts" << std::endl;
+    // std::cout << "Using surface normal: " << surface_normal_ << std::endl;
     ICPFitter fitter(input_cloud_xyz, model_cloud_xyz, surface_normal_);
     fitter.rotateModelUp(false);
     fitter.setMaxICPIterations(60);
@@ -121,7 +121,9 @@ void ModelPoseEstimation::execute()
 
     // Dump the pointclouds that ICPFitter generated during it's execution
     // TODO: check bool for activation
-    fitter.dumpPointClouds();
+    if(dump_icp_fitter_pointclouds_)
+      fitter.dumpPointClouds();
+
     // Workaround for a strange error ... The ICPFitter behaves
     // differently when you instantiate the standard ICP around it ...
     // Be careful when you comment this in .....
