@@ -180,9 +180,19 @@ class Classifier(object):
         print [h, s, v]
         classifyable_unclassified_object = [h, s, v]# + edges
         class_name = self.clf.predict(classifyable_unclassified_object)
+        class_name = self.lolloosed(r,g,b)
         unclassified_object.c_shape = class_dict[class_name[0]]
         unclassified_object.object.id = class_name[0]
         resp = ClassifierResponse()
         resp.classifiedObject = unclassified_object
         print class_name
         return resp
+
+    def lolloosed(self, r,g,b):
+        if r > 130 and g < 130 and b < 130:
+            return ['red_cube']
+        if r < 130 and g > 130 and b < 130:
+            return ['green_cylinder']
+        if r < 130 and g < 130 and b > 130:
+            return ['blue_handle']
+        return ['unkown']
