@@ -9,6 +9,7 @@ import cv2
 from suturo_msgs.msg import Task
 from sklearn import tree
 from suturo_perception_msgs.srv import ClassifierResponse
+from sklearn.naive_bayes import GaussianNB
 
 
 class Classifier(object):
@@ -22,6 +23,7 @@ class Classifier(object):
         # rospy.loginfo("Starting ColorDetector")
         rospy.Subscriber("/suturo/yaml_pars0r", Task, self.set_yaml_infos)
         self.clf = tree.DecisionTreeClassifier()
+        self.clf = GaussianNB()
         # spin the wheel
         # rospy.spin()
 
@@ -144,10 +146,11 @@ class Classifier(object):
         r = int(color[:2], 16)
         g = int(color[2:4], 16)
         b = int(color[-2:], 16)
+        hsv_color = cv2.cvtColor(np.uint8([[[b,g,r]]]), cv2.COLOR_BGR2HSV)
         x = eu_object['dimensions'][0]
         y = eu_object['dimensions'][1]
         z = eu_object['dimensions'][2]
-        return [r, g, b]#, x, y, z]
+        return [hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2]]#, x, y, z]
 
     def convert_to_dataset(self, raw_data):
         data = []
@@ -174,7 +177,8 @@ class Classifier(object):
         b = bgr_color[0][0][0]
         edges = list(unclassified_object.object.primitives[0].dimensions)
         edges.sort()
-        classifyable_unclassified_object = [r, g, b]# + edges
+        print [h, s, v]
+        classifyable_unclassified_object = [h, s, v]# + edges
         class_name = self.clf.predict(classifyable_unclassified_object)
         unclassified_object.c_type = class_dict[class_name[0]]
         unclassified_object.object.id = class_name[0]
