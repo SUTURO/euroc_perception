@@ -190,10 +190,12 @@ class Classifier(object):
         return resp
 
     def lolloosed(self, r,g,b):
-        if r > 100 and g < 100 and b < 100:
+        colors = [r,g,b]
+        ind = colors.index(max(colors))
+        if ind == 0:
             return ['red_cube']
-        if r < 100 and g > 100 and b < 100:
+        if ind == 1:
             return ['green_cylinder']
-        if r < 100 and g < 100 and b > 100:
+        if ind == 2:
             return ['blue_handle']
         return ['unkown']
