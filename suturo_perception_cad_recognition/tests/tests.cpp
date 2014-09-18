@@ -278,6 +278,7 @@ TEST(suturo_perception_mbpe, pose_estimation_handlebar)
   mpe.setInputCloud(input_cloud);
   mpe.setSurfaceNormal(table_normal);
   mpe.setVoxelSize(0.003f);
+  mpe.setDumpICPFitterPointclouds(true); // Enable debugging. This will save pointclouds
   mpe.execute();
 
   std::cout << "Fitness for handlebar matching: " << mpe.getFitnessScore() << std::endl;
