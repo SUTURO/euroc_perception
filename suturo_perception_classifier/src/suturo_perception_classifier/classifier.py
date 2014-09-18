@@ -2,10 +2,12 @@ __author__ = 'smurpheus'
 
 import random
 import copy
+import numpy as np
 
-from sklearn import tree
 import rospy
+import cv2
 from suturo_msgs.msg import Task
+from sklearn import tree
 
 
 class Classifier(object):
@@ -46,25 +48,29 @@ class Classifier(object):
         if len(object.primitives) == 1:
             primitive = object.primitives[0]
             print(primitive.dimensions)
+            dimensions = primitive.dimensions
+            dimensions.sort()
             if primitive.type == 3:
-                z = primitive.dimensions[0]
-                x = 2 * primitive.dimensions[1]
+                z = dimensions[0]
+                x = 2 * dimensions[1]
                 y = x
                 return [x, y, z]
             if primitive.type == 1:
-                return [primitive.dimensions[0], primitive.dimensions[1], primitive.dimensions[2]]
+                return [dimensions[0], dimensions[1], dimensions[2]]
             return [0, 0, 0]  #
         if len(object.primitives) > 1:
             z, y, x = 0, 0, 0
             for primitive in object.primitives:
+                dimensions = primitive.dimensions
+                dimensions.sort()
                 if primitive.type == 3:
-                    z += primitive.dimensions[0]
-                    if x < 2 * primitive.dimensions[1]: x = 2 * primitive.dimensions[1]
-                    if y < 2 * primitive.dimensions[1]: y = 2 * primitive.dimensions[1]
+                    z += dimensions[0]
+                    if x < 2 * dimensions[1]: x = 2 * dimensions[1]
+                    if y < 2 * dimensions[1]: y = 2 * dimensions[1]
                 if primitive.type == 1:
-                    z += primitive.dimensions[2]
-                    if x < 2 * primitive.dimensions[0]: x = primitive.dimensions[0]
-                    if y < 2 * primitive.dimensions[1]: y = primitive.dimensions[1]
+                    z += dimensions[2]
+                    if x < 2 * dimensions[0]: x = dimensions[0]
+                    if y < 2 * dimensions[1]: y = dimensions[1]
             return [x, y, z]
 
 
@@ -156,13 +162,17 @@ class Classifier(object):
 
     def classify_object(self, object):
         class_dict = {'red_cube': 1, 'green_cylinder': 2, 'blue_handle': 0}
-        r = object.color.r
-        g = object.color.g
-        b = object.color.b
-        edges = object.primitives[0].dimensions[0]
+        h = object.c_avg_col_h
+        s = object.c_avg_col_s
+        v = object.c_avg_col_v
+        hsv_color = np.uint8([[[h, s, v]]])
+        bgr_color = cv2.cvtColor(hsv_color, cv2.COLOR_HSV2BGR)
+        r = bgr_color[2]
+        g = bgr_color[1]
+        b = bgr_color[0]
+        edges = object.primitives[0].dimensions
         edges.sort()
         classifyable_object = [r, g, b] + edges
         class_name = self.clf.predict(classifyable_object)
-        print dir("%s %s"%(object, class_name))
         object.c_type = class_dict[class_name[0]]
         return object
