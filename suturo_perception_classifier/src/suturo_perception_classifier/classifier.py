@@ -29,6 +29,7 @@ class Classifier(object):
         objects = data.objects
         self.original_objects = objects
         all_data = {}
+        print objects
         for object in objects:
             # print object
             name = object.name
@@ -146,7 +147,7 @@ class Classifier(object):
         x = eu_object['dimensions'][0]
         y = eu_object['dimensions'][1]
         z = eu_object['dimensions'][2]
-        return [r, g, b, x, y, z]
+        return [r, g, b]#, x, y, z]
 
     def convert_to_dataset(self, raw_data):
         data = []
@@ -163,6 +164,9 @@ class Classifier(object):
         h = unclassified_object.c_avg_col_h
         s = unclassified_object.c_avg_col_s
         v = unclassified_object.c_avg_col_v
+        h = int(h/360. * 255)
+        s = int(s * 255)
+        v = int(v * 255)
         hsv_color = np.uint8([[[h, s, v]]])
         bgr_color = cv2.cvtColor(hsv_color, cv2.COLOR_HSV2BGR)
         r = bgr_color[0][0][2]
@@ -170,9 +174,10 @@ class Classifier(object):
         b = bgr_color[0][0][0]
         edges = list(unclassified_object.object.primitives[0].dimensions)
         edges.sort()
-        classifyable_unclassified_object = [r, g, b] + edges
+        classifyable_unclassified_object = [r, g, b]# + edges
         class_name = self.clf.predict(classifyable_unclassified_object)
         unclassified_object.c_type = class_dict[class_name[0]]
+        unclassified_object.object.id = class_name[0]
         resp = ClassifierResponse()
         resp.classifiedObject = unclassified_object
         print class_name
