@@ -36,7 +36,7 @@ namespace suturo_perception
         c_avg_col_h = -1;
         c_avg_col_s = -1.0;
         c_avg_col_v = -1.0;
-        c_mbpe_object = boost::shared_ptr<moveit_msgs::CollisionObject>(new moveit_msgs::CollisionObject());
+        c_mpe_object = boost::shared_ptr<moveit_msgs::CollisionObject>(new moveit_msgs::CollisionObject());
 
         logger = Logger("pipeline_object");
       };
@@ -96,10 +96,10 @@ namespace suturo_perception
         return c_avg_col_v; 
       };
       
-      boost::shared_ptr<moveit_msgs::CollisionObject> get_c_mbpe_object() const
+      boost::shared_ptr<moveit_msgs::CollisionObject> get_c_mpe_object() const
       {
         boost::lock_guard<boost::signals2::mutex> lock(*mutex); 
-        return c_mbpe_object; 
+        return c_mpe_object; 
       };
 
       // Threadsafe setters
@@ -148,10 +148,10 @@ namespace suturo_perception
         boost::lock_guard<boost::signals2::mutex> lock(*mutex);
         c_avg_col_v = value;
       };
-      void set_c_mbpe_object(boost::shared_ptr<moveit_msgs::CollisionObject> value)
+      void set_c_mpe_object(boost::shared_ptr<moveit_msgs::CollisionObject> value)
       {
         boost::lock_guard<boost::signals2::mutex> lock(*mutex);
-        c_mbpe_object = value;
+        c_mpe_object = value;
       };
 
       suturo_perception_msgs::EurocObject toEurocObject()
@@ -212,7 +212,7 @@ namespace suturo_perception
         obj.c_avg_col_v = c_avg_col_v;
         
         // mbpe_object
-        obj.mbpe_object = *c_mbpe_object;
+        obj.mpe_object = *c_mpe_object;
         return obj;
       }
     
@@ -226,7 +226,7 @@ namespace suturo_perception
       int c_avg_col_h;
       double c_avg_col_s;
       double c_avg_col_v;
-      boost::shared_ptr<moveit_msgs::CollisionObject> c_mbpe_object;
+      boost::shared_ptr<moveit_msgs::CollisionObject> c_mpe_object;
 
       boost::shared_ptr<boost::signals2::mutex> mutex;
 
