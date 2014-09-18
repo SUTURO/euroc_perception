@@ -23,7 +23,7 @@ class Classifier(object):
         # rospy.loginfo("Starting ColorDetector")
         rospy.Subscriber("/suturo/yaml_pars0r", Task, self.set_yaml_infos)
         self.clf = tree.DecisionTreeClassifier()
-        self.clf = GaussianNB()
+        # self.clf = GaussianNB()
         # spin the wheel
         # rospy.spin()
 
