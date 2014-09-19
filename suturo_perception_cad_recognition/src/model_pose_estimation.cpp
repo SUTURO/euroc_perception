@@ -57,6 +57,17 @@ void ModelPoseEstimation::execute()
   generateModels();
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud = input_cloud_;
 
+  if(input_cloud == NULL)
+  {
+    logger_.logWarn("NULL pointcloud received. Skipping execution.");
+    return;
+  }
+  if(input_cloud->points.size()==0)
+  {
+    logger_.logWarn("Empty pointcloud received. Skipping execution.");
+    return;
+  }
+
   if(remove_nans_)
   {
     std::vector<int> indices;
