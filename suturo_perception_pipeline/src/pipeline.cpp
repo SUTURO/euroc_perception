@@ -43,7 +43,7 @@ Pipeline::instantiateCapability(CapabilityType type, PipelineData::Ptr data, Pip
   pose1.orientation.w = 1;
   sobj.primitives.push_back(shape1);
   sobj.primitive_poses.push_back(pose1);
-  objects->push_back(sobj);
+  // objects->push_back(sobj); // Don't add the object now, to deactive the MPE // TODO reactivate
   ModelPoseEstimation* mpe;
   // Return the desired capability instance
   switch (type)
