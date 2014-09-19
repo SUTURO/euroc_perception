@@ -2,6 +2,7 @@
 
 #include <perception_utils/point_cloud_operations.h>
 #include <perception_utils/publisher_helper.h>
+#include <perception_utils/get_euroc_task_description.h>
 #include <suturo_perception_segmentation/projection_segmenter.h>
 #include <suturo_perception_pipeline/pipeline.h>
 #include <suturo_perception_msgs/EurocObject.h>
@@ -90,6 +91,16 @@ SuturoGripperNode::getGripper(suturo_perception_msgs::GetGripper::Request &req, 
 
 	pipelineData_->resetData();
   pipelineData_->request_parameters_ = req.s;
+  
+  // get task description
+  EurocTaskClient task_client(nodeHandle_);
+  logger.logInfo("Requesting task description");
+  if (!task_client.requestTaskDescription())
+  {
+    logger.logError("Requesting task description failed. Aborting.");
+    return false;
+  }
+  pipelineData_->task_ = task_client.getTaskDescription();
   
 	ros::Subscriber sub = nodeHandle_.subscribe<sensor_msgs::PointCloud2>(cloudTopic_, 1, boost::bind(&SuturoGripperNode::receive_cloud,this, _1));
 	

@@ -2,6 +2,7 @@
 #define PIPELINE_DATA_H
 
 #include <perception_utils/logger.h>
+#include <suturo_msgs/Task.h>
 
 #include <pcl/ModelCoefficients.h>
 #include <boost/shared_ptr.hpp>
@@ -18,6 +19,9 @@ namespace suturo_perception
       
       // service parameter
       std::string request_parameters_;
+      
+      // euroc task description
+      suturo_msgs::Task task_;
       
       
       PipelineData()
