@@ -37,6 +37,7 @@ namespace suturo_perception
         c_avg_col_s = -1.0;
         c_avg_col_v = -1.0;
         c_mpe_object = boost::shared_ptr<moveit_msgs::CollisionObject>(new moveit_msgs::CollisionObject());
+        c_height = -1.0;
 
         logger = Logger("pipeline_object");
       };
@@ -108,6 +109,12 @@ namespace suturo_perception
         return c_mpe_success; 
       };
 
+      double get_c_height() const
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex); 
+        return c_height; 
+      };
+
       // Threadsafe setters
       void set_c_id(int value)
       {
@@ -163,6 +170,11 @@ namespace suturo_perception
       {
         boost::lock_guard<boost::signals2::mutex> lock(*mutex);
         c_mpe_success = value;
+      };
+      void set_c_height(double value)
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex);
+        c_height = value;
       };
 
       suturo_perception_msgs::EurocObject toEurocObject()
@@ -225,6 +237,9 @@ namespace suturo_perception
         // mbpe_object
         obj.mpe_success = c_mpe_success;
         obj.mpe_object = *c_mpe_object;
+
+        // object height
+        obj.c_height = c_height;
         return obj;
       }
     
@@ -240,6 +255,7 @@ namespace suturo_perception
       double c_avg_col_v;
       boost::shared_ptr<moveit_msgs::CollisionObject> c_mpe_object;
       bool c_mpe_success;
+      double c_height;
 
       boost::shared_ptr<boost::signals2::mutex> mutex;
 

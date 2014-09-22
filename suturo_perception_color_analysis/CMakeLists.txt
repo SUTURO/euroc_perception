@@ -19,7 +19,7 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES suturo_perception_color_analysis
-  CATKIN_DEPENDS cv_bridge roscpp
+  CATKIN_DEPENDS cv_bridge roscpp perception_utils
   DEPENDS opencv pcl
 )
 
@@ -38,6 +38,7 @@ target_link_libraries(suturo_perception_color_analysis
   ${PCL_LIBRARIES}
   ${Boost_LIBRARIES}
   ${OpenCV_LIBS} 
+  ${catkin_LIBRARIES} 
 )
 
 catkin_add_gtest(${PROJECT_NAME}-test 
