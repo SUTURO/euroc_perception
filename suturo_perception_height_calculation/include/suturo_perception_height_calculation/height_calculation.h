@@ -23,6 +23,8 @@ namespace suturo_perception
       void execute();
       std::string getName() { return "height"; }
 
+      double calculateHeight(pcl::ModelCoefficients::Ptr table, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud); 
+
     private:
       Logger logger;
   };

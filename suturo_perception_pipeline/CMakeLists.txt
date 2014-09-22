@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   suturo_perception_shape_detection
   suturo_perception_color_analysis
   suturo_perception_cad_recognition
+  suturo_perception_height_calculation
 )
 
 find_package(PCL REQUIRED)
@@ -26,7 +27,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES suturo_perception_pipeline
-  CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils suturo_perception_match_cuboid suturo_perception_centroid_calc suturo_perception_shape_detection suturo_perception_cad_recognition suturo_perception_color_analysis
+  CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils suturo_perception_match_cuboid suturo_perception_centroid_calc suturo_perception_shape_detection suturo_perception_cad_recognition suturo_perception_color_analysis suturo_perception_height_calculation
   DEPENDS pcl
 )
 

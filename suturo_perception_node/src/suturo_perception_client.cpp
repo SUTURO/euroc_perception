@@ -19,6 +19,7 @@ void print_euroc_object(suturo_perception_msgs::EurocObject &obj)
   ROS_INFO(" |-> c_avg_col_h: %d", obj.c_avg_col_h);
   ROS_INFO(" |-> c_avg_col_s: %f", obj.c_avg_col_s);
   ROS_INFO(" |-> c_avg_col_v: %f", obj.c_avg_col_v);
+  ROS_INFO(" |-> c_height: %f", obj.c_height);
   ROS_INFO(" |-> moveit CollisionObject:");
   ROS_INFO(" |-|-> primitives: %d", obj.object.primitives.size());
   for (int j = 0; j < obj.object.primitives.size(); j++)

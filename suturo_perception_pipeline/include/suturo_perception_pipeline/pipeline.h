@@ -21,6 +21,7 @@ namespace suturo_perception
         SHAPE_DETECTOR, 
         COLOR_ANALYSIS,
         MODEL_POSE,
+        HEIGHT_CALCULATION,
         
         LAST_CAPABILITY 
       };
