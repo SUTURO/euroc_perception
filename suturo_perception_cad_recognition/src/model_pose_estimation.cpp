@@ -150,8 +150,9 @@ void ModelPoseEstimation::execute()
       // Get the origin of the aligned object.
       pcl::PointXYZ origin = fitter.getOrigin(); 
       logger_.logInfo("pipeline_mode_ = true");
-      ss << "Model " << i << " is below best fitness score. "; 
-      ss << "Pose: " << orientation.x() << " " << orientation.y() << " " << orientation.z() << " " << orientation.w() << " " << origin << std::endl;
+      suturo_msgs::Object &o = objects_->at(i);
+      ss << "Model " << i << "("<< o.name <<") is below best fitness score. "; 
+      ss << "Pose: " << orientation.x() << " " << orientation.y() << " " << orientation.z() << " " << orientation.w() << " " << origin << ". Score: " << fitter.getFitnessScore() << std::endl;
       logger_.logInfo(ss.str());
       ss.str("");
 
