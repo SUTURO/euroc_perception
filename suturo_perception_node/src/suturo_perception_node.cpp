@@ -87,7 +87,7 @@ SuturoPerceptionNode::SuturoPerceptionNode(ros::NodeHandle &n, std::string image
 /*
  * Callback for the dynamic reconfigure service
  */
-void SuturoPerceptionNode::reconfigureCallback(suturo_perception_gripper_node::SuturoPerceptionConfig &config, uint32_t level)
+void SuturoPerceptionNode::reconfigureCallback(suturo_perception_node::SuturoPerceptionConfig &config, uint32_t level)
 {
   pipelineData_->zAxisFilterMin = config.zAxisFilterMin;
   pipelineData_->zAxisFilterMax = config.zAxisFilterMax;
@@ -102,6 +102,10 @@ void SuturoPerceptionNode::reconfigureCallback(suturo_perception_gripper_node::S
   pipelineData_->ecObjClusterTolerance = config.ecObjClusterTolerance;
   pipelineData_->ecObjMinClusterSize = config.ecObjMinClusterSize;
   pipelineData_->ecObjMaxClusterSize = config.ecObjMaxClusterSize;
+  pipelineData_->maxICPIterations = config.mpeMaxICPIterations;
+  pipelineData_->successThreshold = config.mpeSuccessThreshold;
+  pipelineData_->voxelSize = config.mpeVoxelSize;
+  pipelineData_->dumpICPFitterPointClouds = config.mpeDumpICPFitterPointClouds;
   
   pipelineData_->printConfig();
 }

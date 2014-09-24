@@ -1,5 +1,5 @@
-#ifndef SUTURO_PERCEPTION_GRIPPER_NODE_H
-#define SUTURO_PERCEPTION_GRIPPER_NODE_H
+#ifndef SUTURO_PERCEPTION_NODE_H
+#define SUTURO_PERCEPTION_NODE_H
 
 #include "ros/ros.h"
 #include <dynamic_reconfigure/server.h>
@@ -9,7 +9,7 @@
 #include "perception_utils/pipeline_data.hpp"
 #include "perception_utils/publisher_helper.h"
 #include "suturo_perception_msgs/GetGripper.h"
-#include "suturo_perception_gripper_node/SuturoPerceptionConfig.h"
+#include "suturo_perception_node/SuturoPerceptionConfig.h"
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_cloud.h>
@@ -21,7 +21,7 @@ class SuturoPerceptionNode
     enum NodeType { SCENE, GRIPPER };
 
     SuturoPerceptionNode(ros::NodeHandle &nodeHandle, std::string imageTopic, std::string depthTopic, SuturoPerceptionNode::NodeType nodeType);
-    void reconfigureCallback(suturo_perception_gripper_node::SuturoPerceptionConfig &config, uint32_t level);
+    void reconfigureCallback(suturo_perception_node::SuturoPerceptionConfig &config, uint32_t level);
     bool getGripper(suturo_perception_msgs::GetGripper::Request &req, suturo_perception_msgs::GetGripper::Response &res);
 
     void receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud);
@@ -59,8 +59,8 @@ class SuturoPerceptionNode
     suturo_perception::PipelineData::Ptr pipelineData_;
     
     // dynamic reconfigure
-    dynamic_reconfigure::Server<suturo_perception_gripper_node::SuturoPerceptionConfig> reconfSrv;
-    dynamic_reconfigure::Server<suturo_perception_gripper_node::SuturoPerceptionConfig>::CallbackType reconfCb;
+    dynamic_reconfigure::Server<suturo_perception_node::SuturoPerceptionConfig> reconfSrv;
+    dynamic_reconfigure::Server<suturo_perception_node::SuturoPerceptionConfig>::CallbackType reconfCb;
 };
 
-#endif // SUTURO_PERCEPTION_GRIPPER_NODE_H
+#endif // SUTURO_PERCEPTION_NODE_H

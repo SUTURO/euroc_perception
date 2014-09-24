@@ -50,4 +50,4 @@ target_link_libraries(suturo_perception_client
   ${PCL_LIBRARIES}
 )
 
-add_dependencies(suturo_perception_node ${PROJECT_NAME}_gencfg)
+add_dependencies(suturo_perception_node  ${${PROJECT_NAME}_EXPORTED_TARGETS})
