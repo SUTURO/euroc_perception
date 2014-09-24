@@ -1,0 +1,5 @@
+<launch>
+  <include file="$(find pointcloud_publisher)/launch/run_pointcloud_publisher.launch"></include>
+
+  <node pkg="suturo_perception_node" name="suturo_perception_gripper_node" type="suturo_perception_node" output="screen" args="--type gripper"></node>
+</launch>
