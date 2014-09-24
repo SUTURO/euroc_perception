@@ -49,8 +49,8 @@ double HeightCalculation::calculateHeight(pcl::ModelCoefficients::Ptr table, pcl
     if (tmp > height)
       height = tmp;
   }
-  e = boost::posix_time::microsec_clock::local_time();
-  logger.logTime(s, e, "height calculation");
+  boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
+  logger.logTime(s, end, "height calculation");
 
   return height;
 } 
