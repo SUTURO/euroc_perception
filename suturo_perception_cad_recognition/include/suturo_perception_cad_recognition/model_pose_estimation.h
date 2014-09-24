@@ -34,6 +34,7 @@ public:
   ModelPoseEstimation (boost::shared_ptr<std::vector<suturo_msgs::Object> > objects,suturo_perception::PipelineData::Ptr pipelineData, suturo_perception::PipelineObject::Ptr pipelineObject) : 
   suturo_perception::Capability(pipelineData, pipelineObject)
   {
+	  logger_ = suturo_perception::Logger("SuturoPerceptionMPE");
 
     if(pipelineData == NULL || pipelineObject == NULL)
     {
@@ -67,7 +68,6 @@ public:
     best_fit_model_ = 0;
     fitness_score_ = 0;
     pose_estimation_successful_ = false;
-	  logger_ = suturo_perception::Logger("SuturoPerceptionMPE");
     generated_models_ = boost::shared_ptr<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> >(new std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> );
     voxel_size_ = 0;
     dump_icp_fitter_pointclouds_ = false;

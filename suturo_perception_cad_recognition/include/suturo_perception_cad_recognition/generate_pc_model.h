@@ -10,11 +10,13 @@
 #include <pcl/common/transforms.h>
 #include <math.h>
 #include <suturo_msgs/Task.h>
+#include <tf/transform_broadcaster.h>
 
 class GeneratePointCloudModel
 {
   private:
     Eigen::Matrix4f getRotationMatrixFromPose(Eigen::Matrix< float, 6, 1 > pose);
+    Eigen::Matrix< float, 3, 3 > removeTranslationVectorFromMatrix(Eigen::Matrix<float,4,4> m);
   public:
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr generateBox(double size_x, double size_y,
         double size_z, int total_points);

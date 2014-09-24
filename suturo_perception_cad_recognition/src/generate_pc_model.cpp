@@ -51,6 +51,25 @@ Eigen::Matrix4f GeneratePointCloudModel::getRotationMatrixFromPose(Eigen::Matrix
   return result;
 }
 
+Eigen::Matrix< float, 3, 3 > GeneratePointCloudModel::removeTranslationVectorFromMatrix(Eigen::Matrix<float,4,4> m)
+{
+  Eigen::Matrix< float, 3, 3 > result;
+  result.setZero();
+  result(0,0) = m(0,0);
+  result(1,0) = m(1,0);
+  result(2,0) = m(2,0);
+
+  result(0,1) = m(0,1);
+  result(1,1) = m(1,1);
+  result(2,1) = m(2,1);
+
+  result(0,2) = m(0,2);
+  result(1,2) = m(1,2);
+  result(2,2) = m(2,2);
+  return result;
+}
+
+
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateBox(double size_x, double size_y,
     double size_z, int total_points)
 {
@@ -240,7 +259,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateComposed
 {
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr result(new pcl::PointCloud<pcl::PointXYZRGB>);
   for (int i = 0; i < primitives.size(); i++) {
-    std::cout << "Generating shape " << i << " with type " << ((int) primitives.at(i).type);
+    std::cout << "[generate_pc_model] Generating shape " << i << " with type " << ((int) primitives.at(i).type);
     std::cout << std::endl;
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr shape_part(new pcl::PointCloud<pcl::PointXYZRGB>);
     switch(primitives.at(i).type)
@@ -259,6 +278,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateComposed
     }
 
     // Check if the pose is !=0 and a transformation is necessary
+    // TODO add check for w=1
     if(poses.at(i).position.x != 0   || 
         poses.at(i).position.y != 0  || 
         poses.at(i).position.z != 0  || 
@@ -267,14 +287,44 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateComposed
         poses.at(i).orientation.z != 0  )
     {
       
+      // TODO Use quaternion instead of doing this:
+      /* 
+         Eigen::VectorXf pose = Eigen::Matrix< float, 6, 1 >::Zero();
+         pose[0] = poses.at(i).position.x;
+         pose[1] = poses.at(i).position.y;
+         pose[2] = poses.at(i).position.z;
+         pose[3] = poses.at(i).orientation.x;
+         pose[4] = poses.at(i).orientation.y;
+         pose[5] = poses.at(i).orientation.z;
+         pcl::transformPointCloud(*shape_part, *shape_part, getRotationMatrixFromPose(pose) );
+        */ 
+
+      // Eigen::Quaternionf q(poses.at(i).orientation.x,
+      //     poses.at(i).orientation.y,
+      //     poses.at(i).orientation.z,
+      //     poses.at(i).orientation.w);
+      // 
+      tf::Quaternion q(poses.at(i).orientation.x,
+          poses.at(i).orientation.y,
+          poses.at(i).orientation.z,
+          poses.at(i).orientation.w);
+      tf::Matrix3x3 m(q);
+      double roll,pitch,yaw;
+      m.getRPY(roll,pitch,yaw);
       Eigen::VectorXf pose = Eigen::Matrix< float, 6, 1 >::Zero();
       pose[0] = poses.at(i).position.x;
       pose[1] = poses.at(i).position.y;
       pose[2] = poses.at(i).position.z;
-      pose[3] = poses.at(i).orientation.x;
-      pose[4] = poses.at(i).orientation.y;
-      pose[5] = poses.at(i).orientation.z;
+      pose[3] = roll;
+      pose[4] = pitch;
+      pose[5] = yaw;
       pcl::transformPointCloud(*shape_part, *shape_part, getRotationMatrixFromPose(pose) );
+
+      
+      //pcl::transformPointCloud (const pcl::PointCloud< PointT > &cloud_in, pcl::PointCloud< PointT > &cloud_out, const Eigen::Matrix< Scalar, 3, 1 > &offset, const Eigen::Quaternion< Scalar > &rotation) 
+      // Eigen::Matrix< float, 3, 3 > rotation = removeTranslationVectorFromMatrix(pose);
+      // Eigen::Quaterniof q(rotation);
+      // pcl::transformPointCloud(*shape_part, *shape_part, getRotationMatrixFromPose(pose) );
     }
     *result += *shape_part;
 
