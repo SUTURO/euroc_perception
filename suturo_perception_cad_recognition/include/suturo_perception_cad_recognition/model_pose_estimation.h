@@ -70,6 +70,7 @@ public:
     voxel_size_ = 0;
     dump_icp_fitter_pointclouds_ = false;
     remove_nans_ = false;
+    max_icp_iterations_ = 60;
   }
 
   //  This should be the observed pointcloud
@@ -161,6 +162,7 @@ private:
   // true, if the caller has passed pipelineData AND pipelineObjects that are != NULL
   bool pipeline_mode_;
   bool remove_nans_;
+  int max_icp_iterations_;
 
 
 };

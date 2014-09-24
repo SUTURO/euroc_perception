@@ -43,10 +43,10 @@ namespace suturo_perception
         ecObjMinClusterSize = 100;
         ecObjMaxClusterSize = 25000;
         numThreads_ = 8;
-        maxICPIterations = 60;
-        successThreshold = 1e-5;
-        voxelSize = 0.03;
-        dumpICPFitterPointClouds = false;
+        mpeMaxICPIterations = 60;
+        mpeSuccessThreshold = 1e-5;
+        mpeVoxelSize = 0.003;
+        mpeDumpICPFitterPointClouds = false;
       }
 
       // pipeline configuration
@@ -64,10 +64,10 @@ namespace suturo_perception
       int ecObjMinClusterSize;
       int ecObjMaxClusterSize;
       int numThreads_;
-      int maxICPIterations;
-      double successThreshold;
-      double voxelSize;
-      bool dumpICPFitterPointClouds;
+      int mpeMaxICPIterations;
+      double mpeSuccessThreshold;
+      double mpeVoxelSize;
+      bool mpeDumpICPFitterPointClouds;
       
       void resetData()
       {
@@ -100,8 +100,8 @@ namespace suturo_perception
             planeMaxIterations % planeDistanceThreshold % ecClusterTolerance %
             ecMinClusterSize % ecMaxClusterSize % prismZMin % prismZMax %
             ecObjClusterTolerance % ecObjMinClusterSize % ecObjMaxClusterSize % 
-            numThreads_ % maxICPIterations % successThreshold % voxelSize % 
-            dumpICPFitterPointClouds
+            numThreads_ % mpeMaxICPIterations % mpeSuccessThreshold % mpeVoxelSize % 
+            mpeDumpICPFitterPointClouds
             ).str());
       }
     private:

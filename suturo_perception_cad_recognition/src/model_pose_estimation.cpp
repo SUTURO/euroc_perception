@@ -53,6 +53,12 @@ void ModelPoseEstimation::initForPipelineCall()
   // to suturo_perception_cad_recognition/dumps
   this->setVoxelSize(0.003f);
   this->setRemoveNaNs(true);
+
+
+  // mpeMaxICPIterations = 60;
+  // mpeSuccessThreshold = 1e-5;
+  // mpeVoxelSize = 0.003;
+  // mpeDumpICPFitterPointClouds = false;
 }
 
 void ModelPoseEstimation::execute()
@@ -128,7 +134,7 @@ void ModelPoseEstimation::execute()
     // std::cout << "Using surface normal: " << surface_normal_ << std::endl;
     ICPFitter fitter(input_cloud_xyz, model_cloud_xyz, surface_normal_);
     fitter.rotateModelUp(false);
-    fitter.setMaxICPIterations(60);
+    fitter.setMaxICPIterations(max_icp_iterations_);
 
     boost::posix_time::ptime s_icp = boost::posix_time::microsec_clock::local_time();
     // pcl::PointCloud<pcl::PointXYZ>::Ptr model_fitted = ria.execute();

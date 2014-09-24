@@ -102,10 +102,10 @@ void SuturoPerceptionNode::reconfigureCallback(suturo_perception_node::SuturoPer
   pipelineData_->ecObjClusterTolerance = config.ecObjClusterTolerance;
   pipelineData_->ecObjMinClusterSize = config.ecObjMinClusterSize;
   pipelineData_->ecObjMaxClusterSize = config.ecObjMaxClusterSize;
-  pipelineData_->maxICPIterations = config.mpeMaxICPIterations;
-  pipelineData_->successThreshold = config.mpeSuccessThreshold;
-  pipelineData_->voxelSize = config.mpeVoxelSize;
-  pipelineData_->dumpICPFitterPointClouds = config.mpeDumpICPFitterPointClouds;
+  pipelineData_->mpeMaxICPIterations = config.mpeMaxICPIterations;
+  pipelineData_->mpeSuccessThreshold = config.mpeSuccessThreshold;
+  pipelineData_->mpeVoxelSize = config.mpeVoxelSize;
+  pipelineData_->mpeDumpICPFitterPointClouds = config.mpeDumpICPFitterPointClouds;
   
   pipelineData_->printConfig();
 }
