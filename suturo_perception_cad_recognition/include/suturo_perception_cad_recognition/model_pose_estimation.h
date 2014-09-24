@@ -39,6 +39,7 @@ public:
     {
       std::cout << "pipeline_mode_ = false" << std::endl;
       pipeline_mode_ = false;
+      objects_ = objects;
     }
     else
     {
@@ -52,13 +53,18 @@ public:
       surface_normal[3] = pipelineData->coefficients_->values.at(3);
       surface_normal_ = surface_normal;
       input_cloud_ = pipelineObject->get_pointCloud();
+
+      // TODO Does make_shared work?
+      // boost::shared_ptr<std::vector<suturo_msgs::Object> > objects_from_pipeline(&pipelineData_->task_.objects);
+      boost::shared_ptr<std::vector<suturo_msgs::Object> > objects_from_pipeline = boost::make_shared<std::vector<suturo_msgs::Object> >(pipelineData_->task_.objects);
+
+      objects_ = objects_from_pipeline;
     }
 
     success_threshold_ = 1e-5;
     best_fit_model_ = 0;
     fitness_score_ = 0;
     pose_estimation_successful_ = false;
-    objects_ = objects;
 	  logger_ = suturo_perception::Logger("SuturoPerceptionMPE");
     generated_models_ = boost::shared_ptr<std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> >(new std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> );
     voxel_size_ = 0;
@@ -97,6 +103,12 @@ public:
   // Remove NaNs from the input cloud before the fitting process starts
   // Default: false
   void setRemoveNaNs(bool b);
+
+  // If we are called by the perception pipeline, we can't set the necessary parameters from the calling side
+  // We will therefore prepare everything in this method (set voxel size, retrieve models from the task description etc.).
+  void initForPipelineCall();
+
+
 
   void execute();
 

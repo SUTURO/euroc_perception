@@ -44,39 +44,41 @@ Pipeline::instantiateCapability(CapabilityType type, PipelineData::Ptr data, Pip
       //
       // Prepare the model that should be matched against the input cloud
       boost::shared_ptr<std::vector<suturo_msgs::Object> > objects(new std::vector<suturo_msgs::Object>);
-      suturo_msgs::Object sobj;
-      sobj.name="red_cube";
-      sobj.color="ff0000";
-      sobj.description="a red cube";
-      sobj.surface_material = suturo_msgs::Object::ALUMINIUM;
+      // suturo_msgs::Object sobj;
+      // sobj.name="red_cube";
+      // sobj.color="ff0000";
+      // sobj.description="a red cube";
+      // sobj.surface_material = suturo_msgs::Object::ALUMINIUM;
 
-      shape_msgs::SolidPrimitive shape1;
-      geometry_msgs::Pose pose1;
-      shape1.type = shape1.BOX;
-      // 0.05 x 0.05 x 0.05
-      shape1.dimensions.push_back(0.05f);
-      shape1.dimensions.push_back(0.05f);
-      shape1.dimensions.push_back(0.05f);
-      pose1.position.x = 0;
-      pose1.position.y = 0;
-      pose1.position.z = 0;
-      pose1.orientation.x = 0;
-      pose1.orientation.y = 0;
-      pose1.orientation.z = 0;
-      pose1.orientation.w = 1;
-      sobj.primitives.push_back(shape1);
-      sobj.primitive_poses.push_back(pose1);
-      // objects->push_back(sobj); // Don't add the object now, to deactive the MPE // TODO reactivate
-      ModelPoseEstimation* mpe;
-      // Return the desired capability instance
-      mpe = new ModelPoseEstimation(objects, data, obj);
-      // TODO: move the 3 following args to pipelineData and dynamic reconfigure
-      mpe->setDumpICPFitterPointclouds(true); // Enable debugging. This will save pointclouds
-                  // to suturo_perception_cad_recognition/dumps
-      mpe->setVoxelSize(0.003f);
-      mpe->setRemoveNaNs(true);
-      // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      return mpe;
+      // shape_msgs::SolidPrimitive shape1;
+      // geometry_msgs::Pose pose1;
+      // shape1.type = shape1.BOX;
+      // // 0.05 x 0.05 x 0.05
+      // shape1.dimensions.push_back(0.05f);
+      // shape1.dimensions.push_back(0.05f);
+      // shape1.dimensions.push_back(0.05f);
+      // pose1.position.x = 0;
+      // pose1.position.y = 0;
+      // pose1.position.z = 0;
+      // pose1.orientation.x = 0;
+      // pose1.orientation.y = 0;
+      // pose1.orientation.z = 0;
+      // pose1.orientation.w = 1;
+      // sobj.primitives.push_back(shape1);
+      // sobj.primitive_poses.push_back(pose1);
+      // // objects->push_back(sobj); // Don't add the object now, to deactive the MPE // TODO reactivate
+      // ModelPoseEstimation* mpe;
+      // // Return the desired capability instance
+      // mpe = new ModelPoseEstimation(objects, data, obj);
+      // // TODO: move the 3 following args to pipelineData and dynamic reconfigure
+      // mpe->setDumpICPFitterPointclouds(true); // Enable debugging. This will save pointclouds
+      //             // to suturo_perception_cad_recognition/dumps
+      // mpe->setVoxelSize(0.003f);
+      // mpe->setRemoveNaNs(true);
+      // // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      // return mpe;
+      return new ModelPoseEstimation(objects, data, obj);
+
       break;
     }
 

@@ -47,12 +47,24 @@ Eigen::VectorXf ModelPoseEstimation::getEstimatedPose()
   return estimated_pose_;
 }
 
+void ModelPoseEstimation::initForPipelineCall()
+{
+  this->setDumpICPFitterPointclouds(true); // Enable debugging. This will save pointclouds
+  // to suturo_perception_cad_recognition/dumps
+  this->setVoxelSize(0.003f);
+  this->setRemoveNaNs(true);
+}
+
 void ModelPoseEstimation::execute()
 {
   std::stringstream ss;
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
   // Reset fitness score
   fitness_score_ = 999;
+
+  // Set the default parameters if we are running inside our perception pipeline
+  if(pipeline_mode_)
+    initForPipelineCall();
 
   generateModels();
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud = input_cloud_;
@@ -147,7 +159,6 @@ void ModelPoseEstimation::execute()
     }
 
     // Dump the pointclouds that ICPFitter generated during it's execution
-    // TODO: check bool for activation
     if(dump_icp_fitter_pointclouds_)
       fitter.dumpPointClouds();
 
@@ -181,6 +192,7 @@ void ModelPoseEstimation::execute()
       co->operation = moveit_msgs::CollisionObject::ADD;
 
       /*
+      // TODO IMPLEMENT AND TEST THIS
       // Convert suturo_msg Object to CollisionObject
       suturo_msgs::Object &o = objects_->at(best_fit_model_);
       co->primitives.resize(o.primitives.size());
