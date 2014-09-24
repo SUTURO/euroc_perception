@@ -24,6 +24,8 @@ double HeightCalculation::calculateHeight(pcl::ModelCoefficients::Ptr table, pcl
     logger.logError("table doesn't have 4 coefficients!");
     return -1.0;
   }
+  
+  boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
 
   // plane coefficients
   float a,b,c,d;
@@ -43,9 +45,12 @@ double HeightCalculation::calculateHeight(pcl::ModelCoefficients::Ptr table, pcl
   {
     pcl::PointXYZRGB *p = &cloud->points[i];
     double tmp = ( a * p->x + b * p->y + c * p->z + d ) / e;
+    tmp = tmp < 0 ? -tmp : tmp; // abs
     if (tmp > height)
       height = tmp;
   }
+  e = boost::posix_time::microsec_clock::local_time();
+  logger.logTime(s, e, "height calculation");
 
   return height;
 } 
