@@ -101,6 +101,7 @@ namespace suturo_perception
       // Return the amount of executed transformations to fit the cuboid
       int transformationCount();
 
+      bool validCuboid(Cuboid::Ptr cuboid);
       // Execute the algorithm
       // @param c A reference to a cuboid instance, where the fitted cuboid informations
       //          will be stored.

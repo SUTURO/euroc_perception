@@ -32,6 +32,7 @@ namespace suturo_perception
         c_cuboid->length2 = -1;
         c_cuboid->length3 = -1;
         c_cuboid->volume = -1;
+        c_cuboid_success = false;
         c_shape = None;
         c_avg_col_h = -1;
         c_avg_col_s = -1.0;
@@ -115,6 +116,12 @@ namespace suturo_perception
         return c_height; 
       };
 
+      bool get_c_cuboid_success() const
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex); 
+        return c_cuboid_success; 
+      };
+
       // Threadsafe setters
       void set_c_id(int value)
       {
@@ -176,6 +183,11 @@ namespace suturo_perception
         boost::lock_guard<boost::signals2::mutex> lock(*mutex);
         c_height = value;
       };
+      void set_c_cuboid_success(bool value)
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex);
+        c_cuboid_success = value;
+      };
 
       suturo_perception_msgs::EurocObject toEurocObject()
       {
@@ -189,28 +201,31 @@ namespace suturo_perception
         obj.c_type = suturo_perception_msgs::EurocObject::UNKNOWN; 
         
         // cuboid
-        Cuboid::Ptr cub = get_c_cuboid();
-        shape_msgs::SolidPrimitive cuboid_primitive;
-        cuboid_primitive.type = shape_msgs::SolidPrimitive::BOX;
-        cuboid_primitive.dimensions.resize(3);
-        cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_X) = cub->length1;
-        cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_Y) = cub->length2;
-        cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_Z) = cub->length3;
-        obj.object.primitives.push_back(cuboid_primitive);
+        if (get_c_cuboid_success())
+        {
+          Cuboid::Ptr cub = get_c_cuboid();
+          shape_msgs::SolidPrimitive cuboid_primitive;
+          cuboid_primitive.type = shape_msgs::SolidPrimitive::BOX;
+          cuboid_primitive.dimensions.resize(3);
+          cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_X) = cub->length1;
+          cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_Y) = cub->length2;
+          cuboid_primitive.dimensions.at(shape_msgs::SolidPrimitive::BOX_Z) = cub->length3;
+          obj.object.primitives.push_back(cuboid_primitive);
 
-        geometry_msgs::Pose cuboid_pose;
-        cuboid_pose.position.x = cub->center[0];
-        cuboid_pose.position.y = cub->center[1];
-        cuboid_pose.position.z = cub->center[2];
-        // TODO: find out which one is right
-        //cuboid_pose.position.x = cub->center[0] - cub->length1 / 2;
-        //cuboid_pose.position.y = cub->center[1] - cub->length2 / 2;
-        //cuboid_pose.position.z = cub->center[2] - cub->length3 / 2;
-        cuboid_pose.orientation.x = cub->orientation.x();
-        cuboid_pose.orientation.y = cub->orientation.y();
-        cuboid_pose.orientation.z = cub->orientation.z();
-        cuboid_pose.orientation.w = cub->orientation.w();
-        obj.object.primitive_poses.push_back(cuboid_pose);
+          geometry_msgs::Pose cuboid_pose;
+          cuboid_pose.position.x = cub->center[0];
+          cuboid_pose.position.y = cub->center[1];
+          cuboid_pose.position.z = cub->center[2];
+          // TODO: find out which one is right
+          //cuboid_pose.position.x = cub->center[0] - cub->length1 / 2;
+          //cuboid_pose.position.y = cub->center[1] - cub->length2 / 2;
+          //cuboid_pose.position.z = cub->center[2] - cub->length3 / 2;
+          cuboid_pose.orientation.x = cub->orientation.x();
+          cuboid_pose.orientation.y = cub->orientation.y();
+          cuboid_pose.orientation.z = cub->orientation.z();
+          cuboid_pose.orientation.w = cub->orientation.w();
+          obj.object.primitive_poses.push_back(cuboid_pose);
+        }
 
         // shape
         switch(c_shape)
@@ -249,6 +264,7 @@ namespace suturo_perception
       double c_volume;
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloud;
       Cuboid::Ptr c_cuboid;
+      bool c_cuboid_success;
       Shape c_shape;
       int c_avg_col_h;
       double c_avg_col_s;

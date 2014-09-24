@@ -418,12 +418,19 @@ Cuboid::Ptr CuboidMatcher::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::Po
   return c;
 }
 
+
+bool CuboidMatcher::validCuboid(Cuboid::Ptr cuboid)
+{
+  return ! (cuboid->length1 < 0 || cuboid->length2 < 0 || cuboid->length3 < 0);
+}
+
 void CuboidMatcher::execute()
 {
   setMode(CUBOID_MATCHER_MODE_WITH_COEFFICIENTS);
   setTableCoefficients(pipelineData_->coefficients_);
   setInputCloud(pipelineObject_->get_pointCloud());
   execute(pipelineObject_->get_c_cuboid());
+  pipelineObject_->set_c_cuboid_success(validCuboid(pipelineObject_->get_c_cuboid()));
 }
 
 bool CuboidMatcher::execute(Cuboid::Ptr c)

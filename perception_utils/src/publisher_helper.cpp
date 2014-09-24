@@ -171,9 +171,7 @@ void PublisherHelper::publish_marker(PipelineObject::VecPtr &objects, std::strin
     cuboidMarker.color.r = 1.0;
     cuboidMarker.color.g = 0.0;
     cuboidMarker.color.b = 0.0;
-    if(cuboidMarker.pose.position.x != -1 &&
-       cuboidMarker.pose.position.y != -1 &&
-       cuboidMarker.pose.position.z != -1)
+    if(obj->get_c_cuboid_success())
     {
       markerPublisher.publish(cuboidMarker);
     }
