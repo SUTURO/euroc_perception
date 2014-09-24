@@ -102,7 +102,7 @@ void ModelPoseEstimation::execute()
     sor.setLeafSize (voxel_size_, voxel_size_, voxel_size_);
     sor.filter (*voxel_cloud);
     input_cloud = voxel_cloud;
-    std::cout << "Downsampled Object Pointcloud has " << input_cloud->points.size() << "pts" << std::endl;
+    // std::cout << "Downsampled Object Pointcloud has " << input_cloud->points.size() << "pts" << std::endl;
   }
 
   for (int i = 0; i < objects_->size(); i++) 
@@ -143,7 +143,11 @@ void ModelPoseEstimation::execute()
       Eigen::Quaternionf orientation = fitter.getOrientation(); 
       // Get the origin of the aligned object.
       pcl::PointXYZ origin = fitter.getOrigin(); 
-      std::cout << "Pose: " << orientation.x() << " " << orientation.y() << " " << orientation.z() << " " << orientation.w() << " " << origin << std::endl;
+      logger_.logInfo("pipeline_mode_ = true");
+      ss << "Model " << i << " is below best fitness score. "; 
+      ss << "Pose: " << orientation.x() << " " << orientation.y() << " " << orientation.z() << " " << orientation.w() << " " << origin << std::endl;
+      logger_.logInfo(ss.str());
+      ss.str("");
 
       estimated_pose_ = Eigen::VectorXf(7);
       estimated_pose_[0] = origin.x;
@@ -191,7 +195,7 @@ void ModelPoseEstimation::execute()
       co->header.frame_id = "/tdepth_pcl";
       co->operation = moveit_msgs::CollisionObject::ADD;
 
-      /*
+      
       // TODO IMPLEMENT AND TEST THIS
       // Convert suturo_msg Object to CollisionObject
       suturo_msgs::Object &o = objects_->at(best_fit_model_);
@@ -204,46 +208,62 @@ void ModelPoseEstimation::execute()
         // co->primitives[i].dimensions.resize ( o.primitives.dimensions.size() );
         co->primitives[i] = o.primitives[i];
         co->primitive_poses[i] = o.primitive_poses[i];
+        // Has everything been copied properly?
+        // std::cout << "CO Primitive" << co->primitives[i] << std::endl;
+        // std::cout << "MPE Primitive" << o.primitives[i] << std::endl;
+        // std::cout << "CO PrimitivePoses" << co->primitive_poses[i] << std::endl;
+        // std::cout << "MPE PrimitivePoses" <<  o.primitive_poses[i] << std::endl;
+
+        // // Copy the primitive pose by hand. This will not be handled by the SolidPrimitive Class.
+        // co->primitive_poses[i].position.x = estimated_pose_[0];
+        // co->primitive_poses[i].position.y = estimated_pose_[1];
+        // co->primitive_poses[i].position.z = estimated_pose_[2];
 
         // Thanks to moritz 
         // Convert the original pose of every building block of the model
         // to the matched pose
-        tf::Vector3 offset(o.primitive_poses[i].position.x,o.primitive_poses[i].position.y,o.primitive_poses[i].position.z);
+        
+        tf::Vector3 offset(o.primitive_poses[i].position.x,
+            o.primitive_poses[i].position.y,
+            o.primitive_poses[i].position.z);
         tf::Quaternion real_pose( estimated_pose_[3], estimated_pose_[4], estimated_pose_[5], estimated_pose_[6]);
         tf::Vector3 rotatedOffset = tf::quatRotate(real_pose, offset);
-        o.primitive_poses[i].position.x = estimated_pose_[0] + rotatedOffset.x();
-        o.primitive_poses[i].position.y = estimated_pose_[1] + rotatedOffset.y();
-        o.primitive_poses[i].position.z = estimated_pose_[2] + rotatedOffset.z();
+        co->primitive_poses[i].position.x = estimated_pose_[0] + rotatedOffset.x();
+        co->primitive_poses[i].position.y = estimated_pose_[1] + rotatedOffset.y();
+        co->primitive_poses[i].position.z = estimated_pose_[2] + rotatedOffset.z();
 
-        o.primitive_poses[i].orientation.x = real_pose.x();
-        o.primitive_poses[i].orientation.y = real_pose.y();
-        o.primitive_poses[i].orientation.z = real_pose.z();
-        o.primitive_poses[i].orientation.w = real_pose.w();
+        // TODO WARNING. THIS WILL NOT WORK WITH ROTATED OBJECTS IN THE YAML.
+        //      IMPLEMENT the handling ...
+        co->primitive_poses[i].orientation.x = real_pose.x();
+        co->primitive_poses[i].orientation.y = real_pose.y();
+        co->primitive_poses[i].orientation.z = real_pose.z();
+        co->primitive_poses[i].orientation.w = real_pose.w();
+        
 
 
       }
       co->id = o.name;
-      */
+      
 
       // ** CUBE ONLY ** 
-      co->primitives.resize(1);
-      co->primitives[0].type = shape_msgs::SolidPrimitive::BOX;
-      co->primitives[0].dimensions.resize(shape_tools::SolidPrimitiveDimCount<shape_msgs::SolidPrimitive::BOX>::value);
-      co->primitive_poses.resize(1);
-      co->id = "box";
+      // co->primitives.resize(1);
+      // co->primitives[0].type = shape_msgs::SolidPrimitive::BOX;
+      // co->primitives[0].dimensions.resize(shape_tools::SolidPrimitiveDimCount<shape_msgs::SolidPrimitive::BOX>::value);
+      // co->primitive_poses.resize(1);
+      // co->id = "box";
 
-      co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_X] = 0.05;
-      co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Y] = 0.05;
-      co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Z] = 0.05;
-      co->primitive_poses[0].position.x = estimated_pose_[0];
-      co->primitive_poses[0].position.y = estimated_pose_[1];
-      co->primitive_poses[0].position.z = estimated_pose_[2];
-      geometry_msgs::Quaternion q;
-      q.x = estimated_pose_[3];
-      q.y = estimated_pose_[4];
-      q.z = estimated_pose_[5]; 
-      q.w = estimated_pose_[6];
-      co->primitive_poses[0].orientation = q;
+      // co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_X] = 0.05;
+      // co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Y] = 0.05;
+      // co->primitives[0].dimensions[shape_msgs::SolidPrimitive::BOX_Z] = 0.05;
+      // co->primitive_poses[0].position.x = estimated_pose_[0];
+      // co->primitive_poses[0].position.y = estimated_pose_[1];
+      // co->primitive_poses[0].position.z = estimated_pose_[2];
+      // geometry_msgs::Quaternion q;
+      // q.x = estimated_pose_[3];
+      // q.y = estimated_pose_[4];
+      // q.z = estimated_pose_[5]; 
+      // q.w = estimated_pose_[6];
+      // co->primitive_poses[0].orientation = q;
 
       pipelineObject_->set_c_mpe_object(co);
       pipelineObject_->set_c_mpe_success(true);

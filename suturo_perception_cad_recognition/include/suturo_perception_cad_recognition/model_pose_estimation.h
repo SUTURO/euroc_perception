@@ -37,13 +37,15 @@ public:
 
     if(pipelineData == NULL || pipelineObject == NULL)
     {
-      std::cout << "pipeline_mode_ = false" << std::endl;
+      logger_.logInfo("pipeline_mode_ = false");
+      // std::cout << "pipeline_mode_ = false" << std::endl;
       pipeline_mode_ = false;
       objects_ = objects;
     }
     else
     {
-      std::cout << "pipeline_mode_ = true" << std::endl;
+      logger_.logInfo("pipeline_mode_ = true");
+      // std::cout << "pipeline_mode_ = true" << std::endl;
       pipeline_mode_ = true;
       // Get the relevant parameters from the pipeline data
       Eigen::Vector4f surface_normal;
