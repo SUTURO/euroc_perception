@@ -286,24 +286,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateComposed
         poses.at(i).orientation.y != 0 || 
         poses.at(i).orientation.z != 0  )
     {
-      
-      // TODO Use quaternion instead of doing this:
-      /* 
-         Eigen::VectorXf pose = Eigen::Matrix< float, 6, 1 >::Zero();
-         pose[0] = poses.at(i).position.x;
-         pose[1] = poses.at(i).position.y;
-         pose[2] = poses.at(i).position.z;
-         pose[3] = poses.at(i).orientation.x;
-         pose[4] = poses.at(i).orientation.y;
-         pose[5] = poses.at(i).orientation.z;
-         pcl::transformPointCloud(*shape_part, *shape_part, getRotationMatrixFromPose(pose) );
-        */ 
-
-      // Eigen::Quaternionf q(poses.at(i).orientation.x,
-      //     poses.at(i).orientation.y,
-      //     poses.at(i).orientation.z,
-      //     poses.at(i).orientation.w);
-      // 
+      // TODO - Test this code when we have a rotated object  
       tf::Quaternion q(poses.at(i).orientation.x,
           poses.at(i).orientation.y,
           poses.at(i).orientation.z,
@@ -319,12 +302,6 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr GeneratePointCloudModel::generateComposed
       pose[4] = pitch;
       pose[5] = yaw;
       pcl::transformPointCloud(*shape_part, *shape_part, getRotationMatrixFromPose(pose) );
-
-      
-      //pcl::transformPointCloud (const pcl::PointCloud< PointT > &cloud_in, pcl::PointCloud< PointT > &cloud_out, const Eigen::Matrix< Scalar, 3, 1 > &offset, const Eigen::Quaternion< Scalar > &rotation) 
-      // Eigen::Matrix< float, 3, 3 > rotation = removeTranslationVectorFromMatrix(pose);
-      // Eigen::Quaterniof q(rotation);
-      // pcl::transformPointCloud(*shape_part, *shape_part, getRotationMatrixFromPose(pose) );
     }
     *result += *shape_part;
 

@@ -57,8 +57,6 @@ public:
       surface_normal_ = surface_normal;
       input_cloud_ = pipelineObject->get_pointCloud();
 
-      // TODO Does make_shared work?
-      // boost::shared_ptr<std::vector<suturo_msgs::Object> > objects_from_pipeline(&pipelineData_->task_.objects);
       boost::shared_ptr<std::vector<suturo_msgs::Object> > objects_from_pipeline = boost::make_shared<std::vector<suturo_msgs::Object> >(pipelineData_->task_.objects);
 
       objects_ = objects_from_pipeline;
