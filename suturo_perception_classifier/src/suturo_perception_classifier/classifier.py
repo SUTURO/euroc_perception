@@ -10,7 +10,8 @@ from suturo_msgs.msg import Task
 from sklearn import tree
 from suturo_perception_msgs.srv import ClassifierResponse
 from sklearn.naive_bayes import GaussianNB
-
+from sklearn import tree
+euroc_suturo_shape_mapping = {'3': '2', '1':'1'}
 
 class Classifier(object):
     original_objects = None
@@ -43,7 +44,10 @@ class Classifier(object):
                                                         self.color_tresh)
             all_data[name] = randomized_objects
         data, labels = self.convert_to_dataset(all_data)
+        print data
+        print labels
         self.clf.fit(data, labels)
+        tree.export_graphviz(self.clf, out_file='tree.dot', feature_names=['h','s','v','site'])
 
     def get_surrounding_cuboid(self, object):
         # for each in object.primitives:
@@ -150,38 +154,45 @@ class Classifier(object):
         x = eu_object['dimensions'][0]
         y = eu_object['dimensions'][1]
         z = eu_object['dimensions'][2]
-        return [hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2]]#, x, y, z]
+        return [[x],[y],[z]]
+        # return [[hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], x],#, x, y, z]
+        #         [hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], y],
+        #         [hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], z]]
 
     def convert_to_dataset(self, raw_data):
         data = []
         labels = []
         for key in raw_data:
             for object in raw_data[key]:
-                data.append(self.convert_euroc_object(object))
-            labels += [key] * len(raw_data[key])
+                data += self.convert_euroc_object(object)
+            labels += [key] * len(raw_data[key]) * 3
         return data, labels
 
     def classify_object(self, object):
         class_dict = {'red_cube': 1, 'green_cylinder': 2, 'blue_handle': 0}
+        #load object
         unclassified_object = object.unclassifiedObject
+        height = unclassified_object.c_height
         h = unclassified_object.c_avg_col_h
         s = unclassified_object.c_avg_col_s
         v = unclassified_object.c_avg_col_v
-        h = int(h/360. * 255)
+        #Convert c++ hsv room to python one (take care only to 180 to fit in 8 bit)
+        h = int(h/360. * 180)
         s = int(s * 255)
         v = int(v * 255)
         hsv_color = np.uint8([[[h, s, v]]])
-        bgr_color = cv2.cvtColor(hsv_color, cv2.COLOR_HSV2BGR)
-        r = bgr_color[0][0][2]
-        g = bgr_color[0][0][1]
-        b = bgr_color[0][0][0]
+        # bgr_color = cv2.cvtColor(hsv_color, cv2.COLOR_HSV2BGR)
+        # r = bgr_color[0][0][2]
+        # g = bgr_color[0][0][1]
+        # b = bgr_color[0][0][0]
+        #sort edges
         edges = list(unclassified_object.object.primitives[0].dimensions)
         edges.sort()
-        print [h, s, v]
-        classifyable_unclassified_object = [h, s, v]# + edges
+        #build classifyable object and classify it
+        classifyable_unclassified_object = [height]#[h, s, v]# + edges
         class_name = self.clf.predict(classifyable_unclassified_object)
-        print class_name
-        class_name = self.lolloosed(r,g,b)
+        # print class_name
+        # class_name = self.lolloosed(r,g,b)
         unclassified_object.c_shape = class_dict[class_name[0]]
         unclassified_object.object.id = class_name[0]
         resp = ClassifierResponse()
