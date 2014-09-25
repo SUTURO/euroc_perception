@@ -47,11 +47,11 @@ class Classifier(object):
             all_data[name] = randomized_objects
         data, labels = self.convert_to_dataset(all_data)
         rnd_data, rnd_labels = self.create_random_obstacles(number=1000)
-        print labels + rnd_labels
+        # print labels + rnd_labels
         self.clf.fit(data+rnd_data, labels+rnd_labels)
         tree.export_graphviz(self.clf, out_file='tree.dot', feature_names=['h', 's', 'v', 'site'])
-        system('dot -Tpng tree.dot -o tree.png')
-        system('feh tree.png &')
+        # system('dot -Tpng tree.dot -o tree.png')
+        # system('feh tree.png &')
 
     def get_surrounding_cuboid(self, object):
         # for each in object.primitives:
@@ -173,7 +173,7 @@ class Classifier(object):
         return data, labels
 
     def classify_object(self, object):
-        class_dict = {'red_cube': 1, 'green_cylinder': 2, 'blue_handle': 0}
+        class_dict = {'red_cube': 1, 'green_cylinder': 2, 'blue_handle': 0, 'obstacle': 0}
         # load object
         unclassified_object = object.unclassifiedObject
         height = unclassified_object.c_height
