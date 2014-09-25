@@ -149,7 +149,7 @@ void ModelPoseEstimation::execute()
       Eigen::Quaternionf orientation = fitter.getOrientation(); 
       // Get the origin of the aligned object.
       pcl::PointXYZ origin = fitter.getOrigin(); 
-      logger_.logInfo("pipeline_mode_ = true");
+      // logger_.logInfo("pipeline_mode_ = true");
       suturo_msgs::Object &o = objects_->at(i);
       ss << "Model " << i << "("<< o.name <<") is below best fitness score. "; 
       ss << "Pose: " << orientation.x() << " " << orientation.y() << " " << orientation.z() << " " << orientation.w() << " " << origin << ". Score: " << fitter.getFitnessScore() << std::endl;
