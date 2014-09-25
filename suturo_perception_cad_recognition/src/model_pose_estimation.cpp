@@ -49,12 +49,19 @@ Eigen::VectorXf ModelPoseEstimation::getEstimatedPose()
 
 void ModelPoseEstimation::initForPipelineCall()
 {
+  // Default values - Better use the pipelineData now.
   this->setDumpICPFitterPointclouds(true); // Enable debugging. This will save pointclouds
   // to suturo_perception_cad_recognition/dumps
-  this->setVoxelSize(0.003f);
+  // this->setVoxelSize(0.003f);
   this->setRemoveNaNs(true);
 
 
+  // Use the parameters from dynamic reconfigure
+  this->setVoxelSize(pipelineData_->mpeVoxelSize);
+  this->setDumpICPFitterPointclouds(pipelineData_->mpeDumpICPFitterPointClouds); // Enable debugging. This will save pointclouds
+  // to suturo_perception_cad_recognition/dumps
+  max_icp_iterations_ = pipelineData_->mpeMaxICPIterations;
+  success_threshold_ = pipelineData_->mpeSuccessThreshold;
   // mpeMaxICPIterations = 60;
   // mpeSuccessThreshold = 1e-5;
   // mpeVoxelSize = 0.003;
