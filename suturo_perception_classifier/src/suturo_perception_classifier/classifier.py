@@ -167,7 +167,7 @@ class Classifier(object):
         h = unclassified_object.c_avg_col_h
         s = unclassified_object.c_avg_col_s
         v = unclassified_object.c_avg_col_v
-        h = int(h/360. * 255)
+        h = int(h / 360. * 180)
         s = int(s * 255)
         v = int(v * 255)
         hsv_color = np.uint8([[[h, s, v]]])
@@ -178,9 +178,9 @@ class Classifier(object):
         edges = list(unclassified_object.object.primitives[0].dimensions)
         edges.sort()
         print [h, s, v]
-        classifyable_unclassified_object = [h, s, v]# + edges
-        class_name = self.clf.predict(classifyable_unclassified_object)
-        print class_name
+        #classifyable_unclassified_object = [h, s, v]# + edges
+        #class_name = self.clf.predict(classifyable_unclassified_object)
+        #print class_name
         class_name = self.lolloosed(r,g,b)
         unclassified_object.c_shape = class_dict[class_name[0]]
         unclassified_object.object.id = class_name[0]
