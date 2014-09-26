@@ -49,12 +49,19 @@ Eigen::VectorXf ModelPoseEstimation::getEstimatedPose()
 
 void ModelPoseEstimation::initForPipelineCall()
 {
+  // Default values - Better use the pipelineData now.
   this->setDumpICPFitterPointclouds(true); // Enable debugging. This will save pointclouds
   // to suturo_perception_cad_recognition/dumps
-  this->setVoxelSize(0.003f);
+  // this->setVoxelSize(0.003f);
   this->setRemoveNaNs(true);
 
 
+  // Use the parameters from dynamic reconfigure
+  this->setVoxelSize(pipelineData_->mpeVoxelSize);
+  this->setDumpICPFitterPointclouds(pipelineData_->mpeDumpICPFitterPointClouds); // Enable debugging. This will save pointclouds
+  // to suturo_perception_cad_recognition/dumps
+  max_icp_iterations_ = pipelineData_->mpeMaxICPIterations;
+  success_threshold_ = pipelineData_->mpeSuccessThreshold;
   // mpeMaxICPIterations = 60;
   // mpeSuccessThreshold = 1e-5;
   // mpeVoxelSize = 0.003;
@@ -149,7 +156,7 @@ void ModelPoseEstimation::execute()
       Eigen::Quaternionf orientation = fitter.getOrientation(); 
       // Get the origin of the aligned object.
       pcl::PointXYZ origin = fitter.getOrigin(); 
-      logger_.logInfo("pipeline_mode_ = true");
+      // logger_.logInfo("pipeline_mode_ = true");
       suturo_msgs::Object &o = objects_->at(i);
       ss << "Model " << i << "("<< o.name <<") is below best fitness score. "; 
       ss << "Pose: " << orientation.x() << " " << orientation.y() << " " << orientation.z() << " " << orientation.w() << " " << origin << ". Score: " << fitter.getFitnessScore() << std::endl;

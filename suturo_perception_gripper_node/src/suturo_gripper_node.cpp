@@ -79,6 +79,10 @@ void SuturoGripperNode::reconfigureCallback(suturo_perception_gripper_node::Sutu
   pipelineData_->ecObjClusterTolerance = config.ecObjClusterTolerance;
   pipelineData_->ecObjMinClusterSize = config.ecObjMinClusterSize;
   pipelineData_->ecObjMaxClusterSize = config.ecObjMaxClusterSize;
+  pipelineData_->mpeMaxICPIterations = config.mpeMaxICPIterations;
+  pipelineData_->mpeSuccessThreshold = config.mpeSuccessThreshold;
+  pipelineData_->mpeVoxelSize = config.mpeVoxelSize;
+  pipelineData_->mpeDumpICPFitterPointClouds = config.mpeDumpICPFitterPointClouds;
   
   pipelineData_->printConfig();
 }
