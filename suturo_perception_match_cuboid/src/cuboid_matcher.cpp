@@ -421,7 +421,10 @@ Cuboid::Ptr CuboidMatcher::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::Po
 
 bool CuboidMatcher::validCuboid(Cuboid::Ptr cuboid)
 {
-  return ! (cuboid->length1 < 0 || cuboid->length2 < 0 || cuboid->length3 < 0);
+  std::cout << "[cuboid_matcher] Cuboid in CuboidMatcher::validCuboid " << cuboid->length1 << " " << cuboid->length2 << " "<< cuboid->length3 << std::endl;
+  bool ret = cuboid->length1 > 0 && cuboid->length2 > 0 && cuboid->length3 > 0;
+  std::cout << "[cuboid_matcher] result in CuboidMatcher::validCuboid " << ret << std::endl;
+  return ret;
 }
 
 void CuboidMatcher::execute()

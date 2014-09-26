@@ -49,16 +49,30 @@ Eigen::VectorXf ModelPoseEstimation::getEstimatedPose()
 
 void ModelPoseEstimation::initForPipelineCall()
 {
+  // Default values - Better use the pipelineData now.
   this->setDumpICPFitterPointclouds(true); // Enable debugging. This will save pointclouds
   // to suturo_perception_cad_recognition/dumps
-  this->setVoxelSize(0.003f);
+  // this->setVoxelSize(0.003f);
   this->setRemoveNaNs(true);
 
 
+  // Use the parameters from dynamic reconfigure
+  this->setVoxelSize(pipelineData_->mpeVoxelSize);
+  this->setDumpICPFitterPointclouds(pipelineData_->mpeDumpICPFitterPointClouds); // Enable debugging. This will save pointclouds
+  // to suturo_perception_cad_recognition/dumps
+  max_icp_iterations_ = pipelineData_->mpeMaxICPIterations;
+  success_threshold_ = pipelineData_->mpeSuccessThreshold;
   // mpeMaxICPIterations = 60;
   // mpeSuccessThreshold = 1e-5;
   // mpeVoxelSize = 0.003;
   // mpeDumpICPFitterPointClouds = false;
+  
+  std::vector<int> params = parseRequestArgs(pipelineData_->request_parameters_);
+  logger_.logInfo((boost::format("request args count: %s") % params.size()).str());
+  for (int i = 0; i < params.size(); i++)
+  {
+    ROS_INFO("MPE request param %d: %d", i, params[i]);
+  }
 }
 
 void ModelPoseEstimation::execute()
@@ -70,7 +84,14 @@ void ModelPoseEstimation::execute()
 
   // Set the default parameters if we are running inside our perception pipeline
   if(pipeline_mode_)
+  {
+    logger_.logInfo("pipeline mode on");
     initForPipelineCall();
+  }
+  else
+  {
+    logger_.logInfo("pipeline mode off");
+  }
 
   generateModels();
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud = input_cloud_;
@@ -149,7 +170,7 @@ void ModelPoseEstimation::execute()
       Eigen::Quaternionf orientation = fitter.getOrientation(); 
       // Get the origin of the aligned object.
       pcl::PointXYZ origin = fitter.getOrigin(); 
-      logger_.logInfo("pipeline_mode_ = true");
+      // logger_.logInfo("pipeline_mode_ = true");
       suturo_msgs::Object &o = objects_->at(i);
       ss << "Model " << i << "("<< o.name <<") is below best fitness score. "; 
       ss << "Pose: " << orientation.x() << " " << orientation.y() << " " << orientation.z() << " " << orientation.w() << " " << origin << ". Score: " << fitter.getFitnessScore() << std::endl;
@@ -336,3 +357,53 @@ void ModelPoseEstimation::setRemoveNaNs(bool b)
 {
   remove_nans_ = b;
 }
+
+
+std::vector<int> ModelPoseEstimation::parseRequestArgs(std::string req)
+{
+  std::vector<std::string> rets;
+  std::vector<int> ret;
+  std::string delims = ",()";
+  std::string tmp;
+  bool isMPE = false;
+  for (int i = 0; i < req.size(); i++)
+  {
+    bool isDelim = false;
+    for (int j = 0; j < delims.size(); j++)
+    {
+      if (req[i] == delims[j])
+        isDelim = true;
+    }
+    if (isDelim)
+    {
+      if (isMPE)
+      {
+        rets.push_back(tmp);
+        //logger_.logInfo((boost::format("mpe part: %s") % tmp.c_str()).str());
+        try
+        {
+          ret.push_back(boost::lexical_cast<int>(tmp));
+        }
+        catch (...)
+        {
+        }
+      }
+      if (tmp.compare(getName()) == 0)
+      {
+        isMPE = true;
+      }
+      //ret.push_back(tmp);
+      tmp = "";
+    }
+    else
+    {
+      tmp += req[i];
+    }
+    if (req[i] == ')')
+      isMPE = false;
+  }
+  //ret.push_back(tmp);
+  
+  return ret;
+}
+

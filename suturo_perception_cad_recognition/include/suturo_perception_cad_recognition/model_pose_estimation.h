@@ -164,6 +164,7 @@ private:
   bool remove_nans_;
   int max_icp_iterations_;
 
+  std::vector<int> parseRequestArgs(std::string req);
 
 };
 #endif

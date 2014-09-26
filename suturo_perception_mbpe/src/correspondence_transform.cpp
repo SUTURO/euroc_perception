@@ -115,7 +115,6 @@ void CorrespondenceTransform::setCorrespondences(pcl::PointCloud<pcl::PointXYZ>:
 
 void CorrespondenceTransform::execute()
 {
-
   // TODO Exception when model correspondences and observed_correspondences differ
   // TODO Exception when correspondence size < 3
  

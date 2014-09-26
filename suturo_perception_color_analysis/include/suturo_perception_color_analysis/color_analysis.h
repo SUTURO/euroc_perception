@@ -46,6 +46,11 @@ namespace suturo_perception
     private:
       bool inHSVThreshold(HSVColor col);
 
+      // In the EuRoChallenge, only 6 colors will be used
+      // This method will try to estimate to bin a given HSVColor
+      // into these 6 colors ("ff0000","00ff00","00ffff","ff0000","ff00ff","ffff00". If it can not fit a color into one these colors, the output will be "unknown"
+      std::string getNearestRGBColor(HSVColor col);
+
       Logger logger;
       
       double s_lower_threshold;

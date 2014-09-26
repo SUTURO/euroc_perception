@@ -72,6 +72,7 @@ int main(int argc, char **argv)
 {
   // args
   std::string node_type;
+  std::string request_s;
 
   po::variables_map vm;
   po::options_description desc("Allowed options");
@@ -81,6 +82,7 @@ int main(int argc, char **argv)
     desc.add_options()
       ("help", "print help message")
       ("type,t", po::value<std::string>(&node_type)->required(), "Type of the perception client. Allowed values: 'gripper' and 'scene'")
+      ("req,r", po::value<std::string>(&request_s)->default_value("get"), "Request string in s")
     ;
 
     po::positional_options_description p;
@@ -118,11 +120,12 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
     ros::ServiceClient clusterClient = n.serviceClient<suturo_perception_msgs::GetGripper>("/suturo/GetGripper");
     suturo_perception_msgs::GetGripper gripperSrv;
-    gripperSrv.request.s = "get";
+    gripperSrv.request.s = request_s;
     ROS_INFO_STREAM("GripperServiceClient initialized");
     // run until service gets shut down
     while(true)
     {
+      ROS_INFO("Request string: %s", request_s.c_str());
       if (clusterClient.call(gripperSrv))
       {
         ROS_INFO("GripperScene Service call successful");
@@ -152,11 +155,12 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
     ros::ServiceClient clusterClient = n.serviceClient<suturo_perception_msgs::GetScene>("/suturo/GetScene");
     suturo_perception_msgs::GetScene srv;
-    srv.request.s = "get";
+    srv.request.s = request_s;
     ROS_INFO_STREAM("SceneServiceClient initialized");
     // run until service gets shut down
     while(true)
     {
+      ROS_INFO("Request string: %s", request_s.c_str());
       if (clusterClient.call(srv))
       {
         ROS_INFO("Scene Service call successful");
