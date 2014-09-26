@@ -40,6 +40,7 @@ namespace suturo_perception
         c_mpe_success = false;
         c_mpe_object = boost::shared_ptr<moveit_msgs::CollisionObject>(new moveit_msgs::CollisionObject());
         c_height = -1.0;
+        c_color_class = "";
 
         logger = Logger("pipeline_object");
       };
@@ -129,6 +130,12 @@ namespace suturo_perception
         return mpe_settings; 
       };
       
+      std::string get_c_color_class() const
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex); 
+        return c_color_class; 
+      };
+      
       // Threadsafe setters
       void set_c_id(int value)
       {
@@ -200,6 +207,11 @@ namespace suturo_perception
         boost::lock_guard<boost::signals2::mutex> lock(*mutex);
         mpe_settings = value;
       };
+      void set_c_color_class(std::string value)
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex);
+        c_color_class = value;
+      };
 
       suturo_perception_msgs::EurocObject toEurocObject()
       {
@@ -262,6 +274,9 @@ namespace suturo_perception
         obj.c_avg_col_s = c_avg_col_s;
         obj.c_avg_col_v = c_avg_col_v;
         
+        // color class
+        obj.c_color_class = c_color_class;
+        
         // mbpe_object
         obj.mpe_success = c_mpe_success;
         obj.mpe_object = *c_mpe_object;
@@ -282,6 +297,7 @@ namespace suturo_perception
       int c_avg_col_h;
       double c_avg_col_s;
       double c_avg_col_v;
+      std::string c_color_class;
       boost::shared_ptr<moveit_msgs::CollisionObject> c_mpe_object;
       bool c_mpe_success;
       double c_height;
