@@ -254,8 +254,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   _object_transformation_steps.push_back(_upwards_object_s3);
 
   // Store the transposed matrix of the height-fitting transformation
-  std::cout << "Height Adjustment:" << std::endl; 
-  std::cout << transformUpwards << std::endl; 
+  // std::cout << "Height Adjustment:" << std::endl; 
+  // std::cout << transformUpwards << std::endl; 
   translations_.push_back(transformUpwards.inverse() ); 
   // Store the transposed matrix of the centroid alignment
   translations_.push_back(transform.inverse());

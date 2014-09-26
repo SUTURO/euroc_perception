@@ -186,6 +186,61 @@ ColorAnalysis::convertHSVToRGB(HSVColor hsv)
   return (r << 16) | (g << 8) | b;
 }
 
+std::string 
+ColorAnalysis::getNearestRGBColor(HSVColor c)
+{
+  uint32_t &h = c.h;
+  double &s   = c.s;
+  double &v   = c.v;
+  const int hue_tolerance = 4;
+  const int hue_blue    = 240;
+  const int hue_green   = 120;
+  const int hue_cyan    = 180;
+  const int hue_red     = 0;
+  const int hue_magenta = 300;
+  const int hue_yellow  = 60;
+
+
+  // Check saturation first. if it's below 40, not much of the color is left
+  if(s < 0.40)
+  {
+    return "unknown";
+  }
+
+  if(h > hue_blue - hue_tolerance && h < hue_blue + hue_tolerance)
+  {
+    return "0000ff";
+  }
+  
+  if(h > hue_green - hue_tolerance && h < hue_green + hue_tolerance)
+  {
+    return "00ff00";
+  }
+  
+  if(h > hue_cyan - hue_tolerance && h < hue_cyan + hue_tolerance)
+  {
+    return "00ffff";
+  }
+  
+  if(h > hue_red - hue_tolerance && h < hue_red + hue_tolerance)
+  {
+    return "ff0000";
+  }
+  
+  if(h > hue_magenta - hue_tolerance && h < hue_magenta + hue_tolerance)
+  {
+    return "ff00ff";
+  }
+  
+  if(h > hue_yellow - hue_tolerance && h < hue_yellow + hue_tolerance)
+  {
+    return "ffff00";
+  }
+
+  // No rule matched - return unknown
+  return "unknown";
+  
+}
 void
 ColorAnalysis::execute()
 {
@@ -196,6 +251,8 @@ ColorAnalysis::execute()
   pipelineObject_->set_c_avg_col_h(averageColorHSVQuality.h);
   pipelineObject_->set_c_avg_col_s(averageColorHSVQuality.s);
   pipelineObject_->set_c_avg_col_v(averageColorHSVQuality.v);
+
+  std::cout << "[ColorAnalysis] c_color_class: "<< getNearestRGBColor(averageColorHSVQuality) << std::endl;
 }
 
 bool
