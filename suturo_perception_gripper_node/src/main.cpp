@@ -7,6 +7,9 @@ int main (int argc, char** argv)
 {
   ros::init(argc, argv, "suturo_scene_node");
   ros::NodeHandle nh;
+  
+  ROS_ERROR("this node is deprecated! use rosrun suturo_perception_node suturo_perception_node --type gripper");
+  return 1;
 
 	std::string imageTopic = "/suturo/euroc_tcp_image";
   std::string cloudTopic = "/suturo/euroc_tcp_cloud";
@@ -14,6 +17,7 @@ int main (int argc, char** argv)
   ROS_INFO("Cloud topic is: %s", cloudTopic.c_str());
 
   SuturoGripperNode node(nh, imageTopic, cloudTopic);
+  
 
   ROS_INFO("                    _____ ");
   ROS_INFO("                   |     | ");
