@@ -46,7 +46,7 @@ class Classifier(object):
                                                         self.color_tresh)
             all_data[name] = randomized_objects
         data, labels = self.convert_to_dataset(all_data)
-        rnd_data, rnd_labels = self.create_random_obstacles(number=1000)
+        rnd_data, rnd_labels = [],[]#self.create_random_obstacles(number=1000)
         # print labels + rnd_labels
         self.clf.fit(data+rnd_data, labels+rnd_labels)
         tree.export_graphviz(self.clf, out_file='tree.dot', feature_names=['h', 's', 'v', 'site'])
@@ -190,10 +190,12 @@ class Classifier(object):
         # g = bgr_color[0][0][1]
         # b = bgr_color[0][0][0]
         #sort edges
-        edges = list(unclassified_object.object.primitives[0].dimensions)
-        edges.sort()
+        if unclassified_object.c_cuboid_success:
+            edges = list(unclassified_object.object.primitives[0].dimensions)
+            edges.sort()
         #build classifyable object and classify it
         classifyable_unclassified_object = [h, s, v, height]# + edges
+        print classifyable_unclassified_object
         class_name = self.clf.predict(classifyable_unclassified_object)
         # print class_name
         # class_name = self.lolloosed(r,g,b)
