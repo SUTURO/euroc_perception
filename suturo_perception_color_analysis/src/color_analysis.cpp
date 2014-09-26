@@ -251,6 +251,8 @@ ColorAnalysis::execute()
   pipelineObject_->set_c_avg_col_h(averageColorHSVQuality.h);
   pipelineObject_->set_c_avg_col_s(averageColorHSVQuality.s);
   pipelineObject_->set_c_avg_col_v(averageColorHSVQuality.v);
+  pipelineObject_->set_c_avg_col_v(averageColorHSVQuality.v);
+  pipelineObject_->set_c_color_class(getNearestRGBColor(averageColorHSVQuality));
 
   std::cout << "[ColorAnalysis] c_color_class: "<< getNearestRGBColor(averageColorHSVQuality) << std::endl;
 }

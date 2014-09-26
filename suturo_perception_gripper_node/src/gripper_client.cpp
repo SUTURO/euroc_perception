@@ -35,6 +35,7 @@ int main(int argc, char **argv)
         ROS_INFO(" |-> c_avg_col_h: %d", obj.c_avg_col_h);
         ROS_INFO(" |-> c_avg_col_s: %f", obj.c_avg_col_s);
         ROS_INFO(" |-> c_avg_col_v: %f", obj.c_avg_col_v);
+        ROS_INFO(" |-> c_color_class: %s", obj.c_color_class.c_str() );
         ROS_INFO(" |-> moveit CollisionObject:");
         ROS_INFO(" |-|-> primitives: %d", obj.object.primitives.size());
         for (int j = 0; j < obj.object.primitives.size(); j++)
