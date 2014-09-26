@@ -7,6 +7,8 @@ int main (int argc, char** argv)
 {
   ros::init(argc, argv, "suturo_scene_node");
   ros::NodeHandle nh;
+  ROS_ERROR("this node is deprecated! use rosrun suturo_perception_node suturo_perception_node --type scene");
+  return 1;
 
 	std::string imageTopic = "/suturo/euroc_scene_image";
   std::string cloudTopic = "/suturo/euroc_scene_cloud";
