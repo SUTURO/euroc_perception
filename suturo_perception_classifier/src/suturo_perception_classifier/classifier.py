@@ -22,21 +22,20 @@ class Classifier(object):
     color_tresh = 10
     number_of_data = 10
 
-    def __init__(self):
-        # rospy.loginfo("Starting ColorDetector")
+    def __init__(self, task, logging):
+        self.logging = logging
+        if self.logging >= 1: print(">>>> Classifier will be initialized for task %s" %task)
         rospy.Subscriber("/suturo/yaml_pars0r", Task, self.set_yaml_infos)
         self.clf = tree.DecisionTreeClassifier()
-        # self.clf = GaussianNB()
-        # spin the wheel
-        # rospy.spin()
+
 
     def set_yaml_infos(self, data):
         objects = data.objects
         self.original_objects = objects
         all_data = {}
-        print objects
+        if self.logging >= 1: print(">>>> Receiving Objects from YAML")
+        if self.logging >= 2: print("Objects Received from YAML: \r\n %s"%objects)
         for object in objects:
-            # print object
             name = object.name
             color = object.color
             primitive = object.primitives
@@ -46,15 +45,16 @@ class Classifier(object):
                                                         self.color_tresh)
             all_data[name] = randomized_objects
         data, labels = self.convert_to_dataset(all_data)
-        rnd_data, rnd_labels = [],[]#self.create_random_obstacles(number=1000)
-        # print labels + rnd_labels
+        rnd_data, rnd_labels = [],[]#self.create_random_obstacles(number=1000)@TODO relative to task
+        if self.logging >= 3: print("All Data + Labels \r\n %s  \r\n %s"
+                                    %( (labels + rnd_labels), (data+rnd_data)))
         self.clf.fit(data+rnd_data, labels+rnd_labels)
-        tree.export_graphviz(self.clf, out_file='tree.dot', feature_names=['h', 's', 'v', 'site'])
+        if self.logging >=3:
+            tree.export_graphviz(self.clf, out_file='tree.dot', feature_names=['h', 's', 'v', 'site'])
         # system('dot -Tpng tree.dot -o tree.png')
         # system('feh tree.png &')
 
     def get_surrounding_cuboid(self, object):
-        # for each in object.primitives:
         if len(object.primitives) == 1:
             primitive = object.primitives[0]
             print(primitive.dimensions)
@@ -158,7 +158,6 @@ class Classifier(object):
         x = eu_object['dimensions'][0]
         y = eu_object['dimensions'][1]
         z = eu_object['dimensions'][2]
-        # return [[x], [y], [z]]
         return [[hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], x],
                 [hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], y],
                 [hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], z]]
@@ -176,6 +175,7 @@ class Classifier(object):
         class_dict = {'red_cube': 1, 'green_cylinder': 2, 'blue_handle': 0, 'obstacle': 0}
         # load object
         unclassified_object = object.unclassifiedObject
+        if self.logging >= 2 : print("Got Object to Classify: \r\n %s" %unclassified_object)
         height = unclassified_object.c_height
         h = unclassified_object.c_avg_col_h
         s = unclassified_object.c_avg_col_s
@@ -195,7 +195,7 @@ class Classifier(object):
             edges.sort()
         #build classifyable object and classify it
         classifyable_unclassified_object = [h, s, v, height]# + edges
-        print classifyable_unclassified_object
+        if self.logging >= 1: print("Object to Classify: \r\n %s"%classifyable_unclassified_object)
         class_name = self.clf.predict(classifyable_unclassified_object)
         # print class_name
         # class_name = self.lolloosed(r,g,b)
@@ -203,7 +203,7 @@ class Classifier(object):
         unclassified_object.object.id = class_name[0]
         resp = ClassifierResponse()
         resp.classifiedObject = unclassified_object
-        print class_name
+        if self.logging >= 1: print("Classified Object as: %s"%class_name)
         return resp
 
     def create_random_obstacle(self, max_height=2):
