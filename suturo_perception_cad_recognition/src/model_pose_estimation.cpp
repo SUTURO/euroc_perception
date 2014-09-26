@@ -66,6 +66,13 @@ void ModelPoseEstimation::initForPipelineCall()
   // mpeSuccessThreshold = 1e-5;
   // mpeVoxelSize = 0.003;
   // mpeDumpICPFitterPointClouds = false;
+  
+  std::vector<int> params = parseRequestArgs(pipelineData_->request_parameters_);
+  logger_.logInfo((boost::format("request args count: %s") % params.size()).str());
+  for (int i = 0; i < params.size(); i++)
+  {
+    ROS_INFO("MPE request param %d: %d", i, params[i]);
+  }
 }
 
 void ModelPoseEstimation::execute()
@@ -77,7 +84,14 @@ void ModelPoseEstimation::execute()
 
   // Set the default parameters if we are running inside our perception pipeline
   if(pipeline_mode_)
+  {
+    logger_.logInfo("pipeline mode on");
     initForPipelineCall();
+  }
+  else
+  {
+    logger_.logInfo("pipeline mode off");
+  }
 
   generateModels();
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud = input_cloud_;
@@ -343,3 +357,53 @@ void ModelPoseEstimation::setRemoveNaNs(bool b)
 {
   remove_nans_ = b;
 }
+
+
+std::vector<int> ModelPoseEstimation::parseRequestArgs(std::string req)
+{
+  std::vector<std::string> rets;
+  std::vector<int> ret;
+  std::string delims = ",()";
+  std::string tmp;
+  bool isMPE = false;
+  for (int i = 0; i < req.size(); i++)
+  {
+    bool isDelim = false;
+    for (int j = 0; j < delims.size(); j++)
+    {
+      if (req[i] == delims[j])
+        isDelim = true;
+    }
+    if (isDelim)
+    {
+      if (isMPE)
+      {
+        rets.push_back(tmp);
+        //logger_.logInfo((boost::format("mpe part: %s") % tmp.c_str()).str());
+        try
+        {
+          ret.push_back(boost::lexical_cast<int>(tmp));
+        }
+        catch (...)
+        {
+        }
+      }
+      if (tmp.compare(getName()) == 0)
+      {
+        isMPE = true;
+      }
+      //ret.push_back(tmp);
+      tmp = "";
+    }
+    else
+    {
+      tmp += req[i];
+    }
+    if (req[i] == ')')
+      isMPE = false;
+  }
+  //ret.push_back(tmp);
+  
+  return ret;
+}
+

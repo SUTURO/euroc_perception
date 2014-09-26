@@ -123,6 +123,12 @@ namespace suturo_perception
         return c_cuboid_success; 
       };
 
+      std::vector<int> get_mpe_settings() const
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex); 
+        return mpe_settings; 
+      };
+      
       // Threadsafe setters
       void set_c_id(int value)
       {
@@ -188,6 +194,11 @@ namespace suturo_perception
       {
         boost::lock_guard<boost::signals2::mutex> lock(*mutex);
         c_cuboid_success = value;
+      };
+      void set_mpe_settings(std::vector<int> value)
+      {
+        boost::lock_guard<boost::signals2::mutex> lock(*mutex);
+        mpe_settings = value;
       };
 
       suturo_perception_msgs::EurocObject toEurocObject()
@@ -274,6 +285,7 @@ namespace suturo_perception
       boost::shared_ptr<moveit_msgs::CollisionObject> c_mpe_object;
       bool c_mpe_success;
       double c_height;
+      std::vector<int> mpe_settings;
 
       boost::shared_ptr<boost::signals2::mutex> mutex;
 

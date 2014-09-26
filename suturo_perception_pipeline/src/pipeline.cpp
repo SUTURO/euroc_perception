@@ -137,7 +137,7 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
 int
 Pipeline::capabilityEnabled(std::string capability_settings, std::string capability_name)
 {
-  std::vector<std::string> enabled_capabilities = split(capability_settings, ',');
+  std::vector<std::string> enabled_capabilities = split(capability_settings, ",()");
   if (enabled_capabilities.size() == 0)
     return -1;
   if (capability_settings.compare("get") == 0)
@@ -160,4 +160,30 @@ std::vector<std::string> Pipeline::split(const std::string &s, char delim) {
     std::vector<std::string> elems;
     split(s, delim, elems);
     return elems;
+}
+
+std::vector<std::string> Pipeline::split(const std::string &s, const std::string &delims)
+{
+  std::vector<std::string> ret;
+  std::string tmp;
+  for (int i = 0; i < s.size(); i++)
+  {
+    bool isDelim = false;
+    for (int j = 0; j < delims.size(); j++)
+    {
+      if (s[i] == delims[j])
+        isDelim = true;
+    }
+    if (isDelim)
+    {
+      ret.push_back(tmp);
+      tmp = "";
+    }
+    else
+    {
+      tmp += s[i];
+    }
+  }
+  ret.push_back(tmp);
+  return ret;
 }
