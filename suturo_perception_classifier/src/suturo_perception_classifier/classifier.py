@@ -6,10 +6,13 @@ import numpy as np
 
 import rospy
 import cv2
+from os import system
 from suturo_msgs.msg import Task
-from sklearn import tree
 from suturo_perception_msgs.srv import ClassifierResponse
-from sklearn.naive_bayes import GaussianNB
+from sklearn import tree
+
+
+euroc_suturo_shape_mapping = {'3': '2', '1': '1'}
 
 
 class Classifier(object):
@@ -49,7 +52,6 @@ class Classifier(object):
         tree.export_graphviz(self.clf, out_file='tree.dot', feature_names=['h', 's', 'v', 'site'])
         # system('dot -Tpng tree.dot -o tree.png')
         # system('feh tree.png &')
-
 
     def get_surrounding_cuboid(self, object):
         # for each in object.primitives:
@@ -152,27 +154,33 @@ class Classifier(object):
         r = int(color[:2], 16)
         g = int(color[2:4], 16)
         b = int(color[-2:], 16)
-        hsv_color = cv2.cvtColor(np.uint8([[[b,g,r]]]), cv2.COLOR_BGR2HSV)
+        hsv_color = cv2.cvtColor(np.uint8([[[b, g, r]]]), cv2.COLOR_BGR2HSV)
         x = eu_object['dimensions'][0]
         y = eu_object['dimensions'][1]
         z = eu_object['dimensions'][2]
-        return [hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2]]#, x, y, z]
+        # return [[x], [y], [z]]
+        return [[hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], x],
+                [hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], y],
+                [hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], z]]
 
     def convert_to_dataset(self, raw_data):
         data = []
         labels = []
         for key in raw_data:
             for object in raw_data[key]:
-                data.append(self.convert_euroc_object(object))
-            labels += [key] * len(raw_data[key])
+                data += self.convert_euroc_object(object)
+            labels += [key] * len(raw_data[key]) * 3
         return data, labels
 
     def classify_object(self, object):
-        class_dict = {'red_cube': 1, 'green_cylinder': 2, 'blue_handle': 0}
+        class_dict = {'red_cube': 1, 'green_cylinder': 2, 'blue_handle': 0, 'obstacle': 0}
+        # load object
         unclassified_object = object.unclassifiedObject
+        height = unclassified_object.c_height
         h = unclassified_object.c_avg_col_h
         s = unclassified_object.c_avg_col_s
         v = unclassified_object.c_avg_col_v
+        #Convert c++ hsv room to python one (take care only to 180 to fit in 8 bit)
         h = int(h / 360. * 180)
         s = int(s * 255)
         v = int(v * 255)
@@ -198,8 +206,22 @@ class Classifier(object):
         print class_name
         return resp
 
-    def lolloosed(self, r,g,b):
-        colors = [r,g,b]
+    def create_random_obstacle(self, max_height=2):
+        height = random.randrange(0, int(max_height) * 1000) / 1000.
+        h = random.randrange(0, 180)
+        s = random.randrange(230, 255)
+        v = random.randrange(230, 255)
+        return [h, s, v, height]
+
+    def create_random_obstacles(self, max_height=2, number=100):
+        obstacles = []
+        for i in range(0,number):
+            obstacles.append(self.create_random_obstacle(max_height=max_height))
+        labels = ['obstacle'] * number
+        return obstacles, labels
+
+    def lolloosed(self, r, g, b):
+        colors = [r, g, b]
         ind = colors.index(max(colors))
         if ind == 0:
             return ['red_cube']
