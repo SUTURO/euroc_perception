@@ -73,6 +73,17 @@ void ModelPoseEstimation::initForPipelineCall()
   {
     ROS_INFO("MPE request param %d: %d", i, params[i]);
   }
+
+  if(params.size() > 0)
+  {
+    std::cout << "Set models of interest to:";
+    for (int i = 0; i < params.size(); i++)
+    {
+      std::cout << params[i] << " ";
+    }
+    std::cout << std::endl;
+    setModelsOfInterest(params);
+  }
 }
 
 void ModelPoseEstimation::execute()
