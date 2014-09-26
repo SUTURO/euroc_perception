@@ -37,6 +37,7 @@ namespace suturo_perception
         c_avg_col_h = -1;
         c_avg_col_s = -1.0;
         c_avg_col_v = -1.0;
+        c_mpe_success = false;
         c_mpe_object = boost::shared_ptr<moveit_msgs::CollisionObject>(new moveit_msgs::CollisionObject());
         c_height = -1.0;
 
@@ -201,6 +202,7 @@ namespace suturo_perception
         obj.c_type = suturo_perception_msgs::EurocObject::UNKNOWN; 
         
         // cuboid
+        obj.c_cuboid_success = get_c_cuboid_success();
         if (get_c_cuboid_success())
         {
           Cuboid::Ptr cub = get_c_cuboid();
