@@ -192,7 +192,7 @@ ColorAnalysis::getNearestRGBColor(HSVColor c)
   uint32_t &h = c.h;
   double &s   = c.s;
   double &v   = c.v;
-  const int hue_tolerance = 4;
+  const int hue_tolerance = 6; // 4 is enough for tasks 1,3-6. 6 is required for task 2
   const int hue_blue    = 240;
   const int hue_green   = 120;
   const int hue_cyan    = 180;
@@ -204,6 +204,7 @@ ColorAnalysis::getNearestRGBColor(HSVColor c)
   // Check saturation first. if it's below 40, not much of the color is left
   if(s < 0.40)
   {
+    logger.logInfo("Saturation too low for color_class");
     return "unknown";
   }
 
@@ -222,7 +223,10 @@ ColorAnalysis::getNearestRGBColor(HSVColor c)
     return "00ffff";
   }
   
-  if(h > hue_red - hue_tolerance && h < hue_red + hue_tolerance)
+  // Check for red
+  // Check for h in [360-tolerance...360] and [0..hue_tolerance]
+  if( (h > (360 - hue_tolerance) && h <= 360) || 
+       (h >= hue_red && h < hue_red + hue_tolerance) )
   {
     return "ff0000";
   }
