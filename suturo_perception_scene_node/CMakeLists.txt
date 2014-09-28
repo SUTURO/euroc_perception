@@ -11,7 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   perception_utils
   suturo_perception_msgs
-  suturo_perception_match_cuboid
+  suturo_perception_segmentation
+  suturo_perception_pipeline
 )
 
 find_package(PCL REQUIRED)
@@ -23,7 +24,7 @@ find_package(Boost REQUIRED COMPONENTS system program_options thread)
 include_directories(${Boost_INCLUDE_DIRS})
 
 catkin_package(
-  CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils suturo_perception_msgs
+  CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils suturo_perception_msgs suturo_perception_segmentation suturo_perception_pipeline
   DEPENDS opencv pcl
 )
 include_directories(
@@ -37,7 +38,7 @@ target_link_libraries(suturo_perception_scene_node
   ${PCL_LIBRARIES}
   ${Boost_LIBRARIES} 
 )
-add_dependencies(suturo_perception_scene_node suturo_perception_msgs)
+add_dependencies(suturo_perception_scene_node suturo_perception_msgs_generate_messages_cpp)
 
 add_executable(scene_client src/scene_client.cpp)
 target_link_libraries(scene_client
@@ -45,4 +46,4 @@ target_link_libraries(scene_client
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
 )
-add_dependencies(scene_client suturo_perception_msgs)
+add_dependencies(scene_client suturo_perception_msgs_generate_messages_cpp)

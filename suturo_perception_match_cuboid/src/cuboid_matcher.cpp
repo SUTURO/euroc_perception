@@ -4,11 +4,13 @@
 #define MIN_ANGLE 5 // the minimum angle offset between to norm vectors
                     // if this threshold is not reached, no rotation will be made on this axis
 
+using namespace suturo_perception;
+
 // Define Mutex
 boost::mutex CuboidMatcher::mx;
 
-CuboidMatcher::CuboidMatcher(suturo_perception::PipelineObject::Ptr pipelineObject) :
-  suturo_perception::Capability(pipelineObject)
+CuboidMatcher::CuboidMatcher(PipelineData::Ptr pipelineData, PipelineObject::Ptr pipelineObject) :
+  suturo_perception::Capability(pipelineData, pipelineObject)
 {
     input_cloud_ = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     debug = true;
@@ -16,6 +18,7 @@ CuboidMatcher::CuboidMatcher(suturo_perception::PipelineObject::Ptr pipelineObje
     estimation_succesful_ = false;
     // Use the more general WITHOUT_COEFFICIENTS mode per default
     mode_ = CUBOID_MATCHER_MODE_WITHOUT_COEFFICIENTS;
+    ransac_distance_threshold_ = 0.001;
 }
 std::vector<DetectedPlane> *CuboidMatcher::getDetectedPlanes()
 {
@@ -85,7 +88,7 @@ void CuboidMatcher::segmentPlanes()
     seg.setModelType (pcl::SACMODEL_PLANE );
     seg.setMethodType (pcl::SAC_RANSAC);
     seg.setMaxIterations (1000);
-    seg.setDistanceThreshold (0.005); // Tolerance is 0.5 cm
+    seg.setDistanceThreshold (ransac_distance_threshold_); 
 
     seg.setInputCloud (cloud);
     seg.segment (*detected_planes_.at(planeIdx).getInliers(),
@@ -260,7 +263,7 @@ void CuboidMatcher::segmentPlanes()
 void CuboidMatcher::computeCentroid(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, Eigen::Vector4f &centroid)
 {
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_points (new pcl::PointCloud<pcl::PointXYZRGB> ());
-  perception_utils::ThreadsafeHull::computeConvexHull(cloud_in, hull_points);
+  ThreadsafeHull::computeConvexHull(cloud_in, hull_points);
 
   // Centroid calulcation
   pcl::compute3DCentroid (*hull_points, centroid);  
@@ -392,10 +395,8 @@ void CuboidMatcher::computeCuboidCornersWithMinMax3D(pcl::PointCloud<pcl::PointX
   corner_points->push_back(pt8);
 }
 
-Cuboid::Ptr CuboidMatcher::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points)
+void CuboidMatcher::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points,Cuboid::Ptr c)
 {
-  Cuboid::Ptr c(new Cuboid());
-
   // Get the "width": (minx,miny) -> (maxx,miny)
   c->length1 = pcl::distances::l2(corner_points->points.at(0).getVector4fMap(),corner_points->points.at(2).getVector4fMap());
   // Get the "height": (minx,miny) -> (minx,maxy)
@@ -408,9 +409,32 @@ Cuboid::Ptr CuboidMatcher::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::Po
   CuboidMatcher::computeCentroid(corner_points, centroid);
   c->center = getVector3fFromVector4f(centroid);
   c->corner_points = corner_points;
+}
+
+Cuboid::Ptr CuboidMatcher::computeCuboidFromBorderPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points)
+{
+  Cuboid::Ptr c(new Cuboid());
+  computeCuboidFromBorderPoints(corner_points,c);
   return c;
 }
 
+
+bool CuboidMatcher::validCuboid(Cuboid::Ptr cuboid)
+{
+  std::cout << "[cuboid_matcher] Cuboid in CuboidMatcher::validCuboid " << cuboid->length1 << " " << cuboid->length2 << " "<< cuboid->length3 << std::endl;
+  bool ret = cuboid->length1 > 0 && cuboid->length2 > 0 && cuboid->length3 > 0;
+  std::cout << "[cuboid_matcher] result in CuboidMatcher::validCuboid " << ret << std::endl;
+  return ret;
+}
+
+void CuboidMatcher::execute()
+{
+  setMode(CUBOID_MATCHER_MODE_WITH_COEFFICIENTS);
+  setTableCoefficients(pipelineData_->coefficients_);
+  setInputCloud(pipelineObject_->get_pointCloud());
+  execute(pipelineObject_->get_c_cuboid());
+  pipelineObject_->set_c_cuboid_success(validCuboid(pipelineObject_->get_c_cuboid()));
+}
 
 bool CuboidMatcher::execute(Cuboid::Ptr c)
 {
@@ -541,7 +565,7 @@ bool CuboidMatcher::execute(Cuboid::Ptr c)
     std::cout << bounding_box->points.size() << std::endl;
     return false;
   }
-  c = computeCuboidFromBorderPoints(bounding_box);
+  computeCuboidFromBorderPoints(bounding_box,c);
 
   if(debug)
     std::cout << "Calculating orientation" << std::endl;

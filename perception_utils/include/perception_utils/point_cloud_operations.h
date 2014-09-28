@@ -73,6 +73,12 @@ namespace suturo_perception
           pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out,
           pcl::PointIndices::Ptr object_indices, 
           int convex_hull_dimension, double prismZMin, double prismZMax);
+      static void extractAllPointsAbovePointCloud(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, 
+          const pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_cloud, 
+          pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out,
+          pcl::PointIndices::Ptr object_indices, 
+          pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_points,
+         int convex_hull_dimension, double prismZMin, double prismZMax);
       static void projectToPlaneCoefficients(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
           pcl::PointIndices::Ptr object_indices, pcl::ModelCoefficients::Ptr coefficients,
           pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out);

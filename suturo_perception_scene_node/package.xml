@@ -48,7 +48,8 @@
   <build_depend>libpcl-all-dev</build_depend>
   <build_depend>perception_utils</build_depend>
   <build_depend>suturo_perception_msgs</build_depend>
-  <build_depend>suturo_perception_match_cuboid</build_depend>
+  <build_depend>suturo_perception_segmentation</build_depend>
+  <build_depend>suturo_perception_pipeline</build_depend>
   <run_depend>cv_bridge</run_depend>
   <run_depend>euroc_c2_msgs</run_depend>
   <run_depend>roscpp</run_depend>
@@ -57,7 +58,8 @@
   <run_depend>libpcl-all</run_depend>
   <run_depend>perception_utils</run_depend>
   <run_depend>suturo_perception_msgs</run_depend>
-  <run_depend>suturo_perception_match_cuboid</run_depend>
+  <run_depend>suturo_perception_segmentation</run_depend>
+  <run_depend>suturo_perception_pipeline</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

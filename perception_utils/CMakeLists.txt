@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   suturo_perception_msgs
+  suturo_msgs
 )
 
 # pcl
@@ -22,7 +23,7 @@ include_directories(${PCL_INCLUDE_DIRS})
 set(Boost_USE_STATIC_LIBS OFF) 
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF) 
-find_package(Boost 1.48.0 COMPONENTS thread) 
+find_package(Boost 1.48.0 COMPONENTS thread system) 
 
 # include opencv
 find_package(OpenCV REQUIRED)
@@ -30,7 +31,7 @@ find_package(OpenCV REQUIRED)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES perception_utils
-  CATKIN_DEPENDS pcl_conversions pcl_ros cv_bridge roscpp sensor_msgs std_msgs suturo_perception_msgs
+  CATKIN_DEPENDS pcl_conversions pcl_ros cv_bridge roscpp sensor_msgs std_msgs suturo_perception_msgs suturo_msgs
   DEPENDS opencv pcl
 )
 
@@ -48,15 +49,18 @@ set(perception_utils_files
 	src/point_cloud_operations.cpp 
 	src/logger.cpp 
 	src/publisher_helper.cpp 
+	src/get_euroc_task_description.cpp
 	include/perception_utils/capability.hpp
 	include/perception_utils/pipeline_data.hpp
 	include/perception_utils/pipeline_object.hpp
 	include/perception_utils/point.hpp
+	include/perception_utils/shape.hpp
+  include/perception_utils/get_euroc_task_description.h
 )
 
 add_library(perception_utils ${perception_utils_files})
 target_link_libraries(perception_utils ${PCL_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV_LIBS} ${catkin_LIBRARIES})      
-add_dependencies(perception_utils suturo_perception_msgs)
+add_dependencies(perception_utils suturo_perception_msgs_generate_messages_cpp suturo_msgs_generate_messages_cpp)
 
 add_library(threadsafe_hull src/threadsafe_hull.cpp)
 target_link_libraries(threadsafe_hull ${catkin_LIBRARIES})      
@@ -75,7 +79,16 @@ add_executable(corner_detector
   src/corner_detector.cpp
   src/basic_io_pcd.cpp)
 
+add_executable(cropbox_cloud 
+  src/cropbox_cloud.cpp
+  src/basic_io_pcd.cpp)
+
 target_link_libraries(region_growing
+  ${catkin_LIBRARIES} 
+  ${PCL_LIBRARIES}
+)
+
+target_link_libraries(cropbox_cloud
   ${catkin_LIBRARIES} 
   ${PCL_LIBRARIES}
 )

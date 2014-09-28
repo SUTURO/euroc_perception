@@ -1,0 +1,21 @@
+<package>
+  <name>suturo_perception_color_analysis</name>
+  <version>0.0.1</version>
+  <description>
+      Color analysis on pointclouds.
+      Calculation of average color in RGB and HSV of a pointcloud.
+  </description>
+  <maintainer email="ofenrohr@cs.uni-bremen.de">Tom Vincent Peters</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>libpcl-all-dev</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>perception_utils</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>libpcl-all</run_depend>
+  <run_depend>cv_bridge</run_depend>
+  <run_depend>opencv2</run_depend>
+  <run_depend>perception_utils</run_depend>
+</package>

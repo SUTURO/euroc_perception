@@ -1,5 +1,5 @@
 /*
- * This node uses the PancakePose library to estimate
+ * This node uses the ICPFitter library to estimate
  * the pose of a segmented, partial pointcloud against a 
  * CAD Model. The results will be visualized as follows:
  *   1) The input cloud and the cloud of the CAD model
@@ -19,7 +19,7 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
-#include <pcl/io/vtk_lib_io.h>
+// #include <pcl/io/vtk_lib_io.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/registration/icp.h>
 #include <pcl/registration/icp_nl.h>
@@ -31,7 +31,8 @@
 #include <pcl/features/fpfh.h>
 #include <pcl/features/shot.h>
 #include <suturo_perception_match_cuboid/cuboid_matcher.h>
-#include <suturo_perception_cad_recognition/pancake_pose.h>
+#include <suturo_perception_cad_recognition/icp_fitter.h>
+#include <boost/algorithm/string.hpp>
 
 namespace po = boost::program_options;
 using namespace boost;
@@ -48,6 +49,13 @@ void drawNormalizedVector(pcl::visualization::PCLVisualizer &viewer, Eigen::Vect
 int main(int argc, char** argv){
   std::string cad_model_pc_filename;
   std::string input_pc_filename;
+  std::string table_normal_string;
+  std::string downsample_size;
+  int max_iterations=-1;
+  int max_distance=-1;
+
+  bool turn_model=false;
+  bool use_leaf_size=false;
 
   // "HashMap" for program parameters
   po::variables_map vm;
@@ -59,6 +67,11 @@ int main(int argc, char** argv){
       ("help", "produce help message")
       ("input-pc,i", po::value<std::string>(&input_pc_filename)->required(), "The  filename of the input pointcloud.")
       ("cad-model-pc,m", po::value<std::string>(&cad_model_pc_filename)->required(), "A pointcloud of the CAD-Model to match. You can get a Pointcloud of your CAD-Model with CloudCompare.")
+      ("max-iterations,c", po::value<int>(&max_iterations), "The max iteration count for ICP. Default: 60")
+      ("max-correspondence-distance,d", po::value<int>(&max_distance), "The max iteration correspondence distance for ICP. If no value is set, the PCL default will be used")
+      ("table_normal,t", po::value<std::string>(&table_normal_string)->required(), "The normal of the surface where the object rests on")
+      ("downsample-size,l", po::value<std::string>(&downsample_size), "The leaf size for the downsampling process - Default = 0.005f")
+      ("model-upside,u", po::value<bool>()->zero_tokens(), "Turn the model upwards before running ICP - Default=false")
     ;
 
     po::positional_options_description p;
@@ -66,9 +79,17 @@ int main(int argc, char** argv){
     options(desc).positional(p).run(), vm); 
 
     if (vm.count("help")) {
-      std::cout << "Usage: cad_recognition [-t topic]" << endl << endl;
+      std::cout << "Usage: cad_recognition -i input_cloud.pcd -m cad_model_cloud.pcd -t 'table_normal'" << endl << endl;
       std::cout << desc << "\n";
       return 1;
+    }
+
+    if (vm.count("model-upside")) {
+      turn_model = true;
+    }
+
+    if (vm.count("downsample-size")) {
+      use_leaf_size = true;
     }
 
     // Put notify after the help check, so help is display even
@@ -78,7 +99,7 @@ int main(int argc, char** argv){
   }
   catch(std::exception& e)
   {
-    std::cout << "Usage: cad_recognition -i input_cloud.pcd -m cad_model_cloud.pcd" << endl << endl;
+    std::cout << "Usage: cad_recognition -i input_cloud.pcd -m cad_model_cloud.pcd -t 'table_normal'" << endl << endl;
     std::cerr << "Error: " << e.what() << "\n";
     return false;
   }
@@ -115,26 +136,70 @@ int main(int argc, char** argv){
   // Downsample both clouds
   pcl::VoxelGrid<pcl::PointXYZ> sor;
   sor.setInputCloud (input_cloud);
-  // #define LEAF_SIZE 0.01f
+
   #define LEAF_SIZE 0.005f
-  sor.setLeafSize (LEAF_SIZE, LEAF_SIZE, LEAF_SIZE);
+  if(!use_leaf_size)
+  {
+    sor.setLeafSize (LEAF_SIZE, LEAF_SIZE, LEAF_SIZE);
+  }else{
+    double size = atof(downsample_size.c_str());
+    sor.setLeafSize (size, size, size);
+  }
   sor.filter (*input_cloud_voxeled);
 
   sor.setInputCloud (model_cloud);
   sor.filter (*model_cloud_voxeled);
 
   boost::posix_time::ptime file_load_end = boost::posix_time::microsec_clock::local_time();
-  // suturo_perception_utils::Logger l("cad_recognition");
   // l.logTime(file_load_start,file_load_end,"File loading and voxeling done");
 
-  boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
+  std::vector<std::string> table_normal_components;
+  boost::split(table_normal_components, table_normal_string, boost::is_any_of(","));
+
+  if(table_normal_components.size() != 4)
+  {
+    std::cout << "Extracted " << table_normal_components.size() << " components from the table normal string. Required are exactly 4! See the pcl ModelCoefficients or a RANSAC plane for reference" << std::endl;
+    return 1;
+  }
+  std::cout << "Using the following table normal: ";
+  std::cout << atof(table_normal_components.at(0).c_str()) << ", ";
+  std::cout << atof(table_normal_components.at(1).c_str()) << ", ";
+  std::cout << atof(table_normal_components.at(2).c_str()) << ", ";
+  std::cout << atof(table_normal_components.at(3).c_str()) << std::endl;
+  Eigen::Vector4f table_normal(
+      atof(table_normal_components.at(0).c_str()),
+      atof(table_normal_components.at(1).c_str()),
+      atof(table_normal_components.at(2).c_str()),
+      atof(table_normal_components.at(3).c_str())
+      );
   // Specify the table normal of the given model
   // Eigen::Vector4f table_normal(-0.0102523,-0.746435,-0.66538,0.92944); // pancake_fail
-  Eigen::Vector4f table_normal(0.0118185, 0.612902, 0.79007, -0.917831); // pancake 
+  // Eigen::Vector4f table_normal(0.0118185, 0.612902, 0.79007, -0.917831); // pancake 
   // Eigen::Vector4f table_normal(0.00924593, 0.697689, 0.716341, -0.914689); // pancake 0deg moved
   // Eigen::Vector4f table_normal(0.0102382,0.6985,0.715537,-0.914034); // pancake 0deg moved
-  PancakePose ria(input_cloud_voxeled, model_cloud_voxeled, table_normal);
+  // Eigen::Vector4f table_normal(0.000572634, 0.489801, 0.871834, -0.64807); // euroc_mbpe/test_files/correctly_segmented_box.pcd
+  // Eigen::Vector4f table_normal(0.169393, 0.488678, 0.855862, -0.596477); // euroc_mbpe/test_files/correctly_segmented_cylinder.pcd
+  // Eigen::Vector4f table_normal(0.000309765, 0.601889, 0.79858, -0.782525); // euroc_mbpe/test_files/correctly_segmented_handlebar.pcd
+ 
+  std::cout << "Generated Pointcloud with " << model_cloud_voxeled->points.size() << "pts" << std::endl;
+  std::cout << "Input Pointcloud with " << input_cloud_voxeled->points.size() << "pts" << std::endl;
+  ICPFitter ria(input_cloud_voxeled, model_cloud_voxeled, table_normal);
+  if(max_iterations!=-1)
+  {
+    ria.setMaxICPIterations(max_iterations);
+  }
+  else
+  {
+    ria.setMaxICPIterations(60);
+  }
+  ria.rotateModelUp(turn_model);
+  boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
   pcl::PointCloud<pcl::PointXYZ>::Ptr model_initial_aligned = ria.execute();
+  boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
+  boost::posix_time::time_duration d = end - start;
+  float diff = (float)d.total_microseconds() / (float)1000;
+  std::cout << "Runtime for ICPFitter execute(): " << diff << "ms" << std::endl;
+  ria.dumpPointClouds();
 
   Eigen::Matrix<float, 4, 4> initial_alignment_rotation = 
     ria.getRotation();
@@ -151,16 +216,30 @@ int main(int argc, char** argv){
   pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
   icp.setInputSource(ria._upwards_object);
   icp.setInputTarget(ria._upwards_model);
-  icp.setEuclideanFitnessEpsilon (0.000001f);
+  // icp.setInputTarget(ria._upwards_object);
+  // icp.setInputSource(ria._upwards_model);
+  if(max_iterations!=-1)
+  {
+    std::cout << "Setting max iterations in ICP to: "<< max_iterations << std::endl;
+    icp.setMaximumIterations(max_iterations);
+  }
+  else
+  {
+    icp.setMaximumIterations(60);
+  }
+  // icp.setEuclideanFitnessEpsilon (0.000001f);
+  // icp.setEuclideanFitnessEpsilon (0.00000000001f);
+  icp.setEuclideanFitnessEpsilon (0.00001f);
   // icp.setMaxCorrespondenceDistance (0.55);
   // icp.setRANSACOutlierRejectionThreshold(0.10f);
+  //
+  // Observation: The fitness score should be below 1e-5
+  
   pcl::PointCloud<pcl::PointXYZ>::Ptr Final(new pcl::PointCloud<pcl::PointXYZ>);
   icp.align(*Final);
   std::cout << "has converged:" << icp.hasConverged() << " score: " <<
   icp.getFitnessScore() << std::endl;
   std::cout << icp.getFinalTransformation() << std::endl;
-  boost::posix_time::ptime end = boost::posix_time::microsec_clock::local_time();
-  // l.logTime(start,end,"Initial Alignment and ICP");
 
 
   // Check the result of the calculated transformation
@@ -179,13 +258,13 @@ int main(int argc, char** argv){
   // viewer.createViewPort(0.0,0, 0.25,1, v1 );
   // viewer.addText("Input Cloud", 0.1, 0.1 , "input_cloud_text_id", v1 );
   viewer.createViewPort(0.0,0, 0.33,1, v2 );
-  viewer.addText("Model vs. Input Cloud - Roughly aligned", 0.1, 0.1 , "model_cloud_text_id", v2 );
+  viewer.addText("Model vs. Input Cloud - Roughly aligned (red=model, orange=upwards_model), ", 0.1, 0.1 , "model_cloud_text_id", v2 );
   viewer.addCoordinateSystem(0.3,v2);
   // pcl::PointXYZ a(0,1,0);
   // viewer.addSphere(a,0.5,"sphere",v2);
   viewer.createViewPort(0.33,0, 0.66  ,1, v3 );
   viewer.addCoordinateSystem(0.3,v3);
-  viewer.addText("ICP", 0.1, 0.1 , "icp_text", v3 );
+  viewer.addText("ICP (yellow=ICP result, green=input, orange=model)", 0.1, 0.1 , "icp_text", v3 );
   viewer.createViewPort(0.66,0, 1  ,1, v4 );
   viewer.addCoordinateSystem(0.3,v4);
   viewer.addText("Pose estimation", 0.1, 0.1 , "pose_text", v4 );

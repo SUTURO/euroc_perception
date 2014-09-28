@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="suturo_perception_classifier" name="classifier" type="classifier.py" output="screen"></node>
+</launch>

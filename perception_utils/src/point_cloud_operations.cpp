@@ -200,6 +200,16 @@ bool PointCloudOperations::extractBiggestCluster(const pcl::PointCloud<pcl::Poin
   return true;
 }
 
+void PointCloudOperations::extractAllPointsAbovePointCloud(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, 
+    const pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_cloud, 
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out,
+    pcl::PointIndices::Ptr object_indices, 
+    int convex_hull_dimension, double prismZMin, double prismZMax)
+{
+
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_points (new pcl::PointCloud<pcl::PointXYZRGB> ());
+  extractAllPointsAbovePointCloud(cloud_in, hull_cloud, cloud_out, object_indices, hull_points, convex_hull_dimension, prismZMin, prismZMax);
+}
 /*
  * Extract all Points above a given pointcloud (hull_cloud)
  * A Convex Hull will be calculated around this point cloud.
@@ -211,9 +221,9 @@ void PointCloudOperations::extractAllPointsAbovePointCloud(const pcl::PointCloud
     const pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_cloud, 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out,
     pcl::PointIndices::Ptr object_indices, 
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_points,
     int convex_hull_dimension, double prismZMin, double prismZMax)
 {
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_points (new pcl::PointCloud<pcl::PointXYZRGB> ());
   pcl::ConvexHull<pcl::PointXYZRGB> hull;
 
   hull.setDimension (convex_hull_dimension); 

@@ -30,6 +30,8 @@
 #define MIN_ANGLE 5 // the minimum angle offset between to norm vectors
                     // if this threshold is not reached, no rotation will be made on this axis
 
+using namespace suturo_perception;
+
 void printDuration(boost::posix_time::ptime s, boost::posix_time::ptime e, std::string text)
 {
     boost::posix_time::time_duration d = e - s;
@@ -201,7 +203,8 @@ main (int argc, char** argv)
   pcl::copyPointCloud<pcl::PointXYZRGB, pcl::PointXYZRGB>(*original_cloud, *input_cloud);
 
   suturo_perception::PipelineObject::Ptr pipelineObject(new suturo_perception::PipelineObject());
-  CuboidMatcher cm(pipelineObject);
+  suturo_perception::PipelineData::Ptr pipelineData(new suturo_perception::PipelineData());
+  CuboidMatcher cm(pipelineData, pipelineObject);
   cm.setInputCloud(input_cloud);
   cm.setDebug(true);
   cm.setSaveIntermediateResults(true);
