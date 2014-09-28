@@ -25,7 +25,7 @@ if __name__ == "__main__":
         parser = argparse.ArgumentParser(prog='Classifier Service', usage='%(prog)s [options]')
         parser.add_argument('--task', default='task1_v1', help='The task for which %(prog) should classify. default will be task1_v1')
         parser.add_argument('--logging', default=1, type=int, help='Logging Level from 0 to 3. 3 Will Print everything 0 will do nothing. Default is 1')
-        args = parser.parse_args()
+        args, unknown = parser.parse_known_args()
         main(args.task, args.logging)
     except rospy.ROSInterruptException:
         pass
