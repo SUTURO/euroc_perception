@@ -6,6 +6,8 @@
 
 int main(int argc, char **argv)
 {
+  std::cerr << "This suturo perception client is deprecated. Please use rosrun suturo_perception_node suturo_perception_client --type scene" << std::endl;
+  return 1;
   ros::init(argc, argv, "perception_client");
 
   ros::NodeHandle n;
