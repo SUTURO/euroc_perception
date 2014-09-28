@@ -37,7 +37,7 @@ namespace suturo_perception
         ecClusterTolerance = 0.02f; // 2cm
         ecMinClusterSize = 1000;
         ecMaxClusterSize = 200000;  
-        prismZMin = 0.001f;
+        prismZMin = 0.003f;
         prismZMax = 0.50f; // cutoff 50 cm above plane
         ecObjClusterTolerance = 0.03f; // 3cm
         ecObjMinClusterSize = 100;
