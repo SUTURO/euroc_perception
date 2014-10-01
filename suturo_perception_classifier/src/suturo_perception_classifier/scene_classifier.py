@@ -206,6 +206,7 @@ class SceneClassifier(object):
         marker.color.g = 1.0
         marker.color.b = 0.0
         marker.text = txt
+        marker.lifetime = rospy.Duration.from_sec(6)
         self.marker_publisher.publish(marker)
 
     def classify_object(self, object):
