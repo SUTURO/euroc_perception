@@ -31,7 +31,8 @@ class SceneClassifier(object):
         rospy.Subscriber("/suturo/yaml_pars0r", Task, self.set_yaml_infos)
         self.marker_publisher = rospy.Publisher("/suturo/classifier_marker", Marker)
         self.clf = tree.DecisionTreeClassifier()
-        self.marker_id = 0;
+        self.marker_id = 0
+        self.max_height = 0
 
 
     def set_yaml_infos(self, data):
@@ -47,11 +48,13 @@ class SceneClassifier(object):
             name = object.name
             color = object.color
             primitive = object.primitives
-            self.cubeized_objects[name] = {'color': color, 'dimensions': self.get_surrounding_cuboid(object)}
+            cub_res = self.get_surrounding_cuboid(object)
+            self.cubeized_objects[name] = {'color': color, 'dimensions': cub_res}
             randomized_objects = self.randomize_objects(self.cubeized_objects, self.number_of_data,
                                                         self.size_tresh_perc,
                                                         self.color_tresh)
             all_data[name] = randomized_objects
+            self.max_height = max(self.max_height, max(cub_res))
         data, labels = self.convert_to_dataset(all_data)
         if "task 3" in task_name:
           rnd_data, rnd_labels = self.create_random_obstacles(number=1000)
@@ -62,6 +65,7 @@ class SceneClassifier(object):
         self.clf.fit(data+rnd_data, labels+rnd_labels)
         if self.logging >=3:
             tree.export_graphviz(self.clf, out_file='tree.dot', feature_names=['h', 's', 'v', 'site'])
+            print("max height: %s\n"%self.max_height)
         # system('dot -Tpng tree.dot -o tree.png')
         # system('feh tree.png &')
 
@@ -198,7 +202,7 @@ class SceneClassifier(object):
         marker.pose.orientation.y = 0.0
         marker.pose.orientation.z = 0.0
         marker.pose.orientation.w = 1.0
-        marker.scale.x = 1
+        marker.scale.x = 0.5
         marker.scale.y = 0.1
         marker.scale.z = 0.1
         marker.color.a = 1.0
@@ -206,7 +210,7 @@ class SceneClassifier(object):
         marker.color.g = 1.0
         marker.color.b = 0.0
         marker.text = txt
-        marker.lifetime = rospy.Duration.from_sec(6)
+        marker.lifetime = rospy.Duration.from_sec(10)
         self.marker_publisher.publish(marker)
 
     def classify_object(self, object):
@@ -215,6 +219,7 @@ class SceneClassifier(object):
         unclassified_object = object.unclassifiedObject
         if self.logging >= 2 : print("Got Object to Classify: \r\n %s" %unclassified_object)
         height = unclassified_object.c_height
+        volume = unclassified_object.c_volume
         h = unclassified_object.c_avg_col_h
         s = unclassified_object.c_avg_col_s
         v = unclassified_object.c_avg_col_v
@@ -237,19 +242,22 @@ class SceneClassifier(object):
         class_name = self.clf.predict(classifyable_unclassified_object)
         # print class_name
         # class_name = self.lolloosed(r,g,b)
+        if (volume > 0.0001) or (height > (self.max_height + self.max_height*0.05)):
+          class_name[0] = 'obstacle'
         unclassified_object.c_shape = class_dict[class_name[0]]
         unclassified_object.object.id = class_name[0]
         resp = ClassifierResponse()
         resp.classifiedObject = unclassified_object
         if self.logging >= 1: print("Classified Object as: %s"%class_name)
-        self.publish_marker_for_object(unclassified_object, class_name[0])
+        self.publish_marker_for_object(unclassified_object, class_name[0] + "\nheight: " + str(height))
         return resp
 
     def create_random_obstacle(self, max_height=2):
-        height = random.randrange(0, int(max_height) * 1000) / 1000.
+        height = random.randrange(0, int(max_height) * 1000) / 1000
         h = random.randrange(0, 180)
         s = random.randrange(230, 255)
         v = random.randrange(230, 255)
+        volume = random.randrange(0, 1000) / 1000 + 0.0001
         return [h, s, v, height]
     
     def create_random_target_zone(self):
@@ -257,6 +265,7 @@ class SceneClassifier(object):
         h = random.randrange(0, 180)
         s = random.randrange(230, 255)
         v = random.randrange(230, 255)
+        volume = random.randrange(0, 1000) / 10000000
         return [h, s, v, height]
         
 
