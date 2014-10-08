@@ -168,7 +168,7 @@ class Classifier(object):
         for key in raw_data:
             for object in raw_data[key]:
                 data += self.convert_euroc_object(object)
-            labels += [key] * len(raw_data[key]) * 3
+            labels += [key] * len(raw_data[key])
         return data, labels
 
     def classify_object(self, object):
