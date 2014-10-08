@@ -24,7 +24,7 @@ class Classifier(object):
 
     def __init__(self, task, logging):
         self.logging = logging
-        if self.logging >= 1: print(">>>> Classifier will be initialized for task %s" %task)
+        if self.logging >= 1: print(">>>> Classifier will be initialized for task %s with log_lvl %s" %(task, logging))
         rospy.Subscriber("/suturo/yaml_pars0r", Task, self.set_yaml_infos)
         self.clf = tree.DecisionTreeClassifier()
 
@@ -158,9 +158,9 @@ class Classifier(object):
         x = eu_object['dimensions'][0]
         y = eu_object['dimensions'][1]
         z = eu_object['dimensions'][2]
-        return [[hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], x],
-                [hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], y],
-                [hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], z]]
+        return [[hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], x]]#,
+                # [hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], y],
+                # [hsv_color[0][0][0], hsv_color[0][0][1], hsv_color[0][0][2], z]]
 
     def convert_to_dataset(self, raw_data):
         data = []
