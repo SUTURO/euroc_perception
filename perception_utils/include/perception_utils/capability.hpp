@@ -5,6 +5,7 @@
 #include "perception_utils/pipeline_object.hpp"
 
 #include <boost/signals2/mutex.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <string>
 
 namespace suturo_perception
@@ -17,12 +18,19 @@ namespace suturo_perception
       : pipelineData_(data), pipelineObject_(obj), enabled_(enabled)
       {
       }
-
-			/* The execute method that has to be implemented by the deriving classes.
-			 * This should modify the pipelineObject that was set before.
-			 */
-			virtual void execute() = 0;
       
+      void pipelineExecute()
+			{
+				executeStart_ = boost::posix_time::microsec_clock::local_time();
+				execute();
+				executeEnd_ = boost::posix_time::microsec_clock::local_time();
+			}
+			
+			boost::posix_time::time_duration getExecutionTime()
+			{
+				return executeEnd_ - executeStart_;
+			}
+			
       /* The name of the capability. Used to en/disable capabilities in the
        * pipeline.
        */
@@ -36,6 +44,15 @@ namespace suturo_perception
 			PipelineObject::Ptr pipelineObject_;
       
       bool enabled_;
+			
+			/* The execute method that has to be implemented by the deriving classes.
+			 * This should modify the pipelineObject that was set before.
+			 */
+			virtual void execute() = 0;
+			
+			// time logging
+			boost::posix_time::ptime executeStart_;
+			boost::posix_time::ptime executeEnd_;
 	};
 }
 
