@@ -18,9 +18,9 @@ if __name__ == "__main__":
         perceived_objects = rospy.ServiceProxy('suturo/GetGripper', GetGripper)
         object =  perceived_objects(s).objects
         print object
-        rospy.wait_for_service('suturo/ObstacleClassifier')
+        rospy.wait_for_service('suturo/Classifier')
         try:
-            classified = rospy.ServiceProxy('suturo/ObstacleClassifier', Classifier)
+            classified = rospy.ServiceProxy('suturo/Classifier', Classifier)
             for each in object:
                 classified_object =  classified(each).classifiedObject
                 print classified_object

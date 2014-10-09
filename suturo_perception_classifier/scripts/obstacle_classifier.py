@@ -14,7 +14,7 @@ def main(task, logging):
     rospy.init_node("ObstacleClassifier", anonymous=True)
     # Create the service
     rospy.loginfo("Starting ObstacleClassifier")
-    rospy.Service("/suturo/ObstacleClassifier", Classifier, c.classify_object)
+    rospy.Service("/suturo/Classifier", Classifier, c.classify_object)
     # spin the wheel
     print("Started ObstacleClassifier Service")
     rospy.spin()
