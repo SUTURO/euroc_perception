@@ -24,7 +24,7 @@ class ObstacleClassifier(object):
         self.logging = logging
         if self.logging >= 1: print(">>>> Classifier will be initialized for task %s" %task)
         rospy.Subscriber("/suturo/yaml_pars0r", Task, self.set_yaml_infos)
-        self.clf = tree.DecisionTreeClassifier()
+        # self.clf = tree.DecisionTreeClassifier()
 
 
     def set_yaml_infos(self, data):
@@ -44,7 +44,7 @@ class ObstacleClassifier(object):
             primitive = object.primitives[0]
             print(primitive.dimensions)
             dimensions = list(primitive.dimensions)
-            dimensions.sort()
+            # dimensions.sort()
             if primitive.type == 3:
                 z = dimensions[0]
                 x = 2 * dimensions[1]
@@ -57,7 +57,7 @@ class ObstacleClassifier(object):
             z, y, x = 0, 0, 0
             for primitive in object.primitives:
                 dimensions = list(primitive.dimensions)
-                dimensions.sort()
+                # dimensions.sort()
                 if primitive.type == 3:
                     z += dimensions[0]
                     if x < 2 * dimensions[1]: x = 2 * dimensions[1]
@@ -94,14 +94,21 @@ class ObstacleClassifier(object):
 
         # 1)
         object_candidates = self.original_objects
-        object_candidates[:] = [obj for obj in object_candidates if obj.color == color_class]
-        if self.logging >= 1 : print("Remaining object candidates after color filtering:")
+        for obj in object_candidates:
+          print obj.color 
+          print "vs."
+          print color_class
+          print obj.color == color_class
+
+        object_candidates = [obj for obj in object_candidates if obj.color == color_class]
+        # if self.logging >= 1 : print("Remaining object candidates after color filtering {0}:".format(len(object_candidates) ) )
+        if self.logging >= 1 : print("Remaining object candidates after color filtering:" )
         if self.logging >= 1 :
           for c in object_candidates:
             print c.name
 
         # 2)
-        object_candidates[:] = [obj for obj in object_candidates if self.check_dimension_tolerance(obj, height) ]
+        object_candidates = [obj for obj in object_candidates if self.check_dimension_tolerance(obj, height) ]
         if self.logging >= 1 : print("Remaining object candidates after height filtering:")
         if self.logging >= 1 :
           for c in object_candidates:
