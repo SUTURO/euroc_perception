@@ -34,7 +34,7 @@ bool CloudProjector::getTransform(const ros::NodeHandle &node, const std::string
   return false;
 }
 
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr CloudProjector::depthProject(const cv::Mat &depth_image_in, const cv::Mat &rgb_image, const tf::StampedTransform &transform)
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr CloudProjector::depthProject(const cv::Mat &depth_image_in, const cv::Mat &rgb_image, const tf::StampedTransform &transform, const bool projectColors)
 {
   cv::Mat depth_image;
   if (depth_image_in.type() == CV_16U)
@@ -82,6 +82,10 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr CloudProjector::depthProject(const cv::Ma
       pPt->x = -depth * (h1 - (2*h1 *( u/640.0) )); // TODO: get this from yaml!
 
       // calculate color pixel
+			if (!projectColors)
+			{
+				continue;
+			}
       tf::Stamped<tf::Point> p1, p2;
       
       p1.m_floats[0] = pPt->x;

@@ -55,7 +55,8 @@ bool verbose = false;
 void receive_depth_and_rgb_image(
     const ros::NodeHandle &nodeHandle,
     const sensor_msgs::ImageConstPtr& depthImage,
-		const sensor_msgs::ImageConstPtr& inputImage)
+		const sensor_msgs::ImageConstPtr& inputImage,
+		const bool projectColors)
 {
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
   if(verbose)
@@ -80,11 +81,14 @@ void receive_depth_and_rgb_image(
   resized_depth = depth_ptr->image.clone();
 
   tf::StampedTransform transform;
-  CloudProjector::getTransform(nodeHandle, frame_rgb, frame, transform);
-  if (verbose)
-    CloudProjector::printTransform(transform);
+	if (projectColors)
+	{
+		CloudProjector::getTransform(nodeHandle, frame_rgb, frame, transform);
+		if (verbose)
+			CloudProjector::printTransform(transform);
+	}
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out = 
-    CloudProjector::depthProject(resized_depth, resized_img, transform);
+    CloudProjector::depthProject(resized_depth, resized_img, transform, projectColors);
 
 	// write pcd
   // pcl::PCDWriter writer;
@@ -104,11 +108,12 @@ void receive_depth_and_rgb_image(
   pub_cloud.publish(pub_message);
   
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
-  // Commented by PM. Generates a huge amount of output that interferes
-  // with the pipeline output
-  // std::stringstream ss;
-  // ss << "generate pointcloud on " << output_topic;
-  // logger.logTime(s, e, ss.str());
+  if (verbose)
+	{
+		std::stringstream ss;
+		ss << "generate " << (projectColors?"":"fast ") << "pointcloud on " << output_topic;
+		logger.logTime(s, e, ss.str());
+	}
 }
 
 int main (int argc, char** argv)
@@ -118,6 +123,7 @@ int main (int argc, char** argv)
   frame = "/sdepth_pcl";
   output_topic = "/suturo/euroc_scene_cloud";
   std::string desired_cam = "scene";
+	bool project_colors = true;
 
   // "HashMap" for program parameters
   po::variables_map vm;
@@ -128,6 +134,7 @@ int main (int argc, char** argv)
     desc.add_options()
       ("help", "produce help message")
       ("cam,c", po::value<std::string>(&desired_cam)->required(), "Specify the camera for which the pointclouds should be generated. Allowed values: scene or tcp")
+      ("rgb,s", po::value<bool>(&project_colors), "Dis/Enable colored pointclouds. Allowed values: 0 or 1")
       ("verbose,v", po::value<bool>()->zero_tokens(), "Verbose output")
     ;
 
@@ -171,7 +178,10 @@ int main (int argc, char** argv)
     rgb_topic = "/euroc_interface_node/cameras/scene_rgb_cam";
     frame = "/sdepth_pcl";
     frame_rgb = "/srgb";
-    output_topic = "/suturo/euroc_scene_cloud";
+		if (project_colors)
+			output_topic = "/suturo/euroc_scene_cloud";
+		else
+			output_topic = "/suturo/euroc_scene_cloud_fast";
   }
   else if(desired_cam == "tcp")
   {
@@ -179,7 +189,10 @@ int main (int argc, char** argv)
     rgb_topic = "/euroc_interface_node/cameras/tcp_rgb_cam";
     frame = "/tdepth_pcl";
     frame_rgb = "/trgb";
-    output_topic = "/suturo/euroc_tcp_cloud";
+		if (project_colors)
+			output_topic = "/suturo/euroc_tcp_cloud";
+		else
+			output_topic = "/suturo/euroc_gripper_cloud_fast";
   }
   else
   {
@@ -200,7 +213,7 @@ int main (int argc, char** argv)
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> MySyncPolicy;
   message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), depth_sub, image_sub);
 
-  sync.registerCallback(boost::bind(&receive_depth_and_rgb_image, n, _1, _2));
+  sync.registerCallback(boost::bind(&receive_depth_and_rgb_image, n, _1, _2, project_colors));
 
   pub_cloud = n.advertise<sensor_msgs::PointCloud2> (output_topic, 1);
 
