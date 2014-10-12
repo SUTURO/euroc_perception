@@ -9,7 +9,9 @@ import cv2
 from os import system
 from suturo_msgs.msg import Task
 from suturo_perception_msgs.srv import ClassifierResponse
-from sklearn import tree
+# from sklearn import tree
+from visualization_msgs.msg import Marker
+from std_msgs.msg import Header
 
 
 # TODO: Avoid double classification
@@ -24,7 +26,35 @@ class ObstacleClassifier(object):
         self.logging = logging
         if self.logging >= 1: print(">>>> Classifier will be initialized for task %s" %task)
         rospy.Subscriber("/suturo/yaml_pars0r", Task, self.set_yaml_infos)
-        # self.clf = tree.DecisionTreeClassifier()
+        self.marker_publisher = rospy.Publisher("/suturo/obstacle_classifier_marker", Marker)
+        self.marker_id = 0
+
+    def publish_marker_for_object(self, object, txt):
+        marker = Marker()
+        marker.header.frame_id = "sdepth_pcl"
+        marker.header.stamp = rospy.Time(0)
+        marker.ns = "scene_classifier_marker"
+        self.marker_id = self.marker_id + 1
+        marker.id = self.marker_id
+        marker.type = Marker.TEXT_VIEW_FACING
+        marker.action = Marker.ADD
+        marker.pose.position.x = object.c_centroid.x
+        marker.pose.position.y = object.c_centroid.y
+        marker.pose.position.z = object.c_centroid.z
+        marker.pose.orientation.x = 0.0
+        marker.pose.orientation.y = 0.0
+        marker.pose.orientation.z = 0.0
+        marker.pose.orientation.w = 1.0
+        marker.scale.x = 0.5
+        marker.scale.y = 0.1
+        marker.scale.z = 0.1
+        marker.color.a = 1.0
+        marker.color.r = 0.0
+        marker.color.g = 1.0
+        marker.color.b = 0.0
+        marker.text = txt
+        marker.lifetime = rospy.Duration.from_sec(10)
+        self.marker_publisher.publish(marker)
 
 
     def set_yaml_infos(self, data):
@@ -134,5 +164,6 @@ class ObstacleClassifier(object):
         resp = ClassifierResponse()
         resp.classifiedObject = unclassified_object
         if self.logging >= 1: print("Classified Object as: %s"%unclassified_object.object.id)
+        self.publish_marker_for_object(unclassified_object, unclassified_object.object.id + "\nheight: " + str(height))
         return resp
 

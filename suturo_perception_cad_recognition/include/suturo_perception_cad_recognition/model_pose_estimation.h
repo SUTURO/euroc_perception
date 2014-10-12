@@ -27,6 +27,13 @@
 class ModelPoseEstimation : public suturo_perception::Capability
 {
 public:
+  // NOT_ENABLED = ModelTransform is disabled
+  // TRANSFORM_ALL = ModelTransform is enabled and is applied everytime a pose estimation
+  //                 failed
+  // TRANSFORM_IF_MOI_SET  = ModelTransform is enabled but will only be considered, if the
+  //                         ModelsOfInterest Lists size is > 0
+  enum ModelTransformMode { NOT_ENABLED, TRANSFORM_ALL, TRANSFORM_IF_MOI_SET };
+
   // The objects are the Object specification from the parsed
   // YAML description of the EuRoC Task
   //
@@ -108,6 +115,13 @@ public:
   // If we are called by the perception pipeline, we can't set the necessary parameters from the calling side
   // We will therefore prepare everything in this method (set voxel size, retrieve models from the task description etc.).
   void initForPipelineCall();
+
+  // This method can alter the current ModelTransformMode. Enabling this mode means,
+  // that if not one model matches the desired fitness, the models will 
+  // be rotated (by 180 degrees on the Y-Axis, etc.)
+  //
+  // Please see the documentation of ModelTransformMode for more details on the different modes
+  void setTransformModelsOnFail(ModelTransformMode m);
 
 
 
