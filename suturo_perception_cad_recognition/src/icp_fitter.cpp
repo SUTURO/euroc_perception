@@ -222,7 +222,16 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
     model_cloud_centroid, diff_of_centroids;
   pcl::compute3DCentroid(*_cloud_in, input_cloud_centroid); 
   pcl::compute3DCentroid(*_upwards_object, rotated_input_cloud_centroid); 
-  diff_of_centroids = Eigen::Vector4f(0,0,0,0) - rotated_input_cloud_centroid;
+  if(!_calc_model_centroid)
+  {
+    diff_of_centroids = Eigen::Vector4f(0,0,0,0) - rotated_input_cloud_centroid;
+  }
+  else
+  {
+    pcl::compute3DCentroid(*_upwards_model, model_cloud_centroid); 
+    std::cout << "ModelCentroid is at " << model_cloud_centroid;
+    diff_of_centroids = model_cloud_centroid - rotated_input_cloud_centroid;
+  }
   Eigen::Matrix< float, 4, 4 > transform = 
     getTranslationMatrix(
         diff_of_centroids[0],
@@ -416,4 +425,10 @@ void ICPFitter::dumpPointClouds()
     writer.write(ss.str(), *_model_transformation_steps.at(i));
     // std::cerr << "Saved " << output_cloud_->points.size () << " data points" << std::endl;
   }
+}
+
+
+void ICPFitter::setCalculateModelCentroid(bool b)
+{
+  _calc_model_centroid = b;
 }

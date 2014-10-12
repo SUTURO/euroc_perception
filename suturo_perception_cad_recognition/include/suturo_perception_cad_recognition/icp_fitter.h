@@ -75,6 +75,8 @@ class ICPFitter
     double _max_icp_distance;
     double _icp_fitness_score;
     bool _rotate_model_upwards;
+    bool _calc_model_centroid;
+
     // The transformation that has been done by ICP after the initial alignment
     Eigen::Matrix<float, 4, 4> _icp_transform;
     // The inverse of the last transformation
@@ -89,6 +91,7 @@ class ICPFitter
       _icp_fitness_score = 99; // Default
       _max_icp_distance = NO_ICP_DISTANCE;
       _rotate_model_upwards = true;
+      _calc_model_centroid = false;
       logger_ = suturo_perception::Logger("ICPFitter");
     }
     // Eigen::Matrix<float, 4, 4>  getTransformation(); // Available after execution
@@ -147,6 +150,9 @@ class ICPFitter
     // Dump every pointcloud from _object_transformation_steps and _model_transformation_steps
     // to suturo_perception_cad_recognition/dumps/
     void dumpPointClouds();
+
+    // Should the object moved into the centroid of the model, or in the origin of the frame (0,0,0) ?
+    void setCalculateModelCentroid(bool b);
 };
 #endif
 

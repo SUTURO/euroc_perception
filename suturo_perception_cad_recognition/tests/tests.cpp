@@ -178,6 +178,7 @@ TEST(suturo_perception_mbpe, pose_estimation_cylinder)
   ModelPoseEstimation mpe(objects,data_,object_);
   mpe.setInputCloud(input_cloud);
   mpe.setSurfaceNormal(table_normal);
+  // mpe.setDumpICPFitterPointclouds(true);
   mpe.setVoxelSize(0.003f);
   mpe.execute();
 
