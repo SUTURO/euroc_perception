@@ -2,12 +2,10 @@
 <node pkg="pointcloud_publisher" name="publish_pointcloud_scene" type="publish_pointcloud" output="screen" args="-c scene"></node>
 <node pkg="pointcloud_publisher" name="publish_pointcloud_tcp" type="publish_pointcloud" output="screen" args="-c tcp"></node>
 
-<node pkg="pointcloud_publisher" name="publish_pointcloud_scene_fast" type="publish_pointcloud" output="screen" args="-c scene -s 0"></node>
-<node pkg="pointcloud_publisher" name="publish_pointcloudtcp_fast" type="publish_pointcloud" output="screen" args="-c tcp -s 0"></node>
-
 <node pkg="tf" type="static_transform_publisher" name="sdepth_pcl_broadcaster_z" args="0 0 0 -1.57079632679 0 0 sdepth sdepth_pcl_z 100" />
 <node pkg="tf" type="static_transform_publisher" name="tdepth_pcl_broadcaster_z" args="0 0 0 -1.57079632679 0 0 tdepth tdepth_pcl_z 100" />
 
 <node pkg="tf" type="static_transform_publisher" name="sdepth_pcl_broadcaster" args="0 0 0 0 0 -1.57079632679 sdepth_pcl_z sdepth_pcl 100" />
 <node pkg="tf" type="static_transform_publisher" name="tdepth_pcl_broadcaster" args="0 0 0 0 0 -1.57079632679 tdepth_pcl_z tdepth_pcl 100" />
+
 </launch>
