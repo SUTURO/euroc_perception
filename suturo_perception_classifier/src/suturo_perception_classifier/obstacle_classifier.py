@@ -31,7 +31,8 @@ class ObstacleClassifier(object):
 
     def publish_marker_for_object(self, object, txt):
         marker = Marker()
-        marker.header.frame_id = "sdepth_pcl"
+        # marker.header.frame_id = "sdepth_pcl"
+        marker.header.frame_id = object.object.header.frame_id
         marker.header.stamp = rospy.Time(0)
         marker.ns = "scene_classifier_marker"
         self.marker_id = self.marker_id + 1
