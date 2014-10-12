@@ -193,7 +193,7 @@ TEST(suturo_perception_mbpe, pose_estimation_cylinder)
   // Check the orientation (x,y,z,w from a Quaternionf)
   ASSERT_NEAR( mpe.getEstimatedPose()[3],  -0.270409, CAD_RECOGNITION_TEST_ACCEPTABLE_ORIENTATION_ERROR );
   ASSERT_NEAR( mpe.getEstimatedPose()[4], 0.00236567, CAD_RECOGNITION_TEST_ACCEPTABLE_ORIENTATION_ERROR );
-  ASSERT_NEAR( mpe.getEstimatedPose()[5],  -0.311801, CAD_RECOGNITION_TEST_ACCEPTABLE_ORIENTATION_ERROR );
+  ASSERT_NEAR( mpe.getEstimatedPose()[5],  -0.227, CAD_RECOGNITION_TEST_ACCEPTABLE_ORIENTATION_ERROR );
   ASSERT_NEAR( mpe.getEstimatedPose()[6],   0.910853, CAD_RECOGNITION_TEST_ACCEPTABLE_ORIENTATION_ERROR );
 
   SUCCEED();
