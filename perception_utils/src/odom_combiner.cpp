@@ -66,6 +66,7 @@ bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
   return false;
 
 
+  boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
   if(req.pointCloudName == suturo_perception_msgs::GetPointArrayRequest::TCP)
   {
      mutex_tcp.lock();
@@ -92,6 +93,11 @@ bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
     ROS_INFO("Invalid pointCloudName given");
     return false;
   }
+  boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
+
+  boost::posix_time::time_duration d = e - s;
+  float diff = (float)d.total_microseconds() / (float)1000;
+  std::cout << (boost::format("Time for %s: %s ms") % "execute()" % diff).str();
 
   std::cout << "Service call ended" << std::endl;
   // res.sum = req.a + req.b;
