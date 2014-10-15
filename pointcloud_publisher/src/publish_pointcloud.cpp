@@ -178,10 +178,10 @@ int main (int argc, char** argv)
     rgb_topic = "/euroc_interface_node/cameras/scene_rgb_cam";
     frame = "/sdepth_pcl";
     frame_rgb = "/srgb";
-		if (project_colors)
+		//if (project_colors)
 			output_topic = "/suturo/euroc_scene_cloud";
-		else
-			output_topic = "/suturo/euroc_scene_cloud_fast";
+		//else
+		//	output_topic = "/suturo/euroc_scene_cloud_fast";
   }
   else if(desired_cam == "tcp")
   {
@@ -189,10 +189,10 @@ int main (int argc, char** argv)
     rgb_topic = "/euroc_interface_node/cameras/tcp_rgb_cam";
     frame = "/tdepth_pcl";
     frame_rgb = "/trgb";
-		if (project_colors)
+		//if (project_colors)
 			output_topic = "/suturo/euroc_tcp_cloud";
-		else
-			output_topic = "/suturo/euroc_gripper_cloud_fast";
+		//else
+		//	output_topic = "/suturo/euroc_gripper_cloud_fast";
   }
   else
   {

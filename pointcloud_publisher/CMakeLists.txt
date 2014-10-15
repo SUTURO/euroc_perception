@@ -23,6 +23,8 @@ SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
 SET(CMAKE_BUILD_TYPE Release)	# Mandatory for openmp!
 
 catkin_package(
+  INCLUDE_DIRS include
+  LIBRARIES pointcloud_projector
   CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils
   DEPENDS opencv pcl
 )
@@ -40,6 +42,20 @@ set(PUBLISH_POINTCLOUD_FILES
 
 add_executable(publish_pointcloud ${PUBLISH_POINTCLOUD_FILES})
 target_link_libraries(publish_pointcloud
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBS}
+  ${PCL_LIBRARIES}
+)
+
+set(POINTCLOUD_PROJECTOR_FILES
+  src/cloud_generator.cpp
+  src/projector.cpp
+  include/suturo_pointcloud_publisher/cloud_generator.h
+  include/suturo_pointcloud_publisher/projector.h
+)
+
+add_library(pointcloud_projector ${POINTCLOUD_PROJECTOR_FILES})
+target_link_libraries(pointcloud_projector
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
