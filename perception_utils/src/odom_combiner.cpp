@@ -14,6 +14,8 @@
 #include <boost/thread/thread.hpp>
 #include "suturo_perception_msgs/GetPointArray.h"
 #include <tf/transform_listener.h>
+#include <pcl/filters/filter.h>
+#include <pcl/filters/voxel_grid.h>
 #include "pcl_ros/transforms.h"
 
 //
@@ -33,11 +35,18 @@ receive_tcp_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
   sensor_msgs::PointCloud2 transformedCloud;
   pcl_ros::transformPointCloud("/odom_combined", *inputCloud, transformedCloud, *tfListener);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZRGB>());
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr voxeled_cloud (new pcl::PointCloud<pcl::PointXYZRGB>());
 	pcl::fromROSMsg(transformedCloud,*cloud_in);
 
+  pcl::VoxelGrid<pcl::PointXYZRGB> sor;
+  sor.setInputCloud (cloud_in);
+  sor.setLeafSize (0.003f, 0.003f, 0.003f);
+  sor.filter (*voxeled_cloud);
+
   mutex_tcp.lock();
-  latest_tcp_cloud = cloud_in;
+  latest_tcp_cloud = voxeled_cloud;
   mutex_tcp.unlock();
+  std::cout << "pts after voxeling: " << latest_tcp_cloud->points.size() << std::endl;
 }
 
 void
@@ -48,13 +57,18 @@ receive_scene_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
   sensor_msgs::PointCloud2 transformedCloud;
   pcl_ros::transformPointCloud("/odom_combined", *inputCloud, transformedCloud, *tfListener);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZRGB>());
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr voxeled_cloud (new pcl::PointCloud<pcl::PointXYZRGB>());
 	pcl::fromROSMsg(transformedCloud,*cloud_in);
 	
-	// pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZRGB>());
-	// pcl::fromROSMsg(*inputCloud,*cloud_in);
+  pcl::VoxelGrid<pcl::PointXYZRGB> sor;
+  sor.setInputCloud (cloud_in);
+  sor.setLeafSize (0.003f, 0.003f, 0.003f);
+  sor.filter (*voxeled_cloud);
+
   mutex_scene.lock();
-  latest_scene_cloud = cloud_in;
+  latest_scene_cloud = voxeled_cloud;
   mutex_scene.unlock();
+  std::cout << "pts after voxeling: " << latest_scene_cloud->points.size() << std::endl;
 }
 
 bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
