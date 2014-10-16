@@ -26,6 +26,12 @@ boost::mutex mutex_scene;
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr latest_scene_cloud,
   latest_tcp_cloud;
 tf::TransformListener *tfListener;
+ros::NodeHandle *node_handle;
+ros::Publisher pub;
+
+// Safe the timestamps for the latest clouds
+ros::Time time_tcp_cloud;
+ros::Time time_scene_cloud;
 
 void
 receive_tcp_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
@@ -45,6 +51,7 @@ receive_tcp_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
 
   mutex_tcp.lock();
   latest_tcp_cloud = voxeled_cloud;
+  time_tcp_cloud = inputCloud->header.stamp;
   mutex_tcp.unlock();
   std::cout << "pts after voxeling: " << latest_tcp_cloud->points.size() << std::endl;
 }
@@ -67,6 +74,7 @@ receive_scene_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
 
   mutex_scene.lock();
   latest_scene_cloud = voxeled_cloud;
+  time_scene_cloud = inputCloud->header.stamp;
   mutex_scene.unlock();
   std::cout << "pts after voxeling: " << latest_scene_cloud->points.size() << std::endl;
 }
@@ -89,6 +97,14 @@ bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
        res.pointArray.push_back(latest_tcp_cloud->points.at(i).y);
        res.pointArray.push_back(latest_tcp_cloud->points.at(i).z);
      }
+     if(req.publishToPlanningScene)
+     {
+       sensor_msgs::PointCloud2 pub_message;
+       pcl::toROSMsg(*latest_tcp_cloud, pub_message );
+       pub_message.header.frame_id = "/odom_combined";
+       pub_message.header.stamp = time_tcp_cloud;
+       pub.publish(pub_message);
+     }
      mutex_tcp.unlock();
   }
   else if(req.pointCloudName == suturo_perception_msgs::GetPointArrayRequest::SCENE)
@@ -100,6 +116,14 @@ bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
        res.pointArray.push_back(latest_scene_cloud->points.at(i).y);
        res.pointArray.push_back(latest_scene_cloud->points.at(i).z);
      }
+     if(req.publishToPlanningScene)
+     {
+       sensor_msgs::PointCloud2 pub_message;
+       pcl::toROSMsg(*latest_scene_cloud, pub_message );
+       pub_message.header.frame_id = "/odom_combined";
+       pub_message.header.stamp = time_scene_cloud;
+       pub.publish(pub_message);
+     }
      mutex_scene.unlock();
   }
   else
@@ -107,6 +131,7 @@ bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
     ROS_INFO("Invalid pointCloudName given");
     return false;
   }
+
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
 
   boost::posix_time::time_duration d = e - s;
@@ -126,6 +151,9 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "odom_combiner");
   ros::NodeHandle n;
+  node_handle = &n;
+
+  pub = node_handle->advertise<sensor_msgs::PointCloud2>("/suturo/octomap", 1000);
   tfListener = new tf::TransformListener();
 
   std::cout << "Waiting for tf to come up..." << std::endl;
