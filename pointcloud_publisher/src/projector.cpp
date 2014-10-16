@@ -19,7 +19,7 @@ bool CloudProjector::getTransform(const ros::NodeHandle &node, const std::string
   {
     try
     {
-      listener.waitForTransform(frame_from, frame_to, /*frame_rgb, frame,*/ ros::Time(0), ros::Duration(3.0));
+      listener.waitForTransform(frame_from, frame_to, /*frame_rgb, frame,*/ ros::Time(0), ros::Duration(6.0));
       listener.lookupTransform(frame_from, frame_to, /*frame_rgb, frame,*/ ros::Time(0), transform_);
       return true;
     }

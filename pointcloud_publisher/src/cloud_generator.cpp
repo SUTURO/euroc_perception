@@ -113,7 +113,8 @@ void CloudGenerator::receive_depth_and_rgb_image(
     frame_rgb = "/srgb";
   }
   tf::StampedTransform transform;
-	CloudProjector::getTransform(nodeHandle_, frame_rgb, frame, transform);
+
+	CloudProjector::getTransform(nodeHandle_, frame_rgb, frame, transform );
 	if (verbose_)
 		CloudProjector::printTransform(transform);
   cloud_out_ = CloudProjector::depthProject(resized_depth, resized_img, transform, true);

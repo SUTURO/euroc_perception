@@ -45,7 +45,7 @@ std::string frame = "";
 std::string frame_rgb = "";
 std::string output_topic = "";
 bool verbose = false;
-
+tf::StampedTransform transform_rgb_depth;
 
 
 
@@ -73,7 +73,7 @@ void receive_depth_and_rgb_image(
   if(verbose)
     std::cout << "Received depth image" << std::endl;
 	
-
+  // std::cout << "RGB.timestamp - Depth.timestamp = " << inputImage->header.stamp - depthImage->header.stamp << std::endl;
 	cv::Mat resized_img;
 	cv::Mat resized_depth;
 
@@ -83,10 +83,8 @@ void receive_depth_and_rgb_image(
   tf::StampedTransform transform;
 	if (projectColors)
 	{
-		CloudProjector::getTransform(nodeHandle, frame_rgb, frame, transform);
-		if (verbose)
-			CloudProjector::printTransform(transform);
-	}
+    transform = transform_rgb_depth;
+  }
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out = 
     CloudProjector::depthProject(resized_depth, resized_img, transform, projectColors);
 
@@ -207,6 +205,16 @@ int main (int argc, char** argv)
 	ros::init(argc, argv, ss.str());
 	ros::NodeHandle n;
 
+	if (project_colors)
+	{
+    logger.logInfo("Waiting for tf to come up");
+    sleep(6);
+    logger.logInfo("Getting RGB<->Depth transform once...");
+		CloudProjector::getTransform(n, frame_rgb, frame, transform_rgb_depth);
+		if (verbose)
+			CloudProjector::printTransform(transform_rgb_depth);
+	}
+
   message_filters::Subscriber<sensor_msgs::Image> depth_sub(n, depth_topic, 1);
   message_filters::Subscriber<sensor_msgs::Image> image_sub(n, rgb_topic, 1);
 
@@ -214,6 +222,7 @@ int main (int argc, char** argv)
   message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), depth_sub, image_sub);
 
   sync.registerCallback(boost::bind(&receive_depth_and_rgb_image, n, _1, _2, project_colors));
+  logger.logInfo("Subscribed to image and depth topic");
 
   pub_cloud = n.advertise<sensor_msgs::PointCloud2> (output_topic, 1);
 
