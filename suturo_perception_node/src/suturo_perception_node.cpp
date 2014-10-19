@@ -4,8 +4,10 @@
 #include <perception_utils/publisher_helper.h>
 #include <perception_utils/get_euroc_task_description.h>
 #include <suturo_perception_segmentation/projection_segmenter.h>
+#include <suturo_perception_segmentation/task6_segmenter.h>
 #include <suturo_perception_pipeline/pipeline.h>
 #include <suturo_perception_msgs/EurocObject.h>
+#include <suturo_msgs/Task.h>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
@@ -201,36 +203,77 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
 	pcl::fromROSMsg(*inputCloud,*cloud_in);
   
   
-  ProjectionSegmenter projection_segmenter;
-  if (!projection_segmenter.segment(cloud_in, pipelineData_, pipelineObjects_))
-  {
-    logger.logInfo("segmentation failed");
-    return;
-  }
-  std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_points_clusters =
-    projection_segmenter.getProjectionClusters();
-  std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_point_hulls =
-    projection_segmenter.getProjectionClusterHulls();
-  for (int i = 0; i < projected_points_clusters.size(); i++)
-  {
-    std::stringstream ss;
-    ss << i;
-    ph_.publish_pointcloud(PROJECTED_CLUSTERS_PREFIX_TOPIC + ss.str(), 
-        projected_points_clusters[i], DEPTH_FRAME);
-    ph_.publish_pointcloud(PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC + ss.str(), 
-        projected_point_hulls[i], DEPTH_FRAME);
-  }
-  // Publish the segmentation debug topics
-  ph_.publish_pointcloud(TABLE_TOPIC, projection_segmenter.getTablePointCloud()
-        , DEPTH_FRAME);
+	if (pipelineData_->task_.task_type == suturo_msgs::Task::TASK_6)
+	{
+		Task6Segmenter projection_segmenter;
+		bool segmentation_result = projection_segmenter.segment(cloud_in, pipelineData_, pipelineObjects_);
+		
+		if (segmentation_result)
+		{
+			processing_ = false;
+		}
+		else
+		{
+			logger.logInfo("segmentation failed");
+		}
+		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_points_clusters =
+			projection_segmenter.getProjectionClusters();
+		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_point_hulls =
+			projection_segmenter.getProjectionClusterHulls();
+		for (int i = 0; i < projected_points_clusters.size(); i++)
+		{
+			std::stringstream ss;
+			ss << i;
+			ph_.publish_pointcloud(PROJECTED_CLUSTERS_PREFIX_TOPIC + ss.str(), 
+					projected_points_clusters[i], DEPTH_FRAME);
+			ph_.publish_pointcloud(PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC + ss.str(), 
+					projected_point_hulls[i], DEPTH_FRAME);
+		}
+		// Publish the segmentation debug topics
+		ph_.publish_pointcloud(TABLE_TOPIC, projection_segmenter.getTablePointCloud()
+					, DEPTH_FRAME);
 
-  ph_.publish_pointcloud(DOWNSAMPLED_CLOUD, projection_segmenter.getDownsampledPointCloud()
-        , DEPTH_FRAME);
-  ph_.publish_pointcloud(POINTS_ABOVE_TABLE_CLOUD, projection_segmenter.getPointsAboveTable()
-        , DEPTH_FRAME);
+		ph_.publish_pointcloud(DOWNSAMPLED_CLOUD, projection_segmenter.getDownsampledPointCloud()
+					, DEPTH_FRAME);
+		ph_.publish_pointcloud(POINTS_ABOVE_TABLE_CLOUD, projection_segmenter.getPointsAboveTable()
+					, DEPTH_FRAME);
 
-  ph_.publish_pointcloud(PROJECTED_POINTS_TOPIC, projection_segmenter.getProjectedPoints()
-        , DEPTH_FRAME);
+		ph_.publish_pointcloud(PROJECTED_POINTS_TOPIC, projection_segmenter.getProjectedPoints()
+					, DEPTH_FRAME);
+	}
+	else
+	{
+		ProjectionSegmenter projection_segmenter;
+		if (!projection_segmenter.segment(cloud_in, pipelineData_, pipelineObjects_))
+		{
+			logger.logInfo("segmentation failed");
+			return;
+		}
+		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_points_clusters =
+			projection_segmenter.getProjectionClusters();
+		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_point_hulls =
+			projection_segmenter.getProjectionClusterHulls();
+		for (int i = 0; i < projected_points_clusters.size(); i++)
+		{
+			std::stringstream ss;
+			ss << i;
+			ph_.publish_pointcloud(PROJECTED_CLUSTERS_PREFIX_TOPIC + ss.str(), 
+					projected_points_clusters[i], DEPTH_FRAME);
+			ph_.publish_pointcloud(PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC + ss.str(), 
+					projected_point_hulls[i], DEPTH_FRAME);
+		}
+		// Publish the segmentation debug topics
+		ph_.publish_pointcloud(TABLE_TOPIC, projection_segmenter.getTablePointCloud()
+					, DEPTH_FRAME);
 
-	processing_ = false;
+		ph_.publish_pointcloud(DOWNSAMPLED_CLOUD, projection_segmenter.getDownsampledPointCloud()
+					, DEPTH_FRAME);
+		ph_.publish_pointcloud(POINTS_ABOVE_TABLE_CLOUD, projection_segmenter.getPointsAboveTable()
+					, DEPTH_FRAME);
+
+		ph_.publish_pointcloud(PROJECTED_POINTS_TOPIC, projection_segmenter.getProjectedPoints()
+					, DEPTH_FRAME);
+
+		processing_ = false;
+	}
 }

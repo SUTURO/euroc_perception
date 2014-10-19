@@ -68,6 +68,10 @@ namespace suturo_perception
           pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out, const pcl::PointIndices::Ptr old_inliers,
           pcl::PointIndices::Ptr new_inliers, double ecClusterTolerance,
           int ecMinClusterSize, int ecMaxClusterSize);
+			static bool extractBiggestClusters(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, 
+				  std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clouds_out, 
+					const pcl::PointIndices::Ptr old_inliers, std::vector<pcl::PointIndices::Ptr> &new_inliers_vec,
+    double ecClusterTolerance, int ecMinClusterSize, int ecMaxClusterSize);
       static void extractAllPointsAbovePointCloud(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, 
           const pcl::PointCloud<pcl::PointXYZRGB>::Ptr hull_cloud, 
           pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out,
