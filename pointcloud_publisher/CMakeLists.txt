@@ -47,6 +47,19 @@ target_link_libraries(publish_pointcloud
   ${PCL_LIBRARIES}
 )
 
+set(PUBLISH_CONVEYOR_POINTCLOUD_FILES
+  src/publish_conveyor_pointcloud.cpp
+  src/projector.cpp
+  include/suturo_pointcloud_publisher/projector.h
+)
+
+add_executable(publish_conveyor_pointcloud ${PUBLISH_CONVEYOR_POINTCLOUD_FILES})
+target_link_libraries(publish_conveyor_pointcloud
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBS}
+  ${PCL_LIBRARIES}
+)
+
 set(POINTCLOUD_PROJECTOR_FILES
   src/cloud_generator.cpp
   src/projector.cpp
