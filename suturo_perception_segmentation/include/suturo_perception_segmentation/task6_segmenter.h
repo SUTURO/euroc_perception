@@ -12,10 +12,7 @@ namespace suturo_perception
   class Task6Segmenter : Segmenter
   {
     public:
-      Task6Segmenter() : Segmenter()
-      {
-        logger = Logger("projection_segmenter");
-      }
+      Task6Segmenter(ros::NodeHandle &node, bool isTcp);
 
       bool segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, PipelineData::Ptr &pipeline_data, PipelineObject::VecPtr &pipeline_objects);
       // Should be available after a successful segmentation
@@ -30,6 +27,10 @@ namespace suturo_perception
       bool clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, pcl::PointCloud<pcl::PointXYZRGB>::Ptr original_cloud, std::vector<int> *removed_indices_filtered, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &projected_clusters, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clustered_hulls,PipelineData::Ptr &pipeline_data);
 
       bool clusterPointcloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, PipelineData::Ptr &pipeline_data);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_conveyor_cloud(/*suturo_msgs::Task task*/);
+			
+			bool transform_success_;
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr conveyor_cloud_;
     private:
       Logger logger;
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr table_pointcloud_;

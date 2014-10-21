@@ -2,8 +2,69 @@
 
 #include <perception_utils/point_cloud_operations.h>
 #include <pcl/point_types.h>
+#include <pcl_ros/point_cloud.h>
+#include <sensor_msgs/PointCloud.h>
+#include <tf/transform_listener.h>
+#include <pcl_ros/impl/transforms.hpp>
+
 
 using namespace suturo_perception;
+
+Task6Segmenter::Task6Segmenter(ros::NodeHandle &node, bool isTcp) : Segmenter()
+{
+	logger = Logger("task6_segmenter");
+	
+	logger.logInfo("generating conveyor cloud");
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr odom_conveyor_cloud = generate_conveyor_cloud();
+	conveyor_cloud_ = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
+	
+	logger.logInfo("transforming conveyor cloud");
+	sensor_msgs::PointCloud2 odom_pc2;
+  pcl::toROSMsg(*odom_conveyor_cloud, odom_pc2 );
+  odom_pc2.header.frame_id = "/odom_combined";
+  odom_pc2.header.stamp = ros::Time(0);
+	
+	sensor_msgs::PointCloud2 depth_pcl_pc2;
+	
+	logger.logInfo("Waiting for tf to come up...");
+	sleep(6);
+	tf::TransformListener listener;
+	tf::StampedTransform transform;
+  int tries = 0;
+  ros::Rate rate(10.0);
+	transform_success_ = false;
+  while (node.ok() && tries < 10 && !transform_success_)
+  {
+    try
+    {
+			std::string frame_from = "/odom_combined";
+			std::string frame_to = "/tdepth_pcl";
+			if (!isTcp)
+				frame_to = "/sdepth_pcl";
+      listener.waitForTransform(frame_from, frame_to, ros::Time(0), ros::Duration(6.0));
+      listener.lookupTransform(frame_from, frame_to, ros::Time(0), transform);
+      pcl_ros::transformPointCloud(frame_to, odom_pc2, depth_pcl_pc2, listener);
+      transform_success_ = true;
+    }
+    catch (tf::TransformException &ex) 
+    {
+      logger.logError((boost::format("TransformException\n%s") % ex.what()).str());
+      ros::Duration(1.0).sleep();
+    }
+    rate.sleep();
+    tries++;
+		logger.logWarn((boost::format("transform attempt %s") % tries).str());
+  }
+  
+  if (!transform_success_)
+	{
+		logger.logError("couldn't transform! segmentation won't work!");
+	}
+	else
+	{
+		pcl::fromROSMsg(depth_pcl_pc2,*conveyor_cloud_);
+	}
+}
 
 bool Task6Segmenter::clusterPointcloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, PipelineData::Ptr &pipeline_data)
 {
@@ -68,6 +129,11 @@ Task6Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
     PipelineData::Ptr &pipeline_data, 
     PipelineObject::VecPtr &pipeline_objects)
 {
+	if (!transform_success_)
+	{
+		logger.logError("transform of conveyor cloud failed, segmentation won't work. Please restart the node");
+		return false;
+	}
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>), 
@@ -334,6 +400,49 @@ bool Task6Segmenter::clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Pt
 
   return true;
 
+}
+
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr
+Task6Segmenter::generate_conveyor_cloud(/*suturo_msgs::Task task*/)
+{
+	int cloud_point_cnt = 5000;
+	// task6_v1
+/* YAML info
+  conveyor_belt:
+    move_direction_and_length: [ 0, -2, 0 ]
+    drop_center_point: [0.3, 1, 0.2]
+    drop_deviation: [ 0.01, 0.1, 0.01]
+    start_speed: 0.005
+    end_speed: 0.5
+    n_objects: 10
+    object_template: red_cube
+*/
+	pcl::PointXYZRGB v_dp;
+	v_dp.x = 0.3;
+	v_dp.y = 1.0;
+	v_dp.z = 0.2;
+
+	pcl::PointXYZRGB v_mdl;
+	v_mdl.x = 0.0;
+	v_mdl.y = -2.0;
+	v_mdl.z = 0.0;
+
+	double w = 0.1 * 2;
+
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr conveyor_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+	conveyor_cloud->height = 1;
+	conveyor_cloud->width = cloud_point_cnt;
+	conveyor_cloud->is_dense = false;
+	conveyor_cloud->points.resize(cloud_point_cnt);
+
+	for (int i = 0; i < cloud_point_cnt; i++)
+	{
+		conveyor_cloud->points[i].x = v_dp.x + v_mdl.x * ((rand() % 1000) / 1000.0) + w * ((rand() % 1000) / 1000.0);
+		conveyor_cloud->points[i].y = v_dp.y + v_mdl.y * ((rand() % 1000) / 1000.0);
+		conveyor_cloud->points[i].z = v_dp.z + v_mdl.z * ((rand() % 1000) / 1000.0);
+	}
+	
+	return conveyor_cloud;
 }
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr Task6Segmenter::getTablePointCloud()

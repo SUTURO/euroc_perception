@@ -10,6 +10,9 @@
 #include "perception_utils/publisher_helper.h"
 #include "suturo_perception_msgs/GetGripper.h"
 #include "suturo_perception_node/SuturoPerceptionConfig.h"
+#include <perception_utils/get_euroc_task_description.h>
+#include <suturo_perception_segmentation/projection_segmenter.h>
+#include <suturo_perception_segmentation/task6_segmenter.h>
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_cloud.h>
@@ -50,6 +53,8 @@ class SuturoPerceptionNode
     int objidx_;
 		bool processing_;
     suturo_perception::PublisherHelper ph_;
+		suturo_perception::EurocTaskClient *task_client_;
+		suturo_perception::Task6Segmenter *task6_segmenter_;
 
     ros::Publisher markerPublisher_;
     int maxMarkerId_;

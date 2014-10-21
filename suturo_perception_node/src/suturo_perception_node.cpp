@@ -2,9 +2,6 @@
 
 #include <perception_utils/point_cloud_operations.h>
 #include <perception_utils/publisher_helper.h>
-#include <perception_utils/get_euroc_task_description.h>
-#include <suturo_perception_segmentation/projection_segmenter.h>
-#include <suturo_perception_segmentation/task6_segmenter.h>
 #include <suturo_perception_pipeline/pipeline.h>
 #include <suturo_perception_msgs/EurocObject.h>
 #include <suturo_msgs/Task.h>
@@ -83,7 +80,20 @@ SuturoPerceptionNode::SuturoPerceptionNode(ros::NodeHandle &n, std::string image
   // Initialize dynamic reconfigure
   reconfCb = boost::bind(&SuturoPerceptionNode::reconfigureCallback, this, _1, _2);
   reconfSrv.setCallback(reconfCb);
-
+	
+  // get task description
+  task_client_ = new EurocTaskClient(nodeHandle_);
+  logger.logInfo("Requesting task description");
+  if (!task_client_->requestTaskDescription())
+  {
+    logger.logError("Requesting task description failed. Aborting.");
+    //return false;
+  }
+  
+  if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_6)
+	{
+		task6_segmenter_ = new Task6Segmenter(nodeHandle_, nodeType_==GRIPPER);
+	}
 }
 
 /*
@@ -121,15 +131,7 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
 	pipelineData_->resetData();
   pipelineData_->request_parameters_ = req.s;
   
-  // get task description
-  EurocTaskClient task_client(nodeHandle_);
-  logger.logInfo("Requesting task description");
-  if (!task_client.requestTaskDescription())
-  {
-    logger.logError("Requesting task description failed. Aborting.");
-    return false;
-  }
-  pipelineData_->task_ = task_client.getTaskDescription();
+  pipelineData_->task_ = task_client_->getTaskDescription();
   
 	ros::Subscriber sub = nodeHandle_.subscribe<sensor_msgs::PointCloud2>(cloudTopic_, 1, boost::bind(&SuturoPerceptionNode::receive_cloud,this, _1));
 	
@@ -205,8 +207,7 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
   
 	if (pipelineData_->task_.task_type == suturo_msgs::Task::TASK_6)
 	{
-		Task6Segmenter projection_segmenter;
-		bool segmentation_result = projection_segmenter.segment(cloud_in, pipelineData_, pipelineObjects_);
+		bool segmentation_result = task6_segmenter_->segment(cloud_in, pipelineData_, pipelineObjects_);
 		
 		if (segmentation_result)
 		{
@@ -217,9 +218,9 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
 			logger.logInfo("segmentation failed");
 		}
 		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_points_clusters =
-			projection_segmenter.getProjectionClusters();
+			task6_segmenter_->getProjectionClusters();
 		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_point_hulls =
-			projection_segmenter.getProjectionClusterHulls();
+			task6_segmenter_->getProjectionClusterHulls();
 		for (int i = 0; i < projected_points_clusters.size(); i++)
 		{
 			std::stringstream ss;
@@ -230,15 +231,15 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
 					projected_point_hulls[i], DEPTH_FRAME);
 		}
 		// Publish the segmentation debug topics
-		ph_.publish_pointcloud(TABLE_TOPIC, projection_segmenter.getTablePointCloud()
+		ph_.publish_pointcloud(TABLE_TOPIC, task6_segmenter_->getTablePointCloud()
 					, DEPTH_FRAME);
 
-		ph_.publish_pointcloud(DOWNSAMPLED_CLOUD, projection_segmenter.getDownsampledPointCloud()
+		ph_.publish_pointcloud(DOWNSAMPLED_CLOUD, task6_segmenter_->getDownsampledPointCloud()
 					, DEPTH_FRAME);
-		ph_.publish_pointcloud(POINTS_ABOVE_TABLE_CLOUD, projection_segmenter.getPointsAboveTable()
+		ph_.publish_pointcloud(POINTS_ABOVE_TABLE_CLOUD, task6_segmenter_->getPointsAboveTable()
 					, DEPTH_FRAME);
 
-		ph_.publish_pointcloud(PROJECTED_POINTS_TOPIC, projection_segmenter.getProjectedPoints()
+		ph_.publish_pointcloud(PROJECTED_POINTS_TOPIC, task6_segmenter_->getProjectedPoints()
 					, DEPTH_FRAME);
 	}
 	else
