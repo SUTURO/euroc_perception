@@ -22,6 +22,7 @@ namespace suturo_perception
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr getProjectedPoints();
       std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getProjectionClusters();
       std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getProjectionClusterHulls();
+			void updateConveyorCloud();
 
     protected:
       bool clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, pcl::PointCloud<pcl::PointXYZRGB>::Ptr original_cloud, std::vector<int> *removed_indices_filtered, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &projected_clusters, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clustered_hulls,PipelineData::Ptr &pipeline_data);
@@ -32,6 +33,8 @@ namespace suturo_perception
 			
 			bool transform_success_;
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr conveyor_cloud_;
+			bool isTcp_;
+			ros::NodeHandle nodeHandle_;
     private:
       Logger logger;
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr table_pointcloud_;

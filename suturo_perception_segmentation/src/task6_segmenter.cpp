@@ -10,10 +10,15 @@
 
 using namespace suturo_perception;
 
-Task6Segmenter::Task6Segmenter(ros::NodeHandle &node, bool isTcp) : Segmenter()
+Task6Segmenter::Task6Segmenter(ros::NodeHandle &node, bool isTcp) : Segmenter(), nodeHandle_(node), isTcp_(isTcp)
 {
 	logger = Logger("task6_segmenter");
 	
+	updateConveyorCloud();
+}
+
+void Task6Segmenter::updateConveyorCloud()
+{
 	logger.logInfo("generating conveyor cloud");
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr odom_conveyor_cloud = generate_simple_conveyor_cloud();
 	conveyor_cloud_ = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -33,13 +38,13 @@ Task6Segmenter::Task6Segmenter(ros::NodeHandle &node, bool isTcp) : Segmenter()
   int tries = 0;
   ros::Rate rate(10.0);
 	transform_success_ = false;
-  while (node.ok() && tries < 10 && !transform_success_)
+  while (nodeHandle_.ok() && tries < 10 && !transform_success_)
   {
     try
     {
 			std::string frame_from = "/odom_combined";
 			std::string frame_to = "/tdepth_pcl";
-			if (!isTcp)
+			if (!isTcp_)
 				frame_to = "/sdepth_pcl";
       listener.waitForTransform(frame_from, frame_to, ros::Time(0), ros::Duration(6.0));
       listener.lookupTransform(frame_from, frame_to, ros::Time(0), transform);
@@ -137,11 +142,7 @@ Task6Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>), 
-                                      cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGB>), 
-                                      cloud_projected (new pcl::PointCloud<pcl::PointXYZRGB>),
-                                      objects_cloud_projected (new pcl::PointCloud<pcl::PointXYZRGB>),
-                                      cloud_plane (new pcl::PointCloud<pcl::PointXYZRGB>),
-                                      cloud_without_plane (new pcl::PointCloud<pcl::PointXYZRGB>);
+                                      cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGB>);
 
   // Build a filter to filter on the Z Axis
   pcl::PassThrough<pcl::PointXYZRGB> pass(true);
@@ -168,7 +169,6 @@ Task6Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
   // Find the biggest table plane in the scene
   pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
   pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-  //PointCloudOperations::fitPlanarModel(cloud_filtered, inliers, coefficients, pipeline_data->planeMaxIterations, pipeline_data->planeDistanceThreshold);
   PointCloudOperations::fitPlanarModel(conveyor_cloud_, inliers, coefficients, pipeline_data->planeMaxIterations, pipeline_data->planeDistanceThreshold);
   logger.logInfo((boost::format("Table inlier count: %s") % inliers->indices.size ()).str());
   logger.logInfo((boost::format("pcl::ModelCoefficients: %s") % coefficients->values.size()).str());
@@ -177,149 +177,53 @@ Task6Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
     logger.logInfo((boost::format("  %s") % coefficients->values[i]).str());
   }
   pipeline_data->coefficients_ = coefficients;
+	
+	// Extract all objects above
+	// the table plane
+	pcl::PointIndices::Ptr object_indices (new pcl::PointIndices);
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters (new pcl::PointCloud<pcl::PointXYZRGB>());
 
-	/* ===new=== 
-		logger.logWarn("Doing special stuff for task 6...");
-		PointCloudOperations::extractInliersFromPointCloud(cloud_filtered, inliers, cloud_without_plane, true);
-		// Find the second biggest table plane in the scene
-		//pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
-		//pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-		PointCloudOperations::fitPlanarModel(cloud_without_plane, inliers, coefficients, pipeline_data->planeMaxIterations, pipeline_data->planeDistanceThreshold);
-		logger.logInfo((boost::format("Second Table inlier count: %s") % inliers->indices.size ()).str());
-		logger.logInfo((boost::format("pcl::ModelCoefficients of second plane: %s") % coefficients->values.size()).str());
-		for (int i = 0; i < coefficients->values.size(); i++)
-		{
-			logger.logInfo((boost::format("  %s") % coefficients->values[i]).str());
-		}
-		pipeline_data->coefficients_ = coefficients;
-	===newEnd=== */
-	
-  // Extract the plane as a PointCloud from the calculated inliers
-  //PointCloudOperations::extractInliersFromPointCloud(conveyor_cloud_, inliers, cloud_plane, false);
-  cloud_plane = conveyor_cloud_;
+	// Remove all NaNs from the PointCloud. Otherwise, we can't use Euclidean Clustering (KDTree)
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr nanles_cloud (new pcl::PointCloud<pcl::PointXYZRGB>()); // NEW
+	PointCloudOperations::removeNans(cloud_in, nanles_cloud); // NEW
 
-  // Take the biggest cluster in the extracted plane. This will be
-  // most likely our desired table pointcloud
+	PointCloudOperations::extractAllPointsAbovePointCloud(nanles_cloud, conveyor_cloud_, // New
+			object_clusters, object_indices, 2, pipeline_data->prismZMin, pipeline_data->prismZMax);
+	logger.logInfo((boost::format("After extractAllPointsAbovePointCloud: %s indices and %s object_cluster pts") % object_indices->indices.size() % object_clusters->points.size() ).str() );
+	points_above_table_ = object_clusters;
 	
-  //std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> plane_clusters;
-  //std::vector<pcl::PointIndices::Ptr> new_inliers_vec;
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane_cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
-  pcl::PointIndices::Ptr new_inliers(new pcl::PointIndices);
-	// new
-  //PointCloudOperations::extractBiggestCluster(cloud_plane, plane_cluster, inliers, new_inliers,
-  //  pipeline_data->ecObjClusterTolerance, pipeline_data->ecMinClusterSize, pipeline_data->ecMaxClusterSize);
-	//logger.logInfo((boost::format("biggest cluster new_inliers size: %s") % new_inliers->indices.size()).str());
+	e = boost::posix_time::microsec_clock::local_time();
+	logger.logTime(s, e, "extractAllPointsAbovePointCloud");
 
-	/*
-	bool found_working_plane = false;
-	if (plane_clusters.size() != new_inliers_vec.size())
-	{
-		logger.logError("plane_clusters.size() != new_inliers_vec.size(). Exiting...");
-		return false;
-	}
-	*/
-	
-	
+	// Take the projected points, cluster them and extract everything that's above it
+	// By doing this, we should get every object on the table and a 2d image of it.
+	std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> extractedObjects;
+	std::vector<pcl::PointIndices::Ptr> extractedIndices;
+	clusterPointcloud(object_clusters, extractedObjects, extractedIndices, pipeline_data); // NEW - Just cluster everything above the table - This is unfortunately slower then the projection method ...
+	logger.logInfo((boost::format(" - extractedObjects Vector size %s") % extractedObjects.size()).str());
+	logger.logInfo((boost::format(" - extractedIndices  Vector size %s") % extractedIndices.size()).str());
+
+	e = boost::posix_time::microsec_clock::local_time();
+	logger.logTime(s, e, "table from pointcloud");
+
 	pipeline_objects.clear();
-	//for (int i = 0; i < plane_clusters.size(); i++)
-	//{
-		//pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane_cluster = conveyor_cloud_;//= plane_clusters.at(i);
-		//pcl::PointIndices::Ptr new_inliers = new_inliers_vec.at(i);
-		// NOTE: We need to transform the inliers from table_cluster_indices to inliers
-		//inliers = new_inliers;
-		
-		//if(inliers->indices.size () == 0)
-		//{
-		//	logger.logError("Second Table Inlier Set is empty. Exiting....");
-			//continue;
-		//	return false;
-		//}
-		
-		//found_working_plane = true;
-		
-		// Extract all objects above
-		// the table plane
-		pcl::PointIndices::Ptr object_indices (new pcl::PointIndices);
-		pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters (new pcl::PointCloud<pcl::PointXYZRGB>());
-		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_clusters;
-		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_cluster_hulls;
-
-		// Remove all NaNs from the PointCloud. Otherwise, we can't use Euclidean Clustering (KDTree)
-		pcl::PointCloud<pcl::PointXYZRGB>::Ptr nanles_cloud (new pcl::PointCloud<pcl::PointXYZRGB>()); // NEW
-		PointCloudOperations::removeNans(cloud_in, nanles_cloud); // NEW
-
-		// PointCloudOperations::extractAllPointsAbovePointCloud(cloud_filtered, plane_cluster, // OLD
-		PointCloudOperations::extractAllPointsAbovePointCloud(nanles_cloud, conveyor_cloud_, // New
-				object_clusters, object_indices, 2, pipeline_data->prismZMin, pipeline_data->prismZMax);
-		logger.logInfo((boost::format("After extractAllPointsAbovePointCloud: %s indices and %s object_cluster pts") % object_indices->indices.size() % object_clusters->points.size() ).str() );
-		//objects_on_plane_cloud_ = object_clusters;
-		points_above_table_ = object_clusters;
-		
-		e = boost::posix_time::microsec_clock::local_time();
-		logger.logTime(s, e, "extractAllPointsAbovePointCloud");
-
-		// Project the pointcloud above the table onto the table to get a 2d representation of the objects
-		// This will cause every point of an object to be at the base of the object
-		// PointCloudOperations::projectToPlaneCoefficients(cloud_filtered, object_indices, coefficients, objects_cloud_projected); // OLD - Not necessary for "workaround" segmentation
-		projected_points_ = objects_cloud_projected;
-
-		// Take the projected points, cluster them and extract everything that's above it
-		// By doing this, we should get every object on the table and a 2d image of it.
-		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> extractedObjects;
-		std::vector<pcl::PointIndices::Ptr> extractedIndices;
-		// clusterFromProjection(objects_cloud_projected, cloud_in, &removed_indices_filtered, extractedObjects, extractedIndices, projected_clusters, projected_cluster_hulls, pipeline_data); // OLD. Extract PointClouds by using the 2d Projection clusters.
-
-		clusterPointcloud(object_clusters, extractedObjects, extractedIndices, pipeline_data); // NEW - Just cluster everything above the table - This is unfortunately slower then the projection method ...
-		logger.logInfo((boost::format(" - extractedObjects Vector size %s") % extractedObjects.size()).str());
-		logger.logInfo((boost::format(" - extractedIndices  Vector size %s") % extractedIndices.size()).str());
-		projection_clusters_ = projected_clusters;
-		projection_cluster_hulls_ = projected_cluster_hulls;
-	
-		e = boost::posix_time::microsec_clock::local_time();
-		logger.logTime(s, e, "table from pointcloud");
-
-		/*
-		for (int ex = 0; ex < extractedObjects.size(); ex++)
-		{
-			// write pcd
-			pcl::PCDWriter writer;
-			std::stringstream ss;
-			ss << "euroc_cloud_" << idx_ << "_" << ex << ".pcd";
-			writer.write(ss.str(), *(extractedObjects[ex]));
-			std::cerr << "Saved " << extractedObjects[ex]->points.size () << " data points to " << ss.str().c_str() << std::endl;
-		}
-		*/
-
-		for (int i = 0; i < extractedObjects.size(); i++)
-		{
-			PipelineObject::Ptr pipelineObject(new PipelineObject);
-
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr it = extractedObjects.at(i);
-			logger.logInfo((boost::format("Cluster %i has %s points") % i % it->points.size()).str());
-
-			if(it->points.size()<50)
-			{
-				logger.logError("Cluster cloud has less than 50 points. Skipping ...");
-				continue;
-			}
-
-			pipelineObject->set_pointCloud(it);
-			pipeline_objects.push_back(pipelineObject);
-		}
-	//}
-	
-	/*
-	if (plane_clusters.size() > 1) 
+	for (int i = 0; i < extractedObjects.size(); i++)
 	{
-		// Save the plane cluster for debugging purposes in a member variable
-		table_pointcloud_ = plane_clusters.at(1);
+		PipelineObject::Ptr pipelineObject(new PipelineObject);
+
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr it = extractedObjects.at(i);
+		logger.logInfo((boost::format("Cluster %i has %s points") % i % it->points.size()).str());
+
+		if(it->points.size()<50)
+		{
+			logger.logError("Cluster cloud has less than 50 points. Skipping ...");
+			continue;
+		}
+
+		pipelineObject->set_pointCloud(it);
+		pipeline_objects.push_back(pipelineObject);
 	}
-	else if (plane_clusters.size() == 1) 
-	{
-		// Save the plane cluster for debugging purposes in a member variable
-		table_pointcloud_ = plane_clusters.at(0);
-	}
-	*/
+
 	table_pointcloud_ = conveyor_cloud_;
 	
 	e = boost::posix_time::microsec_clock::local_time();

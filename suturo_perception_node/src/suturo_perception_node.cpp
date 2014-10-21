@@ -132,6 +132,11 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
   pipelineData_->request_parameters_ = req.s;
   
   pipelineData_->task_ = task_client_->getTaskDescription();
+	if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_6 &&
+		  req.s.find("firstConveyorCall")!=std::string::npos)
+	{
+		task6_segmenter_->updateConveyorCloud();
+	}
   
 	ros::Subscriber sub = nodeHandle_.subscribe<sensor_msgs::PointCloud2>(cloudTopic_, 1, boost::bind(&SuturoPerceptionNode::receive_cloud,this, _1));
 	
