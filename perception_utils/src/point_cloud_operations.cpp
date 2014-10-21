@@ -145,6 +145,16 @@ bool PointCloudOperations::extractBiggestCluster(const pcl::PointCloud<pcl::Poin
   if(old_inliers != NULL && new_inliers != NULL)
     map_indices = true;
 
+	if (!cloud_in)
+	{
+		logger.logError("cloud_in is null");
+		return false;
+	}
+	if (!cloud_out)
+	{
+		logger.logError("cloud_out is null");
+		return false;
+	}
   if(cloud_in->points.size() == 0)
   {
     logger.logError("Could not extract biggest cluster. input cloud empty");

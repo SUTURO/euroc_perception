@@ -12,6 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   perception_utils
 )
 
+#set(CMAKE_BUILD_TYPE Debug)
+
 find_package(PCL REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
 

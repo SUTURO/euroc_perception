@@ -162,11 +162,14 @@ Task6Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
   
   logger.logInfo((boost::format("PointCloud after downsample: %s data points") % cloud_filtered->points.size()).str());
   downsampled_pointcloud_ = cloud_filtered;
+  
+  logger.logInfo((boost::format("conveyor_cloud_ has %s points") % conveyor_cloud_->points.size()).str());
 
   // Find the biggest table plane in the scene
   pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
   pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-  PointCloudOperations::fitPlanarModel(cloud_filtered, inliers, coefficients, pipeline_data->planeMaxIterations, pipeline_data->planeDistanceThreshold);
+  //PointCloudOperations::fitPlanarModel(cloud_filtered, inliers, coefficients, pipeline_data->planeMaxIterations, pipeline_data->planeDistanceThreshold);
+  PointCloudOperations::fitPlanarModel(conveyor_cloud_, inliers, coefficients, pipeline_data->planeMaxIterations, pipeline_data->planeDistanceThreshold);
   logger.logInfo((boost::format("Table inlier count: %s") % inliers->indices.size ()).str());
   logger.logInfo((boost::format("pcl::ModelCoefficients: %s") % coefficients->values.size()).str());
   for (int i = 0; i < coefficients->values.size(); i++)
@@ -192,38 +195,45 @@ Task6Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
 	===newEnd=== */
 	
   // Extract the plane as a PointCloud from the calculated inliers
-  PointCloudOperations::extractInliersFromPointCloud(cloud_filtered, inliers, cloud_plane, false);
+  PointCloudOperations::extractInliersFromPointCloud(conveyor_cloud_, inliers, cloud_plane, false);
 
   // Take the biggest cluster in the extracted plane. This will be
   // most likely our desired table pointcloud
-  std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> plane_clusters;
-  std::vector<pcl::PointIndices::Ptr> new_inliers_vec;
+	
+  //std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> plane_clusters;
+  //std::vector<pcl::PointIndices::Ptr> new_inliers_vec;
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane_cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
+  pcl::PointIndices::Ptr new_inliers(new pcl::PointIndices);
 	// new
-  PointCloudOperations::extractBiggestClusters(cloud_plane, plane_clusters, inliers, new_inliers_vec,
+  PointCloudOperations::extractBiggestCluster(cloud_plane, plane_cluster, inliers, new_inliers,
     pipeline_data->ecObjClusterTolerance, pipeline_data->ecMinClusterSize, pipeline_data->ecMaxClusterSize);
 
+	/*
 	bool found_working_plane = false;
 	if (plane_clusters.size() != new_inliers_vec.size())
 	{
 		logger.logError("plane_clusters.size() != new_inliers_vec.size(). Exiting...");
 		return false;
 	}
+	*/
+	
 	
 	pipeline_objects.clear();
-	for (int i = 0; i < plane_clusters.size(); i++)
-	{
-		pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane_cluster = plane_clusters.at(i);
-		pcl::PointIndices::Ptr new_inliers = new_inliers_vec.at(i);
+	//for (int i = 0; i < plane_clusters.size(); i++)
+	//{
+		//pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane_cluster = conveyor_cloud_;//= plane_clusters.at(i);
+		//pcl::PointIndices::Ptr new_inliers = new_inliers_vec.at(i);
 		// NOTE: We need to transform the inliers from table_cluster_indices to inliers
 		inliers = new_inliers;
 		
 		if(inliers->indices.size () == 0)
 		{
 			logger.logError("Second Table Inlier Set is empty. Exiting....");
-			continue;
+			//continue;
+			return false;
 		}
 		
-		found_working_plane = true;
+		//found_working_plane = true;
 		
 		// Extract all objects above
 		// the table plane
@@ -291,8 +301,9 @@ Task6Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
 			pipelineObject->set_pointCloud(it);
 			pipeline_objects.push_back(pipelineObject);
 		}
-	}
+	//}
 	
+	/*
 	if (plane_clusters.size() > 1) 
 	{
 		// Save the plane cluster for debugging purposes in a member variable
@@ -303,8 +314,10 @@ Task6Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
 		// Save the plane cluster for debugging purposes in a member variable
 		table_pointcloud_ = plane_clusters.at(0);
 	}
+	*/
+	table_pointcloud_ = conveyor_cloud_;
 
-  return found_working_plane;
+  return true;
 }
 
 
@@ -437,7 +450,7 @@ Task6Segmenter::generate_conveyor_cloud(/*suturo_msgs::Task task*/)
 
 	for (int i = 0; i < cloud_point_cnt; i++)
 	{
-		conveyor_cloud->points[i].x = v_dp.x + v_mdl.x * ((rand() % 1000) / 1000.0) + w * ((rand() % 1000) / 1000.0);
+		conveyor_cloud->points[i].x = v_dp.x + v_mdl.x * ((rand() % 1000) / 1000.0) + (w * ((rand() % 1000) / 1000.0) - w/2);
 		conveyor_cloud->points[i].y = v_dp.y + v_mdl.y * ((rand() % 1000) / 1000.0);
 		conveyor_cloud->points[i].z = v_dp.z + v_mdl.z * ((rand() % 1000) / 1000.0);
 	}
