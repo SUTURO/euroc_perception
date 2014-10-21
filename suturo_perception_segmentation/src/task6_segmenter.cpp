@@ -15,7 +15,7 @@ Task6Segmenter::Task6Segmenter(ros::NodeHandle &node, bool isTcp) : Segmenter()
 	logger = Logger("task6_segmenter");
 	
 	logger.logInfo("generating conveyor cloud");
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr odom_conveyor_cloud = generate_conveyor_cloud();
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr odom_conveyor_cloud = generate_simple_conveyor_cloud();
 	conveyor_cloud_ = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
 	
 	logger.logInfo("transforming conveyor cloud");
@@ -26,8 +26,8 @@ Task6Segmenter::Task6Segmenter(ros::NodeHandle &node, bool isTcp) : Segmenter()
 	
 	sensor_msgs::PointCloud2 depth_pcl_pc2;
 	
-	logger.logInfo("Waiting for tf to come up...");
-	sleep(6);
+	//logger.logInfo("Waiting for tf to come up...");
+	//sleep(6);
 	tf::TransformListener listener;
 	tf::StampedTransform transform;
   int tries = 0;
@@ -195,7 +195,8 @@ Task6Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
 	===newEnd=== */
 	
   // Extract the plane as a PointCloud from the calculated inliers
-  PointCloudOperations::extractInliersFromPointCloud(conveyor_cloud_, inliers, cloud_plane, false);
+  //PointCloudOperations::extractInliersFromPointCloud(conveyor_cloud_, inliers, cloud_plane, false);
+  cloud_plane = conveyor_cloud_;
 
   // Take the biggest cluster in the extracted plane. This will be
   // most likely our desired table pointcloud
@@ -205,8 +206,9 @@ Task6Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane_cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
   pcl::PointIndices::Ptr new_inliers(new pcl::PointIndices);
 	// new
-  PointCloudOperations::extractBiggestCluster(cloud_plane, plane_cluster, inliers, new_inliers,
-    pipeline_data->ecObjClusterTolerance, pipeline_data->ecMinClusterSize, pipeline_data->ecMaxClusterSize);
+  //PointCloudOperations::extractBiggestCluster(cloud_plane, plane_cluster, inliers, new_inliers,
+  //  pipeline_data->ecObjClusterTolerance, pipeline_data->ecMinClusterSize, pipeline_data->ecMaxClusterSize);
+	//logger.logInfo((boost::format("biggest cluster new_inliers size: %s") % new_inliers->indices.size()).str());
 
 	/*
 	bool found_working_plane = false;
@@ -224,14 +226,14 @@ Task6Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
 		//pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane_cluster = conveyor_cloud_;//= plane_clusters.at(i);
 		//pcl::PointIndices::Ptr new_inliers = new_inliers_vec.at(i);
 		// NOTE: We need to transform the inliers from table_cluster_indices to inliers
-		inliers = new_inliers;
+		//inliers = new_inliers;
 		
-		if(inliers->indices.size () == 0)
-		{
-			logger.logError("Second Table Inlier Set is empty. Exiting....");
+		//if(inliers->indices.size () == 0)
+		//{
+		//	logger.logError("Second Table Inlier Set is empty. Exiting....");
 			//continue;
-			return false;
-		}
+		//	return false;
+		//}
 		
 		//found_working_plane = true;
 		
@@ -247,11 +249,14 @@ Task6Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
 		PointCloudOperations::removeNans(cloud_in, nanles_cloud); // NEW
 
 		// PointCloudOperations::extractAllPointsAbovePointCloud(cloud_filtered, plane_cluster, // OLD
-		PointCloudOperations::extractAllPointsAbovePointCloud(nanles_cloud, plane_cluster, // New
+		PointCloudOperations::extractAllPointsAbovePointCloud(nanles_cloud, conveyor_cloud_, // New
 				object_clusters, object_indices, 2, pipeline_data->prismZMin, pipeline_data->prismZMax);
 		logger.logInfo((boost::format("After extractAllPointsAbovePointCloud: %s indices and %s object_cluster pts") % object_indices->indices.size() % object_clusters->points.size() ).str() );
 		//objects_on_plane_cloud_ = object_clusters;
 		points_above_table_ = object_clusters;
+		
+		e = boost::posix_time::microsec_clock::local_time();
+		logger.logTime(s, e, "extractAllPointsAbovePointCloud");
 
 		// Project the pointcloud above the table onto the table to get a 2d representation of the objects
 		// This will cause every point of an object to be at the base of the object
@@ -316,6 +321,9 @@ Task6Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
 	}
 	*/
 	table_pointcloud_ = conveyor_cloud_;
+	
+	e = boost::posix_time::microsec_clock::local_time();
+	logger.logTime(s, e, "full segmentation");
 
   return true;
 }
@@ -454,6 +462,57 @@ Task6Segmenter::generate_conveyor_cloud(/*suturo_msgs::Task task*/)
 		conveyor_cloud->points[i].y = v_dp.y + v_mdl.y * ((rand() % 1000) / 1000.0);
 		conveyor_cloud->points[i].z = v_dp.z + v_mdl.z * ((rand() % 1000) / 1000.0);
 	}
+	
+	return conveyor_cloud;
+}
+
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr
+Task6Segmenter::generate_simple_conveyor_cloud(/*suturo_msgs::Task task*/)
+{
+	// task6_v1
+/* YAML info
+  conveyor_belt:
+    move_direction_and_length: [ 0, -2, 0 ]
+    drop_center_point: [0.3, 1, 0.2]
+    drop_deviation: [ 0.01, 0.1, 0.01]
+    start_speed: 0.005
+    end_speed: 0.5
+    n_objects: 10
+    object_template: red_cube
+*/
+	pcl::PointXYZRGB v_dp;
+	v_dp.x = 0.3;
+	v_dp.y = 1.0;
+	v_dp.z = 0.2;
+
+	pcl::PointXYZRGB v_mdl;
+	v_mdl.x = 0.0;
+	v_mdl.y = -2.0;
+	v_mdl.z = 0.0;
+
+	double w = 0.1 * 2;
+
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr conveyor_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+	conveyor_cloud->height = 1;
+	conveyor_cloud->width = 4;
+	conveyor_cloud->is_dense = false;
+	conveyor_cloud->points.resize(4);
+
+	conveyor_cloud->points[0].x = v_dp.x + v_mdl.x + w/2;
+	conveyor_cloud->points[0].y = v_dp.y + v_mdl.y;
+	conveyor_cloud->points[0].z = v_dp.z + v_mdl.z;
+	
+	conveyor_cloud->points[1].x = v_dp.x + v_mdl.x - w/2;
+	conveyor_cloud->points[1].y = v_dp.y + v_mdl.y;
+	conveyor_cloud->points[1].z = v_dp.z + v_mdl.z;
+	
+	conveyor_cloud->points[2].x = v_dp.x + v_mdl.x + w/2;
+	conveyor_cloud->points[2].y = v_dp.y + v_mdl.y * 0;
+	conveyor_cloud->points[2].z = v_dp.z + v_mdl.z;
+	
+	conveyor_cloud->points[3].x = v_dp.x + v_mdl.x - w/2;
+	conveyor_cloud->points[3].y = v_dp.y + v_mdl.y * 0;
+	conveyor_cloud->points[3].z = v_dp.z + v_mdl.z;
 	
 	return conveyor_cloud;
 }

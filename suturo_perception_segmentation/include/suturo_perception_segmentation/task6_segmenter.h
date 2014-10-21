@@ -28,6 +28,7 @@ namespace suturo_perception
 
       bool clusterPointcloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, PipelineData::Ptr &pipeline_data);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_conveyor_cloud(/*suturo_msgs::Task task*/);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_simple_conveyor_cloud(/*suturo_msgs::Task task*/);
 			
 			bool transform_success_;
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr conveyor_cloud_;
