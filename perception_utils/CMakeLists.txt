@@ -63,11 +63,12 @@ add_library(perception_utils ${perception_utils_files})
 target_link_libraries(perception_utils ${PCL_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV_LIBS} ${catkin_LIBRARIES})      
 add_dependencies(perception_utils suturo_perception_msgs_generate_messages_cpp suturo_msgs_generate_messages_cpp suturo_perception_msgs_gencpp)
 
+
 add_library(threadsafe_hull src/threadsafe_hull.cpp)
 target_link_libraries(threadsafe_hull ${catkin_LIBRARIES})      
 
 add_executable(get_min_max_3d 
-	src/basic_io_pcd.cpp
+  src/basic_io_pcd.cpp
   src/get_min_max_3d.cpp)
 target_link_libraries(get_min_max_3d ${catkin_LIBRARIES})      
 
@@ -98,6 +99,8 @@ add_dependencies(odom_combiner suturo_perception_msgs_generate_messages_cpp sutu
 add_executable(cropbox_cloud 
   src/cropbox_cloud.cpp
   src/basic_io_pcd.cpp)
+
+add_dependencies(odom_combiner suturo_perception_msgs_generate_messages_cpp suturo_msgs_generate_messages_cpp suturo_perception_msgs_gencpp)
 
 target_link_libraries(region_growing
   ${catkin_LIBRARIES} 
