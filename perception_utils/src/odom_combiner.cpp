@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 
 	ros::Subscriber tcp_sub = n.subscribe<sensor_msgs::PointCloud2>("/suturo/euroc_tcp_cloud", 1, boost::bind(&receive_tcp_cloud, _1));
 
-  std::cout << "Susbcribed to topics" << std::endl;
+  std::cout << "Subscribed to topics" << std::endl;
   ros::ServiceServer service = n.advertiseService("/suturo/GetPointArray", execute);
   ros::spin();
 

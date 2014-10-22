@@ -165,7 +165,13 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
   logger.logInfo("done with perception pipeline, sending result");
   for (int i = 0; i < pipelineObjects_.size(); i++)
   {
-    logger.logInfo("sending object");
+    std::stringstream ss;
+    ss << "sending object ";
+    ss << pipelineObjects_.at(i)->get_c_id();
+    ss << " (mpe_success = ";
+    ss << pipelineObjects_.at(i)->get_c_mpe_success();
+    ss << ") END";
+    logger.logInfo(ss.str());
     if (pipelineObjects_.at(i) == NULL)
     {
       logger.logError("pipeline object is NULL! investigate this!");
@@ -176,6 +182,21 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
     euObj.c_id = objidx_;
     objidx_++;
     euObj.object.header.frame_id = DEPTH_FRAME;
+  
+    std::stringstream ss2;
+    ss2 << "Corresponding EuRoCObject ";
+    ss2 << euObj.c_id;
+    ss2 << " (mpe_success = ";
+    if(euObj.mpe_success)
+    {
+      ss2 << "true";
+    }
+    else
+    {
+      ss2 << "false";
+    }
+    ss2 << ") END";
+    logger.logInfo(ss2.str());
     res.objects.push_back(euObj);
   }
 

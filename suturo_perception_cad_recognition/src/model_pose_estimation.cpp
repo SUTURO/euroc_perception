@@ -201,7 +201,7 @@ void ModelPoseEstimation::execute()
 
       best_fit_model_ = i;
     }
-
+    
     // Dump the pointclouds that ICPFitter generated during it's execution
     if(dump_icp_fitter_pointclouds_)
       fitter.dumpPointClouds();
@@ -310,6 +310,7 @@ void ModelPoseEstimation::execute()
     }
     else
     {
+      logger_.logInfo("The best model fitness is not below the desired threshold. Return false.");
       pipelineObject_->set_c_mpe_success(false);
     }
 
