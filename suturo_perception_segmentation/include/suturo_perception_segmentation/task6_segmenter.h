@@ -9,7 +9,7 @@
 
 namespace suturo_perception
 {
-  class Task6Segmenter : Segmenter
+  class Task6Segmenter : public Segmenter
   {
     public:
       Task6Segmenter(ros::NodeHandle &node, bool isTcp, suturo_msgs::Task task);

@@ -11,6 +11,7 @@
 #include "suturo_perception_msgs/GetGripper.h"
 #include "suturo_perception_node/SuturoPerceptionConfig.h"
 #include <perception_utils/get_euroc_task_description.h>
+#include <suturo_perception_segmentation/segmenter.h>
 #include <suturo_perception_segmentation/projection_segmenter.h>
 #include <suturo_perception_segmentation/task6_segmenter.h>
 

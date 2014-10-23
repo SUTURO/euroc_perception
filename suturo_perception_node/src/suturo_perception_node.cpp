@@ -235,46 +235,56 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
 	// remember time of cloud
   pipelineData_->stamp = inputCloud->header.stamp;
 	
-	// start segmentation
-	if (pipelineData_->task_.task_type == suturo_msgs::Task::TASK_6)
+	// init segmentation
+	Segmenter *segmenter;
+	
+	switch (pipelineData_->task_.task_type)
 	{
-		bool segmentation_result = task6_segmenter_->segment(cloud_in, pipelineData_, pipelineObjects_);
-		
-		if (segmentation_result)
-		{
-			processing_ = false;
-		}
-		else
-		{
-			logger.logInfo("segmentation failed");
-		}
-		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_points_clusters =
-			task6_segmenter_->getProjectionClusters();
-		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_point_hulls =
-			task6_segmenter_->getProjectionClusterHulls();
-		for (int i = 0; i < projected_points_clusters.size(); i++)
-		{
-			std::stringstream ss;
-			ss << i;
-			ph_.publish_pointcloud(PROJECTED_CLUSTERS_PREFIX_TOPIC + ss.str(), 
-					projected_points_clusters[i], DEPTH_FRAME);
-			ph_.publish_pointcloud(PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC + ss.str(), 
-					projected_point_hulls[i], DEPTH_FRAME);
-		}
-		// Publish the segmentation debug topics
-		ph_.publish_pointcloud(TABLE_TOPIC, task6_segmenter_->getTablePointCloud()
-					, DEPTH_FRAME);
-
-		ph_.publish_pointcloud(DOWNSAMPLED_CLOUD, task6_segmenter_->getDownsampledPointCloud()
-					, DEPTH_FRAME);
-		ph_.publish_pointcloud(POINTS_ABOVE_TABLE_CLOUD, task6_segmenter_->getPointsAboveTable()
-					, DEPTH_FRAME);
-
-		ph_.publish_pointcloud(PROJECTED_POINTS_TOPIC, task6_segmenter_->getProjectedPoints()
-					, DEPTH_FRAME);
+		case suturo_msgs::Task::TASK_6:
+			segmenter = task6_segmenter_;
+		break;
+		default:
+			segmenter = new ProjectionSegmenter();
+		break;
+	}
+	
+	// start segmentation
+	bool segmentation_result = segmenter->segment(cloud_in, pipelineData_, pipelineObjects_);
+	
+	if (segmentation_result)
+	{
+		processing_ = false;
 	}
 	else
 	{
+		logger.logInfo("segmentation failed");
+	}
+	std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_points_clusters =
+		segmenter->getProjectionClusters();
+	std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_point_hulls =
+		segmenter->getProjectionClusterHulls();
+	for (int i = 0; i < projected_points_clusters.size(); i++)
+	{
+		std::stringstream ss;
+		ss << i;
+		ph_.publish_pointcloud(PROJECTED_CLUSTERS_PREFIX_TOPIC + ss.str(), 
+				projected_points_clusters[i], DEPTH_FRAME);
+		ph_.publish_pointcloud(PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC + ss.str(), 
+				projected_point_hulls[i], DEPTH_FRAME);
+	}
+	// Publish the segmentation debug topics
+	ph_.publish_pointcloud(TABLE_TOPIC, segmenter->getTablePointCloud()
+				, DEPTH_FRAME);
+
+	ph_.publish_pointcloud(DOWNSAMPLED_CLOUD, segmenter->getDownsampledPointCloud()
+				, DEPTH_FRAME);
+	ph_.publish_pointcloud(POINTS_ABOVE_TABLE_CLOUD, segmenter->getPointsAboveTable()
+				, DEPTH_FRAME);
+
+	ph_.publish_pointcloud(PROJECTED_POINTS_TOPIC, segmenter->getProjectedPoints()
+				, DEPTH_FRAME);
+	
+	/*
 		ProjectionSegmenter projection_segmenter;
 		if (!projection_segmenter.segment(cloud_in, pipelineData_, pipelineObjects_))
 		{
@@ -307,5 +317,5 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
 					, DEPTH_FRAME);
 
 		processing_ = false;
-	}
+	*/
 }
