@@ -92,7 +92,7 @@ SuturoPerceptionNode::SuturoPerceptionNode(ros::NodeHandle &n, std::string image
   
   if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_6)
 	{
-		task6_segmenter_ = new Task6Segmenter(nodeHandle_, nodeType_==GRIPPER);
+		task6_segmenter_ = new Task6Segmenter(nodeHandle_, nodeType_==GRIPPER, task_client_->getTaskDescription());
 	}
 }
 

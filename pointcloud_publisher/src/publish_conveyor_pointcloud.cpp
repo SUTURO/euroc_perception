@@ -27,7 +27,11 @@
 #include <perception_utils/get_euroc_task_description.h>
 #include <suturo_msgs/Task.h>
 
+#include <cmath>
+
 #include "suturo_pointcloud_publisher/projector.h"
+
+#define PI 3.14159265
 
 namespace enc = sensor_msgs::image_encodings;
 namespace po = boost::program_options;
@@ -49,7 +53,7 @@ tf::StampedTransform transform_rgb_depth;
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr conveyor_cloud;
 
 
-void generate_conveyor_cloud(/*suturo_msgs::Task task*/)
+void generate_conveyor_cloud(suturo_msgs::Task task)
 {
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
 	
@@ -64,6 +68,7 @@ void generate_conveyor_cloud(/*suturo_msgs::Task task*/)
     n_objects: 10
     object_template: red_cube
 */
+/*
 	pcl::PointXYZRGB v_dp;
 	v_dp.x = 0.3;
 	v_dp.y = 1.0;
@@ -75,6 +80,18 @@ void generate_conveyor_cloud(/*suturo_msgs::Task task*/)
 	v_mdl.z = 0.0;
 
 	double w = 0.1 * 2;
+*/
+	pcl::PointXYZRGB v_dp;
+	v_dp.x = task.conveyor_belt.drop_center_point.x;
+	v_dp.y = task.conveyor_belt.drop_center_point.y;
+	v_dp.z = task.conveyor_belt.drop_center_point.z;
+
+	pcl::PointXYZRGB v_mdl;
+	v_mdl.x = task.conveyor_belt.move_direction_and_length.x;
+	v_mdl.y = task.conveyor_belt.move_direction_and_length.y;
+	v_mdl.z = task.conveyor_belt.move_direction_and_length.z;
+
+	double w = task.conveyor_belt.drop_deviation.y * 2;
 
 	conveyor_cloud = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
 	conveyor_cloud->height = 1;
@@ -84,7 +101,7 @@ void generate_conveyor_cloud(/*suturo_msgs::Task task*/)
 
 	for (int i = 0; i < cloud_point_cnt; i++)
 	{
-		conveyor_cloud->points[i].x = v_dp.x + v_mdl.x * ((rand() % 1000) / 1000.0) + w * ((rand() % 1000) / 1000.0);
+		conveyor_cloud->points[i].x = v_dp.x + v_mdl.x * ((rand() % 1000) / 1000.0) + (w * ((rand() % 1000) / 1000.0) - w/2);
 		conveyor_cloud->points[i].y = v_dp.y + v_mdl.y * ((rand() % 1000) / 1000.0);
 		conveyor_cloud->points[i].z = v_dp.z + v_mdl.z * ((rand() % 1000) / 1000.0);
 	}
@@ -98,6 +115,87 @@ void generate_conveyor_cloud(/*suturo_msgs::Task task*/)
 	}
 }
 
+void generate_simple_conveyor_cloud(suturo_msgs::Task task)
+{
+  boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
+	pcl::PointXYZRGB v_dp;
+	v_dp.x = task.conveyor_belt.drop_center_point.x;
+	v_dp.y = task.conveyor_belt.drop_center_point.y;
+	v_dp.z = task.conveyor_belt.drop_center_point.z;
+
+	pcl::PointXYZRGB v_mdl;
+	v_mdl.x = task.conveyor_belt.move_direction_and_length.x;
+	v_mdl.y = task.conveyor_belt.move_direction_and_length.y;
+	v_mdl.z = task.conveyor_belt.move_direction_and_length.z;
+
+	double w = task.conveyor_belt.drop_deviation.y * 2;
+	
+	double clen = sqrt(v_mdl.x * v_mdl.x + v_mdl.y * v_mdl.y);
+	double alpha = PI/2 - asin(v_mdl.y / clen);
+	double wx = w * cos(alpha);
+	double wy = w * sin(alpha);
+
+	logger.logInfo((boost::format("conveyor belt description: v_dp = (%s, %s, %s), v_mdl = (%s, %s, %s), w = %s") %
+	  task.conveyor_belt.drop_center_point.x % task.conveyor_belt.drop_center_point.y % task.conveyor_belt.drop_center_point.z %
+		task.conveyor_belt.move_direction_and_length.x % task.conveyor_belt.move_direction_and_length.y %
+		task.conveyor_belt.move_direction_and_length.z % w).str());
+
+	conveyor_cloud = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
+	conveyor_cloud->height = 1;
+	conveyor_cloud->width = 6;
+	conveyor_cloud->is_dense = false;
+	conveyor_cloud->points.resize(6);
+
+	conveyor_cloud->points[0].x = v_dp.x + v_mdl.x + wx;
+	conveyor_cloud->points[0].y = v_dp.y + v_mdl.y + wy;
+	conveyor_cloud->points[0].z = v_dp.z + v_mdl.z;
+	conveyor_cloud->points[0].r = 0;
+	conveyor_cloud->points[0].g = 255;
+	conveyor_cloud->points[0].b = 0;
+	
+	conveyor_cloud->points[1].x = v_dp.x + v_mdl.x - wx;
+	conveyor_cloud->points[1].y = v_dp.y + v_mdl.y - wy;
+	conveyor_cloud->points[1].z = v_dp.z + v_mdl.z;
+	conveyor_cloud->points[1].r = 255;
+	conveyor_cloud->points[1].g = 0;
+	conveyor_cloud->points[1].b = 0;
+	
+	conveyor_cloud->points[2].x = v_dp.x + wx;
+	conveyor_cloud->points[2].y = v_dp.y + wy;
+	conveyor_cloud->points[2].z = v_dp.z;
+	conveyor_cloud->points[2].r = 0;
+	conveyor_cloud->points[2].g = 0;
+	conveyor_cloud->points[2].b = 255;
+	
+	conveyor_cloud->points[3].x = v_dp.x - wx;
+	conveyor_cloud->points[3].y = v_dp.y - wy;
+	conveyor_cloud->points[3].z = v_dp.z;
+	conveyor_cloud->points[3].r = 0;
+	conveyor_cloud->points[3].g = 255;
+	conveyor_cloud->points[3].b = 255;
+	
+	conveyor_cloud->points[4].x = v_dp.x;
+	conveyor_cloud->points[4].y = v_dp.y;
+	conveyor_cloud->points[4].z = v_dp.z;
+	conveyor_cloud->points[4].r = 255;
+	conveyor_cloud->points[4].g = 255;
+	conveyor_cloud->points[4].b = 255;
+	
+	conveyor_cloud->points[5].x = v_dp.x + v_mdl.x;
+	conveyor_cloud->points[5].y = v_dp.y + v_mdl.y;
+	conveyor_cloud->points[5].z = v_dp.z + v_mdl.z;
+	conveyor_cloud->points[5].r = 255;
+	conveyor_cloud->points[5].g = 0;
+	conveyor_cloud->points[5].b = 255;
+
+  boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
+  if (verbose)
+	{
+		std::stringstream ss;
+		ss << "generated simple conveyor pointcloud for " << output_topic;
+		logger.logTime(s, e, ss.str());
+	}
+}
 
 void publish_conveyor_cloud(const ros::NodeHandle &nodeHandle)
 {
@@ -118,10 +216,18 @@ int main (int argc, char** argv)
 	ros::NodeHandle n;
 
   pub_cloud = n.advertise<sensor_msgs::PointCloud2> (output_topic, 1);
-
-	generate_conveyor_cloud();
 	
-  if (verbose)
+	EurocTaskClient *task_client_ = new EurocTaskClient(n);
+  logger.logInfo("Requesting task description");
+  if (!task_client_->requestTaskDescription())
+  {
+    logger.logError("Requesting task description failed. Aborting.");
+    return -1;
+  }
+
+	generate_simple_conveyor_cloud(task_client_->getTaskDescription());
+
+	if (verbose)
 	{
 		pcl::PCDWriter writer;
 		writer.write("/tmp/conveyor_cloud_.pcd", *conveyor_cloud);

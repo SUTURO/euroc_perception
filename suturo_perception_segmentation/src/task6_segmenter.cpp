@@ -6,11 +6,15 @@
 #include <sensor_msgs/PointCloud.h>
 #include <tf/transform_listener.h>
 #include <pcl_ros/impl/transforms.hpp>
+#include <cmath>
 
+#define PI 3.14159265
 
 using namespace suturo_perception;
 
-Task6Segmenter::Task6Segmenter(ros::NodeHandle &node, bool isTcp) : Segmenter(), nodeHandle_(node), isTcp_(isTcp)
+
+Task6Segmenter::Task6Segmenter(ros::NodeHandle &node, bool isTcp, suturo_msgs::Task task) 
+: Segmenter(), nodeHandle_(node), isTcp_(isTcp), task_(task)
 {
 	logger = Logger("task6_segmenter");
 	
@@ -328,73 +332,29 @@ bool Task6Segmenter::clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Pt
 }
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr
-Task6Segmenter::generate_conveyor_cloud(/*suturo_msgs::Task task*/)
+Task6Segmenter::generate_simple_conveyor_cloud()
 {
-	int cloud_point_cnt = 5000;
-	// task6_v1
-/* YAML info
-  conveyor_belt:
-    move_direction_and_length: [ 0, -2, 0 ]
-    drop_center_point: [0.3, 1, 0.2]
-    drop_deviation: [ 0.01, 0.1, 0.01]
-    start_speed: 0.005
-    end_speed: 0.5
-    n_objects: 10
-    object_template: red_cube
-*/
 	pcl::PointXYZRGB v_dp;
-	v_dp.x = 0.3;
-	v_dp.y = 1.0;
-	v_dp.z = 0.2;
+	v_dp.x = task_.conveyor_belt.drop_center_point.x;
+	v_dp.y = task_.conveyor_belt.drop_center_point.y;
+	v_dp.z = task_.conveyor_belt.drop_center_point.z;
 
 	pcl::PointXYZRGB v_mdl;
-	v_mdl.x = 0.0;
-	v_mdl.y = -2.0;
-	v_mdl.z = 0.0;
+	v_mdl.x = task_.conveyor_belt.move_direction_and_length.x;
+	v_mdl.y = task_.conveyor_belt.move_direction_and_length.y;
+	v_mdl.z = task_.conveyor_belt.move_direction_and_length.z;
 
-	double w = 0.1 * 2;
-
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr conveyor_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-	conveyor_cloud->height = 1;
-	conveyor_cloud->width = cloud_point_cnt;
-	conveyor_cloud->is_dense = false;
-	conveyor_cloud->points.resize(cloud_point_cnt);
-
-	for (int i = 0; i < cloud_point_cnt; i++)
-	{
-		conveyor_cloud->points[i].x = v_dp.x + v_mdl.x * ((rand() % 1000) / 1000.0) + (w * ((rand() % 1000) / 1000.0) - w/2);
-		conveyor_cloud->points[i].y = v_dp.y + v_mdl.y * ((rand() % 1000) / 1000.0);
-		conveyor_cloud->points[i].z = v_dp.z + v_mdl.z * ((rand() % 1000) / 1000.0);
-	}
+	double w = task_.conveyor_belt.drop_deviation.y * 2;
 	
-	return conveyor_cloud;
-}
-
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr
-Task6Segmenter::generate_simple_conveyor_cloud(/*suturo_msgs::Task task*/)
-{
-	// task6_v1
-/* YAML info
-  conveyor_belt:
-    move_direction_and_length: [ 0, -2, 0 ]
-    drop_center_point: [0.3, 1, 0.2]
-    drop_deviation: [ 0.01, 0.1, 0.01]
-    start_speed: 0.005
-    end_speed: 0.5
-    n_objects: 10
-    object_template: red_cube
-*/
-	pcl::PointXYZRGB v_dp;
-	v_dp.x = 0.3;
-	v_dp.y = 1.0;
-	v_dp.z = 0.2;
-
-	pcl::PointXYZRGB v_mdl;
-	v_mdl.x = 0.0;
-	v_mdl.y = -2.0;
-	v_mdl.z = 0.0;
-
-	double w = 0.1 * 2;
+	double clen = sqrt(v_mdl.x * v_mdl.x + v_mdl.y * v_mdl.y);
+	double alpha = PI/2 - asin(v_mdl.y / clen);
+	double wx = w * cos(alpha);
+	double wy = w * sin(alpha);
+	
+	logger.logInfo((boost::format("conveyor belt description: v_dp = (%s, %s, %s), v_mdl = (%s, %s, %s), w = %s") %
+	  task_.conveyor_belt.drop_center_point.x % task_.conveyor_belt.drop_center_point.y % task_.conveyor_belt.drop_center_point.z %
+		task_.conveyor_belt.move_direction_and_length.x % task_.conveyor_belt.move_direction_and_length.y %
+		task_.conveyor_belt.move_direction_and_length.z % w).str());
 
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr conveyor_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 	conveyor_cloud->height = 1;
@@ -402,21 +362,21 @@ Task6Segmenter::generate_simple_conveyor_cloud(/*suturo_msgs::Task task*/)
 	conveyor_cloud->is_dense = false;
 	conveyor_cloud->points.resize(4);
 
-	conveyor_cloud->points[0].x = v_dp.x + v_mdl.x + w/2;
-	conveyor_cloud->points[0].y = v_dp.y + v_mdl.y;
+	conveyor_cloud->points[0].x = v_dp.x + v_mdl.x + wx;
+	conveyor_cloud->points[0].y = v_dp.y + v_mdl.y + wy;
 	conveyor_cloud->points[0].z = v_dp.z + v_mdl.z;
 	
-	conveyor_cloud->points[1].x = v_dp.x + v_mdl.x - w/2;
-	conveyor_cloud->points[1].y = v_dp.y + v_mdl.y;
+	conveyor_cloud->points[1].x = v_dp.x + v_mdl.x - wx;
+	conveyor_cloud->points[1].y = v_dp.y + v_mdl.y - wy;
 	conveyor_cloud->points[1].z = v_dp.z + v_mdl.z;
 	
-	conveyor_cloud->points[2].x = v_dp.x + v_mdl.x + w/2;
-	conveyor_cloud->points[2].y = v_dp.y + v_mdl.y * 0;
-	conveyor_cloud->points[2].z = v_dp.z + v_mdl.z;
+	conveyor_cloud->points[2].x = v_dp.x + wx;
+	conveyor_cloud->points[2].y = v_dp.y + wy;
+	conveyor_cloud->points[2].z = v_dp.z;
 	
-	conveyor_cloud->points[3].x = v_dp.x + v_mdl.x - w/2;
-	conveyor_cloud->points[3].y = v_dp.y + v_mdl.y * 0;
-	conveyor_cloud->points[3].z = v_dp.z + v_mdl.z;
+	conveyor_cloud->points[3].x = v_dp.x - wx;
+	conveyor_cloud->points[3].y = v_dp.y - wy;
+	conveyor_cloud->points[3].z = v_dp.z;
 	
 	return conveyor_cloud;
 }
