@@ -245,17 +245,22 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
 	switch (pipelineData_->task_.task_type)
 	{
 		case suturo_msgs::Task::TASK_4:
-			segmenter = task4_segmenter_;
-		break;
-		case suturo_msgs::Task::TASK_6:
 			if (nodeType_==GRIPPER)
-				segmenter = task6_segmenter_;
+				segmenter = task4_segmenter_;
 			else
 				segmenter = new ProjectionSegmenter();
+		break;
+		case suturo_msgs::Task::TASK_6:
+			segmenter = task6_segmenter_;
 		break;
 		default:
 			segmenter = new ProjectionSegmenter();
 		break;
+	}
+	if (!segmenter)
+	{
+		logger.logError("segmenter creation failed!");
+		return;
 	}
 	
 	// start segmentation
