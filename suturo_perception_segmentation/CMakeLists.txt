@@ -33,9 +33,11 @@ set(suturo_perception_segmentation_files
   src/segmenter.cpp
   src/projection_segmenter.cpp
   src/task6_segmenter.cpp
+  src/task4_segmenter.cpp
   include/suturo_perception_segmentation/segmenter.h
   include/suturo_perception_segmentation/projection_segmenter.h
   include/suturo_perception_segmentation/task6_segmenter.h
+  include/suturo_perception_segmentation/task4_segmenter.h
 )
 
 add_library(suturo_perception_segmentation ${suturo_perception_segmentation_files})

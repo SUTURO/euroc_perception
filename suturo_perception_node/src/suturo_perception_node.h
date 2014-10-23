@@ -14,6 +14,7 @@
 #include <suturo_perception_segmentation/segmenter.h>
 #include <suturo_perception_segmentation/projection_segmenter.h>
 #include <suturo_perception_segmentation/task6_segmenter.h>
+#include <suturo_perception_segmentation/task4_segmenter.h>
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_cloud.h>
@@ -56,6 +57,7 @@ class SuturoPerceptionNode
     suturo_perception::PublisherHelper ph_;
 		suturo_perception::EurocTaskClient *task_client_;
 		suturo_perception::Task6Segmenter *task6_segmenter_;
+		suturo_perception::Task4Segmenter *task4_segmenter_;
 
     ros::Publisher markerPublisher_;
     int maxMarkerId_;

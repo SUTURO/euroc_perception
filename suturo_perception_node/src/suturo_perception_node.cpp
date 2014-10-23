@@ -94,6 +94,10 @@ SuturoPerceptionNode::SuturoPerceptionNode(ros::NodeHandle &n, std::string image
 	{
 		task6_segmenter_ = new Task6Segmenter(nodeHandle_, nodeType_==GRIPPER, task_client_->getTaskDescription());
 	}
+  if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_4 && nodeType_==GRIPPER)
+	{
+		task4_segmenter_ = new Task4Segmenter(nodeHandle_, nodeType_==GRIPPER, task_client_->getTaskDescription());
+	}
 }
 
 /*
@@ -240,8 +244,14 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
 	
 	switch (pipelineData_->task_.task_type)
 	{
+		case suturo_msgs::Task::TASK_4:
+			segmenter = task4_segmenter_;
+		break;
 		case suturo_msgs::Task::TASK_6:
-			segmenter = task6_segmenter_;
+			if (nodeType_==GRIPPER)
+				segmenter = task6_segmenter_;
+			else
+				segmenter = new ProjectionSegmenter();
 		break;
 		default:
 			segmenter = new ProjectionSegmenter();
