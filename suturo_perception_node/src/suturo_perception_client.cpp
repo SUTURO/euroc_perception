@@ -129,6 +129,7 @@ int main(int argc, char **argv)
       if (clusterClient.call(gripperSrv))
       {
         ROS_INFO("GripperScene Service call successful");
+				ROS_INFO(" stamp = %f", gripperSrv.response.stamp.toSec());
         ROS_INFO(" id = %d", gripperSrv.response.id);
         ROS_INFO(" number of detected objects = %d", gripperSrv.response.objects.size());
         for (int i = 0; i < gripperSrv.response.objects.size(); i++)

@@ -22,6 +22,9 @@ namespace suturo_perception
       
       // euroc task description
       suturo_msgs::Task task_;
+			
+			// call time
+			ros::Time stamp;
       
       
       PipelineData()

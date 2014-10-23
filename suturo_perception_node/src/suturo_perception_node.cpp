@@ -211,6 +211,8 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
     ph_.publish_pointcloud(OBJECT_CLOUD_PREFIX_TOPIC + ss.str(), 
         pipelineObjects_[i]->get_pointCloud(), DEPTH_FRAME);
   }
+  
+  res.stamp = pipelineData_->stamp;
 
   return true;
 }
@@ -230,7 +232,10 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZRGB>());
 	pcl::fromROSMsg(*inputCloud,*cloud_in);
   
-  
+	// remember time of cloud
+  pipelineData_->stamp = inputCloud->header.stamp;
+	
+	// start segmentation
 	if (pipelineData_->task_.task_type == suturo_msgs::Task::TASK_6)
 	{
 		bool segmentation_result = task6_segmenter_->segment(cloud_in, pipelineData_, pipelineObjects_);
