@@ -82,6 +82,8 @@ add_executable(corner_detector
 add_executable(odom_combiner 
   src/odom_combiner.cpp)
 
+add_dependencies(odom_combiner suturo_perception_msgs_generate_messages_cpp suturo_msgs_generate_messages_cpp suturo_perception_msgs_gencpp)
+
 add_executable(cropbox_cloud 
   src/cropbox_cloud.cpp
   src/basic_io_pcd.cpp)
