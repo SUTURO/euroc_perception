@@ -6,6 +6,7 @@ import numpy as np
 import rospy
 import cv2
 
+from visualization_msgs.msg import Marker
 from Parser import Parser
 from suturo_msgs.msg import Task
 from suturo_perception_msgs.srv import ClassifierResponse
@@ -25,7 +26,7 @@ class Classifier(object):
     selected_attributes = ['color_class', 'height', 'volume']
     original_objects = None
     cubeized_objects = {}
-    size_tresh_perc = 0.01
+    size_tresh_perc = 0.1
     color_tresh = 10
     number_of_data = 1000
     classifier_list = {}
@@ -34,6 +35,8 @@ class Classifier(object):
         self.logging = logging
         if self.logging >= 1: print(">>>> Classifier will be initialized for task %s with log_lvl %s" % (task, logging))
         rospy.Subscriber("/suturo/yaml_pars0r", Task, self.set_yaml_infos)
+        self.marker_publisher = rospy.Publisher("/suturo/obstacle_classifier_marker", Marker)
+        self.marker_id = 0
         self.clf = tree.DecisionTreeClassifier()
 
     def set_yaml_infos(self, data):
@@ -64,6 +67,34 @@ class Classifier(object):
             tree.export_graphviz(self.clf, out_file='tree.dot', feature_names=['h', 's', 'v', 'site'])
             # system('dot -Tpng tree.dot -o tree.png')
             # system('feh tree.png &')
+
+    def publish_marker_for_object(self, object, txt):
+        marker = Marker()
+        # marker.header.frame_id = "sdepth_pcl"
+        marker.header.frame_id = object.object.header.frame_id
+        marker.header.stamp = rospy.Time(0)
+        marker.ns = "scene_classifier_marker"
+        self.marker_id = self.marker_id + 1
+        marker.id = self.marker_id
+        marker.type = Marker.TEXT_VIEW_FACING
+        marker.action = Marker.ADD
+        marker.pose.position.x = object.c_centroid.x
+        marker.pose.position.y = object.c_centroid.y
+        marker.pose.position.z = object.c_centroid.z
+        marker.pose.orientation.x = 0.0
+        marker.pose.orientation.y = 0.0
+        marker.pose.orientation.z = 0.0
+        marker.pose.orientation.w = 1.0
+        marker.scale.x = 0.5
+        marker.scale.y = 0.1
+        marker.scale.z = 0.1
+        marker.color.a = 1.0
+        marker.color.r = 0.0
+        marker.color.g = 1.0
+        marker.color.b = 0.0
+        marker.text = txt
+        marker.lifetime = rospy.Duration.from_sec(10)
+        self.marker_publisher.publish(marker)
 
     def create_classifier_for_object(self, cobject, data, labels):
         new_labels = []
@@ -198,6 +229,7 @@ class Classifier(object):
         resp.classifiedObject = unclassified_object
         if self.logging >= 1:
             print("Classified Object as: %s" % class_name)
+        self.publish_marker_for_object(unclassified_object, unclassified_object.object.id + "\nheight: " + str(height))
         return resp
 
     def create_random_obstacle(self, max_height=2, attributes=[]):
