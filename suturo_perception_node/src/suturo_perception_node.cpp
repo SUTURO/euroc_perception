@@ -129,6 +129,8 @@ void SuturoPerceptionNode::reconfigureCallback(suturo_perception_node::SuturoPer
 bool
 SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &req, suturo_perception_msgs::GetGripper::Response &res)
 {
+	int timeout = 10;
+	
 	res.id = idx_;
 	idx_++;
 
@@ -136,25 +138,32 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
   pipelineData_->request_parameters_ = req.s;
   
   pipelineData_->task_ = task_client_->getTaskDescription();
+	
 	if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_6 &&
 		  req.s.find("firstConveyorCall")!=std::string::npos)
 	{
 		task6_segmenter_->updateConveyorCloud();
 	}
+	if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_4 && 
+			nodeType_ == GRIPPER)
+	{
+		task4_segmenter_->updateSegmentationCloud();
+		timeout = 30;
+	}
   
 	ros::Subscriber sub = nodeHandle_.subscribe<sensor_msgs::PointCloud2>(cloudTopic_, 1, boost::bind(&SuturoPerceptionNode::receive_cloud,this, _1));
 	
-	logger.logInfo("Waiting for processed cloud");
+	logger.logInfo((boost::format("Waiting for processed cloud for %s seconds") % timeout).str());
   ros::Rate r(20); // 20 hz
-  // cancel service call, if no cloud is received after 10s
-  boost::posix_time::ptime cancelTime = boost::posix_time::second_clock::local_time() + boost::posix_time::seconds(10);
+  // cancel service call, if no cloud is received after 20s
+  boost::posix_time::ptime cancelTime = boost::posix_time::second_clock::local_time() + boost::posix_time::seconds(timeout);
 	processing_ = true;
   while(processing_)
   {
     if(boost::posix_time::second_clock::local_time() >= cancelTime)
     {
       processing_ = false;
-			logger.logError("No sensor data available. Aborting.");
+			logger.logError("Timeout reached... No sensor data available. Aborting.");
 			return false;
 		}
     ros::spinOnce();
@@ -246,14 +255,22 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
 	{
 		case suturo_msgs::Task::TASK_4:
 			if (nodeType_==GRIPPER)
+			{
+				logger.logInfo("Using task 4 segmenter");
 				segmenter = task4_segmenter_;
+			}
 			else
+			{
+				logger.logInfo("Using projection segmenter");
 				segmenter = new ProjectionSegmenter();
+			}
 		break;
 		case suturo_msgs::Task::TASK_6:
+			logger.logInfo("Using task 6 segmenter");
 			segmenter = task6_segmenter_;
 		break;
 		default:
+			logger.logInfo("Using projection segmenter");
 			segmenter = new ProjectionSegmenter();
 		break;
 	}
@@ -298,39 +315,4 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
 
 	ph_.publish_pointcloud(PROJECTED_POINTS_TOPIC, segmenter->getProjectedPoints()
 				, DEPTH_FRAME);
-	
-	/*
-		ProjectionSegmenter projection_segmenter;
-		if (!projection_segmenter.segment(cloud_in, pipelineData_, pipelineObjects_))
-		{
-			logger.logInfo("segmentation failed");
-			return;
-		}
-		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_points_clusters =
-			projection_segmenter.getProjectionClusters();
-		std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> projected_point_hulls =
-			projection_segmenter.getProjectionClusterHulls();
-		for (int i = 0; i < projected_points_clusters.size(); i++)
-		{
-			std::stringstream ss;
-			ss << i;
-			ph_.publish_pointcloud(PROJECTED_CLUSTERS_PREFIX_TOPIC + ss.str(), 
-					projected_points_clusters[i], DEPTH_FRAME);
-			ph_.publish_pointcloud(PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC + ss.str(), 
-					projected_point_hulls[i], DEPTH_FRAME);
-		}
-		// Publish the segmentation debug topics
-		ph_.publish_pointcloud(TABLE_TOPIC, projection_segmenter.getTablePointCloud()
-					, DEPTH_FRAME);
-
-		ph_.publish_pointcloud(DOWNSAMPLED_CLOUD, projection_segmenter.getDownsampledPointCloud()
-					, DEPTH_FRAME);
-		ph_.publish_pointcloud(POINTS_ABOVE_TABLE_CLOUD, projection_segmenter.getPointsAboveTable()
-					, DEPTH_FRAME);
-
-		ph_.publish_pointcloud(PROJECTED_POINTS_TOPIC, projection_segmenter.getProjectedPoints()
-					, DEPTH_FRAME);
-
-		processing_ = false;
-	*/
 }
