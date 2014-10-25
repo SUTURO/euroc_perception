@@ -169,6 +169,13 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
     ros::spinOnce();
     r.sleep();
   }
+  
+	if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_4 && 
+			nodeType_ == GRIPPER)
+	{
+		segment(cloud_in_);
+	}
+	
   logger.logInfo("done with segmentation, starting pipeline");
     
   /****************************************************************************/
@@ -230,24 +237,9 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
   return true;
 }
 
-
 void
-SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
+SuturoPerceptionNode::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in)
 {
-	logger.logInfo("image and cloud incoming...");
-  if (!processing_)
-  {
-    logger.logInfo("processing_ == false, aborting...");
-    return;
-  }
-  boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
-	
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZRGB>());
-	pcl::fromROSMsg(*inputCloud,*cloud_in);
-  
-	// remember time of cloud
-  pipelineData_->stamp = inputCloud->header.stamp;
-	
 	// init segmentation
 	Segmenter *segmenter;
 	
@@ -315,4 +307,34 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
 
 	ph_.publish_pointcloud(PROJECTED_POINTS_TOPIC, segmenter->getProjectedPoints()
 				, DEPTH_FRAME);
+}
+
+void
+SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
+{
+	logger.logInfo("image and cloud incoming...");
+  if (!processing_)
+  {
+    logger.logInfo("processing_ == false, aborting...");
+    return;
+  }
+  boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
+	
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZRGB>());
+	pcl::fromROSMsg(*inputCloud,*cloud_in);
+	cloud_in_ = cloud_in;
+  
+	// remember time of cloud
+  pipelineData_->stamp = inputCloud->header.stamp;
+	
+	if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_4 && 
+			nodeType_ == GRIPPER)
+	{
+		// no timeout for gripper segmentation in task 4
+		processing_ = false;
+	}
+	else
+	{
+		segment(cloud_in);
+	}
 }

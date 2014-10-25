@@ -30,7 +30,7 @@ class SuturoPerceptionNode
     bool getGripper(suturo_perception_msgs::GetGripper::Request &req, suturo_perception_msgs::GetGripper::Response &res);
 
     void receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud);
-    void clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, pcl::PointCloud<pcl::PointXYZRGB>::Ptr original_cloud, std::vector<int> *removed_indices_filtered, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices);
+		void segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in);
   private:
     std::string OBJECT_CLOUD_PREFIX_TOPIC;
     std::string TABLE_TOPIC;
@@ -54,6 +54,7 @@ class SuturoPerceptionNode
 		int idx_;
     int objidx_;
 		bool processing_;
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in_;
     suturo_perception::PublisherHelper ph_;
 		suturo_perception::EurocTaskClient *task_client_;
 		suturo_perception::Task6Segmenter *task6_segmenter_;
