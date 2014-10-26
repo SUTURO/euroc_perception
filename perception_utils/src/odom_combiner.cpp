@@ -36,7 +36,7 @@ ros::Time time_scene_cloud;
 void
 receive_tcp_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
 {
-  std::cout << "tcp cloud incoming..." << std::endl;
+  // std::cout << "tcp cloud incoming..." << std::endl;
 
   sensor_msgs::PointCloud2 transformedCloud;
   pcl_ros::transformPointCloud("/odom_combined", *inputCloud, transformedCloud, *tfListener);
@@ -53,13 +53,13 @@ receive_tcp_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
   latest_tcp_cloud = voxeled_cloud;
   time_tcp_cloud = inputCloud->header.stamp;
   mutex_tcp.unlock();
-  std::cout << "pts after voxeling: " << latest_tcp_cloud->points.size() << std::endl;
+  // std::cout << "pts after voxeling: " << latest_tcp_cloud->points.size() << std::endl;
 }
 
 void
 receive_scene_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
 {
-  std::cout << "scene cloud incoming..." << std::endl;
+  // std::cout << "scene cloud incoming..." << std::endl;
   // boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
   sensor_msgs::PointCloud2 transformedCloud;
   pcl_ros::transformPointCloud("/odom_combined", *inputCloud, transformedCloud, *tfListener);
@@ -76,13 +76,13 @@ receive_scene_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
   latest_scene_cloud = voxeled_cloud;
   time_scene_cloud = inputCloud->header.stamp;
   mutex_scene.unlock();
-  std::cout << "pts after voxeling: " << latest_scene_cloud->points.size() << std::endl;
+  // std::cout << "pts after voxeling: " << latest_scene_cloud->points.size() << std::endl;
 }
 
 bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
          suturo_perception_msgs::GetPointArray::Response &res)
 {
-  std::cout << "Service called" << std::endl;
+  // std::cout << "Service called" << std::endl;
 
   if(latest_scene_cloud == NULL or latest_tcp_cloud == NULL)
   return false;
@@ -136,9 +136,9 @@ bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
 
   boost::posix_time::time_duration d = e - s;
   float diff = (float)d.total_microseconds() / (float)1000;
-  std::cout << (boost::format("Time for %s: %s ms") % "execute()" % diff).str();
+  // std::cout << (boost::format("Time for %s: %s ms") % "execute()" % diff).str();
 
-  std::cout << "Service call ended" << std::endl;
+  // std::cout << "Service call ended" << std::endl;
   // res.sum = req.a + req.b;
   // ROS_INFO("request: x=%ld, y=%ld", (long int)req.a, (long int)req.b);
   // ROS_INFO("sending back response: [%ld]", (long int)res.sum);
@@ -156,14 +156,14 @@ int main(int argc, char **argv)
   pub = node_handle->advertise<sensor_msgs::PointCloud2>("/suturo/octomap", 1000);
   tfListener = new tf::TransformListener();
 
-  std::cout << "Waiting for tf to come up..." << std::endl;
+  std::cout << "[odom_combiner] Waiting for tf to come up..." << std::endl;
   sleep(6);
 
 	ros::Subscriber scene_sub = n.subscribe<sensor_msgs::PointCloud2>("/suturo/euroc_scene_cloud", 1, boost::bind(&receive_scene_cloud, _1));
 
 	ros::Subscriber tcp_sub = n.subscribe<sensor_msgs::PointCloud2>("/suturo/euroc_tcp_cloud", 1, boost::bind(&receive_tcp_cloud, _1));
 
-  std::cout << "Subscribed to topics" << std::endl;
+  std::cout << "[odom_combiner] Subscribed to topics" << std::endl;
   ros::ServiceServer service = n.advertiseService("/suturo/GetPointArray", execute);
   ros::spin();
 
