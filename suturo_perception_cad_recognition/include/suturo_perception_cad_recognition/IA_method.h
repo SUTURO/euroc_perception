@@ -35,7 +35,9 @@ namespace suturo_perception
       std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> getObjectTransformationSteps(){ return _object_transformation_steps; }
       // Get the resultant pointcloud after the IA process
       pcl::PointCloud<pcl::PointXYZ>::Ptr getResult(){ return _result; }
-
+      
+      // FIX eigen stuff
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 			
 		protected:
       pcl::PointCloud<pcl::PointXYZ>::Ptr _cloud_in;
