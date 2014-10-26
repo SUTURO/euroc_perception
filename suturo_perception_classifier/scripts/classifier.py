@@ -3,7 +3,7 @@
 
 import rospy
 from suturo_perception_msgs.srv import Classifier
-from suturo_perception_classifier.classifier import Classifier as CF
+from suturo_perception_classifier.classifier_src import Classifier as CF
 import argparse
 def dump():
     pass
