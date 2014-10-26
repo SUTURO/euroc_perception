@@ -40,7 +40,7 @@ namespace suturo_perception
       Eigen::Matrix< float, 4, 4 > rotateAroundCrossProductOfNormals(
           Eigen::Vector3f base_normal,
           Eigen::Vector3f normal_to_rotate,
-          bool store_transformation);
+          bool store_transformation=false);
 
       // Get list of rotation matrices, that have been applied during the initial alignment
       std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > > getRotations(){ return rotations_; }
