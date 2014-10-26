@@ -211,6 +211,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
     rotation_base_vector[1] = 1;
   }
 
+  // INITIAL ALIGNMENT OF THE OBJECT 
   Eigen::Matrix< float, 4, 4 > transformationRotateObject = 
     rotateAroundCrossProductOfNormals(rotation_base_vector, table_normal);
   pcl::transformPointCloud (*_cloud_in, *_upwards_object, transformationRotateObject);   
