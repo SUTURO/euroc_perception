@@ -23,7 +23,7 @@ class Classifier(object):
     color_classes = ['0000ff', '00ff00', '00ffff', 'ff0000', 'ff00ff', 'ffff00', 'unknown']
     color_class_number_mapping = {'0000ff': 0, '00ff00': 1, '00ffff': 2, 'ff0000': 3, 'ff00ff': 4, 'ffff00': 5,
                                   'unknown': 6}
-    selected_attributes = ['color_class', 'height', 'volume']
+    selected_attributes = ['color_class', 'height']
     original_objects = None
     cubeized_objects = {}
     size_tresh_perc = 0.1
