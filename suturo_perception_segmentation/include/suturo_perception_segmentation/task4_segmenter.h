@@ -14,7 +14,9 @@ namespace suturo_perception
     public:
       Task4Segmenter(ros::NodeHandle &node, bool isTcp, suturo_msgs::Task task);
 
+      bool segment_old(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, PipelineData::Ptr &pipeline_data, PipelineObject::VecPtr &pipeline_objects);
       bool segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, PipelineData::Ptr &pipeline_data, PipelineObject::VecPtr &pipeline_objects);
+			
       // Should be available after a successful segmentation
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr getTablePointCloud();
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr getDownsampledPointCloud();
@@ -29,6 +31,7 @@ namespace suturo_perception
 
       bool clusterPointcloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, PipelineData::Ptr &pipeline_data);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_simple_segmentation_cloud();
+			void cloud_cb (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clusters, PipelineData::Ptr &pipeline_data);
 			
 			bool transform_success_;
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentation_cloud_;
