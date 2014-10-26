@@ -7,8 +7,19 @@
 // #include <boost/signals2/mutex.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <string>
+#include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/registration/icp.h>
+#include <pcl/registration/icp_nl.h>
+#include <pcl/registration/ia_ransac.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/common/common_headers.h>
+// #include <perception_utils.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/features/fpfh.h>
+#include <pcl/features/shot.h>
 
 namespace suturo_perception
 {
@@ -26,6 +37,10 @@ namespace suturo_perception
 
 			virtual void execute() = 0;
 
+      Eigen::Matrix< float, 4, 4 > rotateAroundCrossProductOfNormals(
+          Eigen::Vector3f base_normal,
+          Eigen::Vector3f normal_to_rotate,
+          bool store_transformation);
 
       // Get list of rotation matrices, that have been applied during the initial alignment
       std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > > getRotations(){ return rotations_; }
