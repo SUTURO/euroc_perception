@@ -92,7 +92,7 @@ void IACentroid::execute()
 
   // Translate the object to align it with the top of the model
   float translate_upwards = model_height - object_height;
-  std::cout << "Translating upwards by " << translate_upwards << std::endl;
+  std::cout << "Translating upwards by " << translate_upwards * 100 << "=" << model_height * 100 << "-" << object_height * 100 << std::endl;
   Eigen::Matrix< float, 4, 4 > transformUpwards = 
     getTranslationMatrix(0,translate_upwards,0);
   pcl::transformPointCloud(*_result, *result_s3, transformUpwards);

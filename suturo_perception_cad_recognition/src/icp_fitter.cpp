@@ -281,9 +281,11 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
 
   // Translate the object to align it with the top of the model
   float translate_upwards = model_height - object_height;
-  std::cout << "Translating upwards by " << translate_upwards << std::endl;
+  std::cout << "Translating upwards by " << translate_upwards * 100 << "=" << model_height * 100 << "-" << object_height * 100 << std::endl;
   Eigen::Matrix< float, 4, 4 > transformUpwards = 
     getTranslationMatrix(0,translate_upwards,0);
+  std::cout << "Upward translation matrix: " << transformUpwards << std::endl;
+  std::cout << "Upward translation matrix INVERSE: " << transformUpwards.inverse() << std::endl;
   pcl::transformPointCloud(*_upwards_object, *_upwards_object_s3, transformUpwards);
   pcl::transformPointCloud(*_upwards_object, *_upwards_object, transformUpwards);
   _object_transformation_steps.push_back(_upwards_object_s3);
@@ -298,43 +300,43 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   rotations_.push_back(transformationRotateObject.transpose() ); 
 
   //      INITIAL ALIGNMENT DONE
-  std::cout << "Showing translations: " << std::endl;
-  for (int i = 0; i < translations_.size(); i++) {
-    std::cout << "idx: " << i << " " << translations_.at(i) << std::endl;
-  }
-  std::cout << "Showing rotations: " << std::endl;
-  for (int i = 0; i < rotations_.size(); i++) {
-    std::cout << "idx: " << i << " " << rotations_.at(i) << std::endl;
-  }
-  std::cout << "Vs." << std::endl;
- std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > >  ia_rot
-    = _initial_alignment->getRotations();
+ //  std::cout << "Showing translations: " << std::endl;
+ //  for (int i = 0; i < translations_.size(); i++) {
+ //    std::cout << "idx: " << i << " " << translations_.at(i) << std::endl;
+ //  }
+ //  std::cout << "Showing rotations: " << std::endl;
+ //  for (int i = 0; i < rotations_.size(); i++) {
+ //    std::cout << "idx: " << i << " " << rotations_.at(i) << std::endl;
+ //  }
+ //  std::cout << "Vs." << std::endl;
+ // std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > >  ia_rot
+ //    = _initial_alignment->getRotations();
 
- std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > >  ia_trans
-    = _initial_alignment->getTranslations();
+ // std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > >  ia_trans
+ //    = _initial_alignment->getTranslations();
 
-  std::cout << "Showing translations: " << std::endl;
-  for (int i = 0; i < ia_trans.size(); i++) {
-    std::cout << "idx: " << i << " " << ia_trans.at(i) << std::endl;
-  }
-  std::cout << "Showing rotations: " << std::endl;
-  for (int i = 0; i < ia_rot.size(); i++) {
-    std::cout << "idx: " << i << " " << ia_rot.at(i) << std::endl;
-  }
+ //  std::cout << "Showing translations: " << std::endl;
+ //  for (int i = 0; i < ia_trans.size(); i++) {
+ //    std::cout << "idx: " << i << " " << ia_trans.at(i) << std::endl;
+ //  }
+ //  std::cout << "Showing rotations: " << std::endl;
+ //  for (int i = 0; i < ia_rot.size(); i++) {
+ //    std::cout << "idx: " << i << " " << ia_rot.at(i) << std::endl;
+ //  }
 
   // Copy results from IA execution
-  // std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> ia_obj_transformations = _initial_alignment->getObjectTransformationSteps();
-  // _object_transformation_steps.insert(_object_transformation_steps.end(),
-  //     ia_obj_transformations.begin(),
-  //     ia_obj_transformations.end());
-  // std::cout << "transformation pcs copied" << std::endl;
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> ia_obj_transformations = _initial_alignment->getObjectTransformationSteps();
+  _object_transformation_steps.insert(_object_transformation_steps.end(),
+      ia_obj_transformations.begin(),
+      ia_obj_transformations.end());
+  std::cout << "transformation pcs copied" << std::endl;
 
-  // translations_ = _initial_alignment->getTranslations();
-  // std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > > ia_rotations =  _initial_alignment->getRotations();
-  // rotations_.insert( rotations_.end(),
-  //     ia_rotations.begin(), ia_rotations.end());
+  translations_ = _initial_alignment->getTranslations();
+  std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > > ia_rotations =  _initial_alignment->getRotations();
+  rotations_.insert( rotations_.end(),
+      ia_rotations.begin(), ia_rotations.end());
 
-  // _upwards_object = _initial_alignment->getResult();
+  _upwards_object = _initial_alignment->getResult();
   std::cout << "IA done" << std::endl;
   
 
