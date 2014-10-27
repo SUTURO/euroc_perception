@@ -56,8 +56,8 @@ void IACentroid::execute()
         diff_of_centroids[0],
         diff_of_centroids[1],
         diff_of_centroids[2]);
-  std::cout << "Resulting centroid shift transform" << transform << std::endl;
-  std::cout << "Resulting centroid shift transform INVERSE" << transform.inverse() << std::endl;
+  // std::cout << "Resulting centroid shift transform" << transform << std::endl;
+  // std::cout << "Resulting centroid shift transform INVERSE" << transform.inverse() << std::endl;
   pcl::transformPointCloud(*_result, *result_s2,transform);
   pcl::transformPointCloud(*_result, *_result,transform);
   _object_transformation_steps.push_back(result_s2);
@@ -92,7 +92,7 @@ void IACentroid::execute()
 
   // Translate the object to align it with the top of the model
   float translate_upwards = model_height - object_height;
-  std::cout << "Translating upwards by " << translate_upwards * 100 << "=" << model_height * 100 << "-" << object_height * 100 << std::endl;
+  // std::cout << "Translating upwards by " << translate_upwards * 100 << "=" << model_height * 100 << "-" << object_height * 100 << std::endl;
   Eigen::Matrix< float, 4, 4 > transformUpwards = 
     getTranslationMatrix(0,translate_upwards,0);
   pcl::transformPointCloud(*_result, *result_s3, transformUpwards);
@@ -104,9 +104,9 @@ void IACentroid::execute()
   // Store the transposed matrix of the centroid alignment
   translations_.push_back(transform.inverse());
 
-  std::cout << "Showing translations in class: " << std::endl;
-  for (int i = 0; i < translations_.size(); i++) {
-    std::cout << "idx: " << i << " " << translations_.at(i) << std::endl;
-  }
+  // std::cout << "Showing translations in class: " << std::endl;
+  // for (int i = 0; i < translations_.size(); i++) {
+  //   std::cout << "idx: " << i << " " << translations_.at(i) << std::endl;
+  // }
 }
 
