@@ -297,7 +297,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   // Store the transposed matrix of the centroid alignment
   translations_.push_back(transform.inverse());
   // Store the transposed matrix of the rotation to fit the table normal
-  rotations_.push_back(transformationRotateObject.transpose() ); 
+  // rotations_.push_back(transformationRotateObject.transpose() ); 
 
   //      INITIAL ALIGNMENT DONE
  //  std::cout << "Showing translations: " << std::endl;
