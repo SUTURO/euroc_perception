@@ -65,6 +65,7 @@ Eigen::Vector4f getTableNormalFromStringLine(std::string object_table_normal, st
 
 TEST(suturo_perception_mbpe, pose_estimation_cube)
 {
+  std::cout << "PE CUBE TEST" << std::endl;
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
   std::string package_path = ros::package::getPath("suturo_perception_mbpe");
   // std::string modelpath  = "test_files/005box_4000pts.pcd";
@@ -112,7 +113,10 @@ TEST(suturo_perception_mbpe, pose_estimation_cube)
   mpe.setInputCloud(input_cloud);
   mpe.setSurfaceNormal(table_normal);
   mpe.setVoxelSize(0.003f);
+  mpe.setDumpICPFitterPointclouds(true);
+  std::cout << "TEST: BEFORE MPE EXECUTE" << std::endl;
   mpe.execute();
+  std::cout << "TEST: AFTER MPE EXECUTE" << std::endl;
 
   std::cout << "Fitness for cube matching: " << mpe.getFitnessScore() << std::endl;
   // The estimation should be succesful
@@ -683,7 +687,7 @@ TEST(suturo_perception_mbpe, pose_estimation_handlebar_task2)
   mpe.setInputCloud(input_cloud);
   mpe.setSurfaceNormal(table_normal);
   mpe.setVoxelSize(0.003f);
-  mpe.setDumpICPFitterPointclouds(true); // Enable debugging. This will save pointclouds
+  // mpe.setDumpICPFitterPointclouds(true); // Enable debugging. This will save pointclouds
   mpe.execute();
 
   std::cout << "Fitness for handlebar matching: " << mpe.getFitnessScore() << std::endl;

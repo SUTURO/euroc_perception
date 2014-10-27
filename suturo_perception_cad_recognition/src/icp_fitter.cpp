@@ -173,7 +173,27 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
     _model_transformation_steps.push_back(_upwards_model);
   }
 
+  // Prepare and execute initial alignment
+  _initial_alignment->setModelCloud(_upwards_model);
+  _initial_alignment->execute();
+  std::cout << "IA::execute() done" << std::endl;
+  // Copy results from IA execution
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> ia_obj_transformations = _initial_alignment->getObjectTransformationSteps();
+  _object_transformation_steps.insert(_object_transformation_steps.end(),
+      ia_obj_transformations.begin(),
+      ia_obj_transformations.end());
+  std::cout << "transformation pcs copied" << std::endl;
 
+  translations_ = _initial_alignment->getTranslations();
+  std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > > ia_rotations =  _initial_alignment->getRotations();
+  rotations_.insert( rotations_.end(),
+      ia_rotations.begin(), ia_rotations.end());
+
+  _upwards_object = _initial_alignment->getResult();
+  std::cout << "IA done" << std::endl;
+
+
+  /* 
   // Get the (square) dimensions with min max 3d
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points (new pcl::PointCloud<pcl::PointXYZRGB>);
   computeCuboidCornersWithMinMax3D(_upwards_model, corner_points);
@@ -271,7 +291,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   translations_.push_back(transform.inverse());
   // Store the transposed matrix of the rotation to fit the table normal
   rotations_.push_back(transformationRotateObject.transpose() ); 
-
+*/
   // Use ICP for the final alignment, after the object has been initially aligned.
   pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
   icp.setInputSource(_upwards_object);
@@ -298,19 +318,23 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
 
   // Rotate the model first
   pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud (new pcl::PointCloud<pcl::PointXYZ>);
-  Eigen::Matrix< float, 4, 4 > rotationBox = 
-    rotateAroundCrossProductOfNormals(table_normal, Eigen::Vector3f(0,0,1));
+  //      WARN: The following code will break the cad_recognition visualization.
+  //      Nevertheless, we don't need it for
+  //      our newer software modules
+  //
+  // Eigen::Matrix< float, 4, 4 > rotationBox = 
+  //   rotateAroundCrossProductOfNormals(table_normal, Eigen::Vector3f(0,0,1));
 
-  pcl::transformPointCloud (*_model_cloud, *transformed_cloud, rotationBox);   
+  // pcl::transformPointCloud (*_model_cloud, *transformed_cloud, rotationBox);   
 
-  // Compute the centroids of both clouds and bring them closer together
-  // for an rough initial alignment.
-  pcl::compute3DCentroid(*transformed_cloud, model_cloud_centroid); 
-  diff_of_centroids = input_cloud_centroid - model_cloud_centroid;
-  Eigen::Affine3f transformC = pcl::getTransformation(diff_of_centroids[0],
-      diff_of_centroids[1], diff_of_centroids[2],0,0,0);
+  // // Compute the centroids of both clouds and bring them closer together
+  // // for an rough initial alignment.
+  // pcl::compute3DCentroid(*transformed_cloud, model_cloud_centroid); 
+  // diff_of_centroids = input_cloud_centroid - model_cloud_centroid;
+  // Eigen::Affine3f transformC = pcl::getTransformation(diff_of_centroids[0],
+  //     diff_of_centroids[1], diff_of_centroids[2],0,0,0);
 
-  pcl::transformPointCloud(*transformed_cloud, *transformed_cloud,transformC);
+  // pcl::transformPointCloud(*transformed_cloud, *transformed_cloud,transformC);
 
   return transformed_cloud;
 }

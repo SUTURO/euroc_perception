@@ -30,7 +30,9 @@ void IACentroid::execute()
 
   Eigen::Matrix< float, 4, 4 > transformationRotateObject = 
     rotateAroundCrossProductOfNormals(rotation_base_vector, table_normal);
+  std::cout << "LOL"<< std::endl;
   pcl::transformPointCloud (*_cloud_in, *_result, transformationRotateObject);   
+  std::cout << "LOL2"<< std::endl;
   pcl::transformPointCloud (*_cloud_in, *result_s1, transformationRotateObject);   
   _object_transformation_steps.push_back(result_s1);
   // Store the rotation done
@@ -38,6 +40,7 @@ void IACentroid::execute()
 
 
   // Step 2: Move the rotated object cloud to the origin of the coordinate system
+  std::cout << "Step2 in IACentroid" << std::endl;
   Eigen::Vector4f rotated_input_cloud_centroid, 
     diff_of_centroids;
   pcl::compute3DCentroid(*_result, rotated_input_cloud_centroid); 
