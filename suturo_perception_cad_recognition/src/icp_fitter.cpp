@@ -195,7 +195,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   */
 
 
-  
+  /*
   // Get the (square) dimensions with min max 3d
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points (new pcl::PointCloud<pcl::PointXYZRGB>);
   computeCuboidCornersWithMinMax3D(_upwards_model, corner_points);
@@ -289,13 +289,14 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
   pcl::transformPointCloud(*_upwards_object, *_upwards_object_s3, transformUpwards);
   pcl::transformPointCloud(*_upwards_object, *_upwards_object, transformUpwards);
   _object_transformation_steps.push_back(_upwards_object_s3);
+  */
 
   // Store the transposed matrix of the height-fitting transformation
   // std::cout << "Height Adjustment:" << std::endl; 
   // std::cout << transformUpwards << std::endl; 
-  translations_.push_back(transformUpwards.inverse() ); 
+  // translations_.push_back(transformUpwards.inverse() ); 
   // Store the transposed matrix of the centroid alignment
-  translations_.push_back(transform.inverse());
+  // translations_.push_back(transform.inverse());
   // Store the transposed matrix of the rotation to fit the table normal
   // rotations_.push_back(transformationRotateObject.transpose() ); 
 
