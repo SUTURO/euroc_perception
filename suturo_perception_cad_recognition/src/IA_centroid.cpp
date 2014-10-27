@@ -41,15 +41,23 @@ void IACentroid::execute()
 
   // Step 2: Move the rotated object cloud to the origin of the coordinate system
   std::cout << "Step2 in IACentroid" << std::endl;
-  Eigen::Vector4f rotated_input_cloud_centroid, 
+  Eigen::Vector4f rotated_input_cloud_centroid, model_cloud_centroid,
     diff_of_centroids;
   pcl::compute3DCentroid(*_result, rotated_input_cloud_centroid); 
-  diff_of_centroids = Eigen::Vector4f(0,0,0,0) - rotated_input_cloud_centroid;
+  // diff_of_centroids = Eigen::Vector4f(0,0,0,0) - rotated_input_cloud_centroid;
+  // else
+  // {
+    pcl::compute3DCentroid(*_model_cloud, model_cloud_centroid); 
+    diff_of_centroids = model_cloud_centroid - rotated_input_cloud_centroid;
+    std::cout << "ModelCentroid is at " << model_cloud_centroid << "." << "Diff of centroids:" << diff_of_centroids;
+  // }
   Eigen::Matrix< float, 4, 4 > transform = 
     getTranslationMatrix(
         diff_of_centroids[0],
         diff_of_centroids[1],
         diff_of_centroids[2]);
+  std::cout << "Resulting centroid shift transform" << transform << std::endl;
+  std::cout << "Resulting centroid shift transform INVERSE" << transform.inverse() << std::endl;
   pcl::transformPointCloud(*_result, *result_s2,transform);
   pcl::transformPointCloud(*_result, *_result,transform);
   _object_transformation_steps.push_back(result_s2);
@@ -84,6 +92,7 @@ void IACentroid::execute()
 
   // Translate the object to align it with the top of the model
   float translate_upwards = model_height - object_height;
+  std::cout << "Translating upwards by " << translate_upwards << std::endl;
   Eigen::Matrix< float, 4, 4 > transformUpwards = 
     getTranslationMatrix(0,translate_upwards,0);
   pcl::transformPointCloud(*_result, *result_s3, transformUpwards);
@@ -94,5 +103,10 @@ void IACentroid::execute()
   translations_.push_back(transformUpwards.inverse() ); 
   // Store the transposed matrix of the centroid alignment
   translations_.push_back(transform.inverse());
+
+  std::cout << "Showing translations in class: " << std::endl;
+  for (int i = 0; i < translations_.size(); i++) {
+    std::cout << "idx: " << i << " " << translations_.at(i) << std::endl;
+  }
 }
 
