@@ -507,3 +507,16 @@ void ICPFitter::setCalculateModelCentroid(bool b)
 {
   _calc_model_centroid = b;
 }
+
+
+void ICPFitter::setIAMethod(ICPFitter::IAMethod m)
+{
+  if(m == ICPFitter::IA_CENTROID)
+  {
+      _initial_alignment = boost::shared_ptr<suturo_perception::IAMethod> (new suturo_perception::IACentroid(_cloud_in, _model_cloud, _table_normal));
+  }
+  else if(m == ICPFitter::IA_MINMAX)
+  {
+      _initial_alignment = boost::shared_ptr<suturo_perception::IAMethod> (new suturo_perception::IAMinMax(_cloud_in, _model_cloud, _table_normal));
+  }
+}
