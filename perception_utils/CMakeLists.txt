@@ -56,6 +56,7 @@ set(perception_utils_files
 	include/perception_utils/point.hpp
 	include/perception_utils/shape.hpp
   include/perception_utils/get_euroc_task_description.h
+  include/perception_utils/node_status.hpp
 )
 
 add_library(perception_utils ${perception_utils_files})
@@ -70,7 +71,12 @@ add_executable(get_min_max_3d
   src/get_min_max_3d.cpp)
 target_link_libraries(get_min_max_3d ${catkin_LIBRARIES})      
 
-## Declare a cpp executable
+add_executable(publish_required_nodes 
+	src/logger.cpp 
+	src/node_status.cpp
+  include/perception_utils/node_status.hpp)
+target_link_libraries(publish_required_nodes ${Boost_LIBRARIES} ${catkin_LIBRARIES})    
+
 add_executable(region_growing 
   src/region_growing.cpp
   src/basic_io_pcd.cpp)
