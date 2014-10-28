@@ -13,8 +13,8 @@ namespace suturo_perception{
       
     void execute();
 
-    Eigen::Matrix<float, 4, 4> getOrientation(Eigen::Matrix<float, 4, 4> icp_transform_inverse);
-    pcl::PointXYZ getOrigin(Eigen::Matrix<float, 4, 4> icp_transform_inverse);
+    Eigen::Matrix<float, 4, 4> getOrientation();
+    pcl::PointXYZ getOrigin();
   };
 }
 #endif

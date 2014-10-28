@@ -2,15 +2,14 @@
 
 using namespace suturo_perception;
 
-Eigen::Matrix<float, 4, 4> IACentroid::getOrientation(Eigen::Matrix<float, 4, 4> icp_transform_inverse)
+Eigen::Matrix<float, 4, 4> IACentroid::getOrientation()
 {
 
   Eigen::Matrix<float, 4, 4> final_transform =
-    rotations_.at(1) * translations_.at(1) * translations_.at(0) * icp_transform_inverse;
+    rotations_.at(1) * translations_.at(1) * translations_.at(0);
   return final_transform;
 }
-      // Calculate the final origin of the object. This can include the ICP transformation matrix. If you don't need it, pass the identity matrix.
-pcl::PointXYZ IACentroid::getOrigin(Eigen::Matrix<float, 4, 4> icp_transform_inverse)
+pcl::PointXYZ IACentroid::getOrigin()
 {
   // Transform object center
   pcl::PointXYZ a(0,0,0);
@@ -18,7 +17,7 @@ pcl::PointXYZ IACentroid::getOrigin(Eigen::Matrix<float, 4, 4> icp_transform_inv
   origin->push_back(a);
   pcl::transformPointCloud(*origin, *origin, 
       rotations_.at(1) *
-      translations_.at(1) * translations_.at(0) * icp_transform_inverse * rotations_.at(0) );
+      translations_.at(1) * translations_.at(0) );
   return origin->points.at(0);
 }
 
