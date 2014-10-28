@@ -443,39 +443,15 @@ Eigen::Quaternionf ICPFitter::getOrientation()
 
 pcl::PointXYZ ICPFitter::getOrigin()
 {
-
   // Transform object center
   pcl::PointXYZ a(0,0,0);
   pcl::PointCloud<pcl::PointXYZ>::Ptr origin (new pcl::PointCloud<pcl::PointXYZ>);
   origin->push_back(a);
-   // _initial_alignment->getOrigin()
   pcl::transformPointCloud(*origin, *origin, 
        _initial_alignment->getTransformations() * 
 _icp_transform_inverse * rotations_.at(0) );
   return origin->points.at(0); 
 
-  // pcl::PointXYZ a(0,0,0);
-  // pcl::PointCloud<pcl::PointXYZ>::Ptr origin (new pcl::PointCloud<pcl::PointXYZ>);
-  // origin->push_back( a );
-  // pcl::transformPointCloud(*origin, *origin, 
-  //      rotations_.at(1) * translations_.at(1) * translations_.at(0) * _icp_transform_inverse * rotations_.at(0) );
-  // pcl::PointXYZ b = _initial_alignment->getOrigin();
-  // pcl::PointXYZ c(0,0,0);
-  // pcl::PointCloud<pcl::PointXYZ>::Ptr origin2 (new pcl::PointCloud<pcl::PointXYZ>);
-  // origin2->push_back( c );
-  // pcl::transformPointCloud(*origin2, *origin2, 
-  //      rotations_.at(1) * translations_.at(1) * translations_.at(0));
-  //      // rotations_.at(1) * translations_.at(1) * translations_.at(0) * _icp_transform_inverse * rotations_.at(0) );
-
-  // std::cout << "b vs. c:" << b << " ... " << origin2->points.at(0) << std::endl;
-  // pcl::transformPointCloud(*origin2, *origin2, 
-  //      _icp_transform_inverse * rotations_.at(0) );
-  // std::cout << "a full vs. c transformed again:" << origin->points.at(0) << " ... " << origin2->points.at(0) << std::endl;
-  // std::cout << "In ICPFitter transformations:" << std::endl;
-  // std::cout << rotations_.at(1) << std::endl;
-  // std::cout << translations_.at(1) << std::endl;
-  // std::cout << translations_.at(0) << std::endl;
-  // std::cout << "----- END ----" << std::endl;
   return origin->points.at(0);
 
 }
