@@ -40,10 +40,8 @@ namespace suturo_perception
 			virtual void execute() = 0;
 
 
-      // Calculate the final orientation of the object. This can include the ICP transformation matrix. If you don't need it, pass the identity matrix.
-      virtual Eigen::Matrix<float, 4, 4>  getOrientation() = 0;
-      // Calculate the final origin of the object. This can include the ICP transformation matrix. If you don't need it, pass the identity matrix.
-      virtual pcl::PointXYZ getOrigin() = 0;
+      // A transformation matrix with all the applied transformations
+      virtual Eigen::Matrix<float, 4, 4>  getTransformations() = 0;
 
       Eigen::Matrix< float, 4, 4 > rotateAroundCrossProductOfNormals(
           Eigen::Vector3f base_normal,

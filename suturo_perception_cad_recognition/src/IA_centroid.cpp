@@ -2,24 +2,30 @@
 
 using namespace suturo_perception;
 
-Eigen::Matrix<float, 4, 4> IACentroid::getOrientation()
+Eigen::Matrix<float, 4, 4> IACentroid::getTransformations()
 {
 
   Eigen::Matrix<float, 4, 4> final_transform =
     rotations_.at(0) * translations_.at(1) * translations_.at(0);
   return final_transform;
 }
-pcl::PointXYZ IACentroid::getOrigin()
-{
-  // Transform object center
-  pcl::PointXYZ a(0,0,0);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr origin (new pcl::PointCloud<pcl::PointXYZ>);
-  origin->push_back(a);
-  pcl::transformPointCloud(*origin, *origin, 
-      rotations_.at(0) *
-      translations_.at(1) * translations_.at(0) );
-  return origin->points.at(0);
-}
+// pcl::PointXYZ IACentroid::getOrigin()
+// {
+//   // Transform object center
+//   pcl::PointXYZ a(0,0,0);
+//   pcl::PointCloud<pcl::PointXYZ>::Ptr origin (new pcl::PointCloud<pcl::PointXYZ>);
+//   origin->push_back(a);
+//   pcl::transformPointCloud(*origin, *origin, 
+//       rotations_.at(0) *
+//       translations_.at(1) * translations_.at(0) );
+// 
+//   // std::cout << "In class transformations:" << std::endl;
+//   // std::cout << rotations_.at(0) << std::endl;
+//   // std::cout << translations_.at(1) << std::endl;
+//   // std::cout << translations_.at(0) << std::endl;
+//   // std::cout << "----- END ----" << std::endl;
+//   return origin->points.at(0);
+// }
 
 void IACentroid::execute()
 {
