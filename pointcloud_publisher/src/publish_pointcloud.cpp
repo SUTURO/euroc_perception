@@ -24,6 +24,7 @@
 #include <boost/program_options.hpp>
 
 #include <perception_utils/logger.h>
+#include <perception_utils/node_status.hpp>
 
 #include "suturo_pointcloud_publisher/projector.h"
 
@@ -44,6 +45,7 @@ std::string rgb_topic = "";
 std::string frame = "";
 std::string frame_rgb = "";
 std::string output_topic = "";
+unsigned char status_node_type;
 bool verbose = false;
 tf::StampedTransform transform_rgb_depth;
 
@@ -121,6 +123,7 @@ int main (int argc, char** argv)
   frame = "/sdepth_pcl";
   output_topic = "/suturo/euroc_scene_cloud";
   std::string desired_cam = "scene";
+	status_node_type = suturo_perception_msgs::PerceptionNodeStatus::NODE_CLOUD_SCENE;
 	bool project_colors = true;
 
   // "HashMap" for program parameters
@@ -180,6 +183,7 @@ int main (int argc, char** argv)
 			output_topic = "/suturo/euroc_scene_cloud";
 		//else
 		//	output_topic = "/suturo/euroc_scene_cloud_fast";
+		status_node_type = suturo_perception_msgs::PerceptionNodeStatus::NODE_CLOUD_SCENE;
   }
   else if(desired_cam == "tcp")
   {
@@ -191,6 +195,7 @@ int main (int argc, char** argv)
 			output_topic = "/suturo/euroc_tcp_cloud";
 		//else
 		//	output_topic = "/suturo/euroc_gripper_cloud_fast";
+		status_node_type = suturo_perception_msgs::PerceptionNodeStatus::NODE_CLOUD_GRIPPER;
   }
   else
   {
@@ -226,6 +231,8 @@ int main (int argc, char** argv)
 
   pub_cloud = n.advertise<sensor_msgs::PointCloud2> (output_topic, 1);
 
+	NodeStatus node_status(n);
+	node_status.nodeStarted(status_node_type);
 
 	ros::Rate loop_rate(10);
 	while (ros::ok())

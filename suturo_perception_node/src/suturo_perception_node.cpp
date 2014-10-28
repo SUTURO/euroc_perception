@@ -19,6 +19,7 @@ SuturoPerceptionNode::SuturoPerceptionNode(ros::NodeHandle &n, std::string image
   nodeType_(nodeType),
   ph_(n)
 {
+	unsigned char status_node_type;
   switch (nodeType_) 
   {
     case GRIPPER:
@@ -33,6 +34,7 @@ SuturoPerceptionNode::SuturoPerceptionNode(ros::NodeHandle &n, std::string image
       SERVICE_NAME = "/suturo/GetGripper";
       MARKER_TOPIC = "/suturo/tcp/cuboid_markers_gripper";
       DEPTH_FRAME = "/tdepth_pcl";
+			status_node_type = suturo_perception_msgs::PerceptionNodeStatus::NODE_GRIPPER;
     break;
     case SCENE:
       OBJECT_CLOUD_PREFIX_TOPIC= "/suturo/scene/object_cluster_cloud/";
@@ -46,6 +48,7 @@ SuturoPerceptionNode::SuturoPerceptionNode(ros::NodeHandle &n, std::string image
       SERVICE_NAME = "/suturo/GetScene";
       MARKER_TOPIC = "/suturo/scene/cuboid_markers_gripper";
       DEPTH_FRAME = "/sdepth_pcl";
+			status_node_type = suturo_perception_msgs::PerceptionNodeStatus::NODE_SCENE;
     break;
   }
 
@@ -98,6 +101,9 @@ SuturoPerceptionNode::SuturoPerceptionNode(ros::NodeHandle &n, std::string image
 	{
 		task4_segmenter_ = new Task4Segmenter(nodeHandle_, nodeType_==GRIPPER, task_client_->getTaskDescription());
 	}
+	
+	node_status = boost::shared_ptr<NodeStatus> (new NodeStatus(nodeHandle_));
+	node_status->nodeStarted(status_node_type);
 }
 
 /*

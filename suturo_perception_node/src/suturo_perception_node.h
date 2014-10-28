@@ -9,6 +9,8 @@
 #include "perception_utils/pipeline_data.hpp"
 #include "perception_utils/publisher_helper.h"
 #include "suturo_perception_msgs/GetGripper.h"
+#include <suturo_perception_msgs/PerceptionNodeStatus.h>
+#include <perception_utils/node_status.hpp>
 #include "suturo_perception_node/SuturoPerceptionConfig.h"
 #include <perception_utils/get_euroc_task_description.h>
 #include <suturo_perception_segmentation/segmenter.h>
@@ -45,6 +47,7 @@ class SuturoPerceptionNode
     std::string DEPTH_FRAME;
 
     NodeType nodeType_; // true = gripper, false = scene
+    boost::shared_ptr<suturo_perception::NodeStatus> node_status;
 
     ros::NodeHandle nodeHandle_;
     ros::ServiceServer clusterService_;
