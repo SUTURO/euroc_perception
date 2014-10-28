@@ -43,6 +43,7 @@
 #include <ros/ros.h>
 #include <ros/package.h>
 #include "perception_utils/logger.h"
+#include <suturo_perception_cad_recognition/IA_centroid.h>
 
 using namespace boost;
 using namespace std;
@@ -55,6 +56,7 @@ class ICPFitter
   protected:
     suturo_perception::Logger logger_;
     Eigen::Vector4f _table_normal;
+    boost::shared_ptr<suturo_perception::IAMethod> _initial_alignment;
 
   public:
     // Attributes
@@ -93,6 +95,8 @@ class ICPFitter
       _rotate_model_upwards = true;
       _calc_model_centroid = false;
       logger_ = suturo_perception::Logger("ICPFitter");
+      // _initial_alignment = suturo_perception::IACentroid(cloud_in, model_cloud, table_normal);
+      _initial_alignment = boost::shared_ptr<suturo_perception::IAMethod> (new suturo_perception::IACentroid(cloud_in, model_cloud, table_normal));
     }
     // Eigen::Matrix<float, 4, 4>  getTransformation(); // Available after execution
 

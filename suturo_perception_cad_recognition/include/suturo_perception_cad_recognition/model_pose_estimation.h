@@ -15,6 +15,7 @@
 #include <moveit_msgs/CollisionObject.h>
 #include <geometry_msgs/Quaternion.h>
 #include <tf/transform_broadcaster.h>
+#include <suturo_perception_cad_recognition/IA_centroid.h>
 
 // #include <pcl/registration/ia_ransac.h>
 /*
