@@ -253,6 +253,9 @@ bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
        res.pointArray.push_back(latest_scene_cloud->points.at(i).x);
        res.pointArray.push_back(latest_scene_cloud->points.at(i).y);
        res.pointArray.push_back(latest_scene_cloud->points.at(i).z);
+       HSVColor c = convertRGBToHSV(latest_tcp_cloud->points.at(i).r,
+       latest_tcp_cloud->points.at(i).g, latest_tcp_cloud->points.at(i).b);
+       res.pointArray.push_back( getNearestRGBColor(c) );
      }
      if(req.publishToPlanningScene)
      {
