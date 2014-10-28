@@ -17,6 +17,7 @@
 #include <pcl/filters/filter.h>
 #include <pcl/filters/voxel_grid.h>
 #include "pcl_ros/transforms.h"
+#include <perception_utils/node_status.hpp>
 
 //
 //
@@ -302,6 +303,10 @@ int main(int argc, char **argv)
 
   std::cout << "[odom_combiner] Subscribed to topics" << std::endl;
   ros::ServiceServer service = n.advertiseService("/suturo/GetPointArray", execute);
+	
+	suturo_perception::NodeStatus node_status(n);
+	node_status.nodeStarted(suturo_perception_msgs::PerceptionNodeStatus::NODE_ODOM_COMBINER);
+	
   ros::spin();
 
   return 0;

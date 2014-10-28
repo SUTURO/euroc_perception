@@ -140,8 +140,8 @@ def main():
     rospy.loginfo("Starting ColorDetector")
     rospy.Service("/suturo/RecognizeOoI", RecognizeOoI, colorDetector.detect)
     # Started
-    startpub = rospy.Publisher("/suturo/perception_node_status", PerceptionNodeStatus)
-    statusmsg = PerceptionNodeStatus(PerceptionNodeStatus.NODE_COLOR_RECOGNIZER, [], latch=True)
+    startpub = rospy.Publisher("/suturo/perception_node_status", PerceptionNodeStatus, latch=True)
+    statusmsg = PerceptionNodeStatus(PerceptionNodeStatus.NODE_COLOR_RECOGNIZER, [])
     startpub.publish(statusmsg)
     # spin the wheel
     rospy.spin()

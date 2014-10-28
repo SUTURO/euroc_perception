@@ -38,43 +38,32 @@ namespace suturo_perception
 			return true;
 		}
 		
-		std::vector<unsigned char> getRequiredNodesForTask(int task)
+		std::vector<unsigned short> getRequiredNodesForTask(int task)
 		{
-			std::vector<unsigned char> required_nodes;
+			std::vector<unsigned short> required_nodes;
 			
-			if (task == suturo_msgs::Task::TASK_1)
+			switch (task)
 			{
-				logger.logInfo("+");
-			}
-			else
-			{
-				logger.logInfo("-");
-			}
-			if (task >= suturo_msgs::Task::TASK_1 && task <= suturo_msgs::Task::TASK_5)
-			{
+				case suturo_msgs::Task::TASK_4:
+					required_nodes.push_back(suturo_perception_msgs::PerceptionNodeStatus::NODE_ODOM_COMBINER);
+				case suturo_msgs::Task::TASK_1:
+				case suturo_msgs::Task::TASK_2:
+				case suturo_msgs::Task::TASK_3:
+				case suturo_msgs::Task::TASK_5:
 					required_nodes.push_back(suturo_perception_msgs::PerceptionNodeStatus::NODE_CLOUD_SCENE);
 					required_nodes.push_back(suturo_perception_msgs::PerceptionNodeStatus::NODE_CLOUD_GRIPPER);
 					required_nodes.push_back(suturo_perception_msgs::PerceptionNodeStatus::NODE_SCENE);
 					required_nodes.push_back(suturo_perception_msgs::PerceptionNodeStatus::NODE_GRIPPER);
 					required_nodes.push_back(suturo_perception_msgs::PerceptionNodeStatus::NODE_COLOR_RECOGNIZER);
-					return required_nodes;
-			}
-			if (task == suturo_msgs::Task::TASK_6)
-			{
+				break;
+				case suturo_msgs::Task::TASK_6:
 					required_nodes.push_back(suturo_perception_msgs::PerceptionNodeStatus::NODE_CLOUD_GRIPPER);
 					required_nodes.push_back(suturo_perception_msgs::PerceptionNodeStatus::NODE_GRIPPER);
-					return required_nodes;
+				break;
+				default:
+					logger.logError((boost::format("Couldn't define which nodes are required! Unknown task_type: %s") % task).str());
+				break;
 			}
-			
-			if (0 == 0)
-			{
-				logger.logInfo("0 == 0");
-			}
-			
-			logger.logError((boost::format("Couldn't define which nodes are required! Unknown task_type: %s (task 1 = %s)") % (int)task % (int)suturo_msgs::Task::TASK_1).str());
-			logger.logError((boost::format("Couldn't define which nodes are required! Unknown task_type: %s (task 1 = %s)") % task % suturo_msgs::Task::TASK_1).str());
-			
-			logger.logInfo((boost::format("case: %s, task %s") % typeid((int)task).name() % typeid((int)suturo_msgs::Task::TASK_1).name()).str());
 			
 			return required_nodes;
 		}
