@@ -20,6 +20,7 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/fpfh.h>
 #include <pcl/features/shot.h>
+#include <suturo_perception_match_cuboid/cuboid_matcher.h>
 
 namespace suturo_perception
 {
@@ -41,6 +42,12 @@ namespace suturo_perception
           Eigen::Vector3f base_normal,
           Eigen::Vector3f normal_to_rotate,
           bool store_transformation=false);
+
+      Eigen::Matrix< float, 4, 4> getTranslationMatrix(
+          float x, float y, float z);
+
+      Cuboid computeCuboidFromBorderPoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points);
+      void computeCuboidCornersWithMinMax3D(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in, pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points);
 
       // Get list of rotation matrices, that have been applied during the initial alignment
       std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > > getRotations(){ return rotations_; }
