@@ -6,7 +6,7 @@ Eigen::Matrix<float, 4, 4> IACentroid::getOrientation()
 {
 
   Eigen::Matrix<float, 4, 4> final_transform =
-    rotations_.at(1) * translations_.at(1) * translations_.at(0);
+    rotations_.at(0) * translations_.at(1) * translations_.at(0);
   return final_transform;
 }
 pcl::PointXYZ IACentroid::getOrigin()
@@ -16,7 +16,7 @@ pcl::PointXYZ IACentroid::getOrigin()
   pcl::PointCloud<pcl::PointXYZ>::Ptr origin (new pcl::PointCloud<pcl::PointXYZ>);
   origin->push_back(a);
   pcl::transformPointCloud(*origin, *origin, 
-      rotations_.at(1) *
+      rotations_.at(0) *
       translations_.at(1) * translations_.at(0) );
   return origin->points.at(0);
 }

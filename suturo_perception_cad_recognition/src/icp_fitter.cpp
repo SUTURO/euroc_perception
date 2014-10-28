@@ -436,7 +436,7 @@ Eigen::Matrix< float, 3, 3 > ICPFitter::removeTranslationVectorFromMatrix(Eigen:
 Eigen::Quaternionf ICPFitter::getOrientation()
 {
   Eigen::Matrix<float, 4, 4> final_transform =
-    rotations_.at(1) * translations_.at(1) * translations_.at(0) * _icp_transform_inverse * rotations_.at(0);
+    _initial_alignment->getOrientation() * _icp_transform_inverse * rotations_.at(0);
   Eigen::Quaternionf q(removeTranslationVectorFromMatrix( final_transform ) );
   return q;
 }
