@@ -153,7 +153,7 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
 	if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_4 && 
 			nodeType_ == GRIPPER)
 	{
-		task4_segmenter_->updateSegmentationCloud();
+		task4_segmenter_->updateSegmentationCloud(pipelineData_);
 		timeout = 30;
 	}
   
@@ -299,9 +299,14 @@ SuturoPerceptionNode::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in)
 		ss << i;
 		ph_.publish_pointcloud(PROJECTED_CLUSTERS_PREFIX_TOPIC + ss.str(), 
 				projected_points_clusters[i], DEPTH_FRAME);
+	}
+	for (int i = 0; i < projected_point_hulls.size(); i++)
+	{
+		std::stringstream ss;
+		ss << i;
 		ph_.publish_pointcloud(PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC + ss.str(), 
 				projected_point_hulls[i], DEPTH_FRAME);
-	}
+}
 	// Publish the segmentation debug topics
 	ph_.publish_pointcloud(TABLE_TOPIC, segmenter->getTablePointCloud()
 				, DEPTH_FRAME);
