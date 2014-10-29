@@ -145,10 +145,12 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
   
   pipelineData_->task_ = task_client_->getTaskDescription();
 	
-	if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_6 &&
-		  req.s.find("firstConveyorCall")!=std::string::npos)
+	if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_6)
 	{
-		task6_segmenter_->updateConveyorCloud();
+		if (req.s.find("firstConveyorCall")!=std::string::npos)
+		{
+			task6_segmenter_->updateConveyorCloud();
+		}
 	}
 	else
 	{
