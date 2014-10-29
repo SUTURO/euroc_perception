@@ -168,6 +168,7 @@ void ModelPoseEstimation::execute()
     fitter.rotateModelUp(false);
     fitter.setMaxICPIterations(max_icp_iterations_);
     fitter.setCalculateModelCentroid(true);
+    fitter.setIAMethod(icp_fitter_ia_method_);
 
     boost::posix_time::ptime s_icp = boost::posix_time::microsec_clock::local_time();
     // pcl::PointCloud<pcl::PointXYZ>::Ptr model_fitted = ria.execute();

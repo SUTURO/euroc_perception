@@ -79,6 +79,7 @@ public:
     dump_icp_fitter_pointclouds_ = false;
     remove_nans_ = false;
     max_icp_iterations_ = 60;
+    icp_fitter_ia_method_ = ICPFitter::IA_CENTROID;
   }
 
   //  This should be the observed pointcloud
@@ -124,7 +125,12 @@ public:
   // Please see the documentation of ModelTransformMode for more details on the different modes
   void setTransformModelsOnFail(ModelTransformMode m);
 
-
+  // Sets the desired INITIAL ALIGNMENT method that should be
+  // used during ICPFitter::execute()
+  void setInitialAlignmentMethod(ICPFitter::IAMethod m)
+  {
+    icp_fitter_ia_method_ = m;
+  }
 
   void execute();
 
@@ -178,6 +184,7 @@ private:
   bool pipeline_mode_;
   bool remove_nans_;
   int max_icp_iterations_;
+  ICPFitter::IAMethod icp_fitter_ia_method_;
 
   std::vector<int> parseRequestArgs(std::string req);
 
