@@ -162,7 +162,7 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 	
 	for (size_t i = 0; i < euclidean_label_indices.size (); i++)
 	{
-		if (euclidean_label_indices[i].indices.size () > 50)
+		if (euclidean_label_indices[i].indices.size () > pipeline_data->ecMinClusterSize)
 		{
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
 			pcl::copyPointCloud (*cloud,euclidean_label_indices[i].indices,*cluster);
