@@ -153,7 +153,7 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
 	if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_4 && 
 			nodeType_ == GRIPPER)
 	{
-		task4_segmenter_->updateSegmentationCloud();
+		task4_segmenter_->updateSegmentationCloud(pipelineData_);
 		timeout = 30;
 	}
   

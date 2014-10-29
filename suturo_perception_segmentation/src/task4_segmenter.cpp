@@ -36,10 +36,10 @@ Task4Segmenter::Task4Segmenter(ros::NodeHandle &node, bool isTcp, suturo_msgs::T
 	points_above_table_ = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
 	projected_points_ = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
 	
-	updateSegmentationCloud();
+	updateSegmentationCloud(PipelineData::Ptr(new PipelineData()));
 }
 
-void Task4Segmenter::updateSegmentationCloud()
+void Task4Segmenter::updateSegmentationCloud(PipelineData::Ptr pipeline_data)
 {
 	logger.logInfo("generating segmentation cloud");
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr odom_segmentation_cloud = generate_simple_segmentation_cloud();
@@ -91,6 +91,18 @@ void Task4Segmenter::updateSegmentationCloud()
 	{
 		pcl::fromROSMsg(depth_pcl_pc2,*segmentation_cloud_);
 	}
+	
+	// fit the table plane to get coefficients
+	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+  pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+  PointCloudOperations::fitPlanarModel(segmentation_cloud_, inliers, coefficients, pipeline_data->planeMaxIterations, pipeline_data->planeDistanceThreshold);
+  logger.logInfo((boost::format("Table inlier count: %s") % inliers->indices.size ()).str());
+  logger.logInfo((boost::format("pcl::ModelCoefficients: %s") % coefficients->values.size()).str());
+  for (int i = 0; i < coefficients->values.size(); i++)
+  {
+    logger.logInfo((boost::format("  %s") % coefficients->values[i]).str());
+  }
+  table_coefficients_ = coefficients;
 }
 
 void
@@ -103,6 +115,7 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
     PipelineData::Ptr &pipeline_data, 
     PipelineObject::VecPtr &pipeline_objects)
 {
+	/*
 	pcl::IntegralImageNormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
 	pcl::OrganizedMultiPlaneSegmentation<pcl::PointXYZRGB, pcl::Normal, pcl::Label> mps;
 	
@@ -116,7 +129,7 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 	pcl::EuclideanPlaneCoefficientComparator<pcl::PointXYZRGB, pcl::Normal>::Ptr euclidean_comparator_(new pcl::EuclideanPlaneCoefficientComparator<pcl::PointXYZRGB, pcl::Normal> ());
 	pcl::RGBPlaneCoefficientComparator<pcl::PointXYZRGB, pcl::Normal>::Ptr rgb_comparator_(new pcl::RGBPlaneCoefficientComparator<pcl::PointXYZRGB, pcl::Normal> ());
 	pcl::EdgeAwarePlaneComparator<pcl::PointXYZRGB, pcl::Normal>::Ptr edge_aware_comparator_(new pcl::EdgeAwarePlaneComparator<pcl::PointXYZRGB, pcl::Normal> ());
-	pcl::EuclideanClusterComparator<pcl::PointXYZRGB, pcl::Normal, pcl::Label>::Ptr  euclidean_cluster_comparator_ = pcl::EuclideanClusterComparator<pcl::PointXYZRGB, pcl::Normal, pcl::Label>::Ptr (new pcl::EuclideanClusterComparator<pcl::PointXYZRGB, pcl::Normal, pcl::Label> ());
+	
 	// Set up Organized Multi Plane Segmentation
 	mps.setMinInliers (10000);
 	mps.setAngularThreshold (pcl::deg2rad (1.0)); //3 degrees
@@ -132,18 +145,6 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 	boost::shared_ptr<pcl::EdgeAwarePlaneComparator<pcl::PointXYZRGB,pcl::Normal> > eapc = boost::dynamic_pointer_cast<pcl::EdgeAwarePlaneComparator<pcl::PointXYZRGB,pcl::Normal> >(edge_aware_comparator_);
 	eapc->setDistanceMap (distance_map);
 	eapc->setDistanceThreshold (0.01f, false);
-	
-	// fake the table plane to get correct coefficients
-  pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
-  pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-  PointCloudOperations::fitPlanarModel(segmentation_cloud_, inliers, coefficients, pipeline_data->planeMaxIterations, pipeline_data->planeDistanceThreshold);
-  logger.logInfo((boost::format("Table inlier count: %s") % inliers->indices.size ()).str());
-  logger.logInfo((boost::format("pcl::ModelCoefficients: %s") % coefficients->values.size()).str());
-  for (int i = 0; i < coefficients->values.size(); i++)
-  {
-    logger.logInfo((boost::format("  %s") % coefficients->values[i]).str());
-  }
-  pipeline_data->coefficients_ = coefficients;
 	
 	// Segment Planes
 	//double mps_start = pcl::getTime ();
@@ -176,56 +177,76 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 	//double mps_end = pcl::getTime ();
   boost::posix_time::ptime mps_end = boost::posix_time::microsec_clock::local_time();
 	logger.logTime(mps_start, mps_end, "MPS+Refine took: ");
+	*/
+	
+	pcl::PointCloud<pcl::Label>::Ptr labels (new pcl::PointCloud<pcl::Label>);
+	//std::vector<pcl::PointIndices> label_indices;
+	
+	// self made plane generation
+	double max_plane_dist = 0.002; // 2mm
+	
+	labels->points.resize(cloud->points.size());
+	// init height calculation
+  float a,b,c,d,e;
+  a = table_coefficients_->values[0];
+  b = table_coefficients_->values[1];
+  c = table_coefficients_->values[2];
+  d = table_coefficients_->values[3];
+  e = sqrt(a*a + b*b + c*c);
+	
+#pragma omp parallel for
+	for (int i = 0; i < cloud->points.size(); i++)
+	{
+		pcl::PointXYZRGB *p = &cloud->points[i];
+		// height calculation
+		double tmp = ( a * p->x + b * p->y + c * p->z + d ) / e;
+    tmp = tmp < 0 ? -tmp : tmp; // abs
+    
+    labels->points[i].label = tmp < max_plane_dist ? 0 : 1;
+	}
+	
 	//Segment Objects
 	std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
-	bool use_clustering_ = true;
-	if (use_clustering_ && regions.size () > 0)
+	//bool use_clustering_ = true;
+	//if (use_clustering_ && regions.size () > 0)
+	//{
+	std::vector<bool> plane_labels;
+	//plane_labels.resize (label_indices.size (), false);
+	plane_labels.push_back(true);
+	plane_labels.push_back(false);
+	//for (size_t i = 0; i < label_indices.size (); i++)
+	//{
+	//	if (label_indices[i].indices.size () > 10000)
+	//	{
+	//		plane_labels[i] = true;
+	//	}
+	//}
+	
+	pcl::EuclideanClusterComparator<pcl::PointXYZRGB, pcl::Normal, pcl::Label>::Ptr  euclidean_cluster_comparator_ = pcl::EuclideanClusterComparator<pcl::PointXYZRGB, pcl::Normal, pcl::Label>::Ptr (new pcl::EuclideanClusterComparator<pcl::PointXYZRGB, pcl::Normal, pcl::Label> ());
+	euclidean_cluster_comparator_->setInputCloud (cloud);
+	euclidean_cluster_comparator_->setLabels (labels);
+	euclidean_cluster_comparator_->setExcludeLabels (plane_labels);
+	//euclidean_cluster_comparator_->setExcludeLabels (empty_plane_labels);
+	euclidean_cluster_comparator_->setDistanceThreshold (0.01f, false);
+	pcl::PointCloud<pcl::Label> euclidean_labels;
+	std::vector<pcl::PointIndices> euclidean_label_indices;
+	pcl::OrganizedConnectedComponentSegmentation<pcl::PointXYZRGB,pcl::Label> euclidean_segmentation (euclidean_cluster_comparator_);
+	euclidean_segmentation.setInputCloud (cloud);
+	euclidean_segmentation.segment (euclidean_labels, euclidean_label_indices);
+	for (size_t i = 0; i < euclidean_label_indices.size (); i++)
 	{
-		std::vector<bool> empty_plane_labels;
-		std::vector<bool> plane_labels;
-		empty_plane_labels.resize (label_indices.size (), false);
-		plane_labels.resize (label_indices.size (), false);
-		for (size_t i = 0; i < label_indices.size (); i++)
+		if (euclidean_label_indices[i].indices.size () > 1000)
 		{
-			if (label_indices[i].indices.size () > 10000)
-			{
-				plane_labels[i] = true;
-			}
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
+			pcl::copyPointCloud (*cloud,euclidean_label_indices[i].indices,*cluster);
+			clusters.push_back (cluster);
+			logger.logInfo((boost::format("euclidean cluster %s has %s points!") % i % cluster->points.size()).str());
 		}
-		euclidean_cluster_comparator_->setInputCloud (cloud);
-		euclidean_cluster_comparator_->setLabels (labels);
-		euclidean_cluster_comparator_->setExcludeLabels (plane_labels);
-		//euclidean_cluster_comparator_->setExcludeLabels (empty_plane_labels);
-		euclidean_cluster_comparator_->setDistanceThreshold (0.01f, false);
-		pcl::PointCloud<pcl::Label> euclidean_labels;
-		std::vector<pcl::PointIndices> euclidean_label_indices;
-		pcl::OrganizedConnectedComponentSegmentation<pcl::PointXYZRGB,pcl::Label> euclidean_segmentation (euclidean_cluster_comparator_);
-		euclidean_segmentation.setInputCloud (cloud);
-		euclidean_segmentation.segment (euclidean_labels, euclidean_label_indices);
-		for (size_t i = 0; i < euclidean_label_indices.size (); i++)
-		{
-			if (euclidean_label_indices[i].indices.size () > 1000)
-			{
-				pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
-				pcl::copyPointCloud (*cloud,euclidean_label_indices[i].indices,*cluster);
-				clusters.push_back (cluster);
-				logger.logInfo((boost::format("euclidean cluster %s has %s points!") % i % cluster->points.size()).str());
-			}
-		}
-		logger.logInfo((boost::format("Got %s euclidean clusters!") % clusters.size() ).str());
-		projection_clusters_ = clusters;
 	}
-	/*
-	{
-	//QMutexLocker vis_locker (&vis_mtx_);
-	prev_cloud_ = *cloud;
-	prev_normals_ = *normal_cloud;
-	prev_regions_ = regions;
-	prev_distance_map_ = distance_map;
-	prev_clusters_ = clusters;
-	data_modified_ = true;
-	}
-	*/
+	logger.logInfo((boost::format("Got %s euclidean clusters!") % clusters.size() ).str());
+	projection_clusters_ = clusters;
+	//}
+
 	// publish the segmentation results
 	pipeline_objects.clear();
 	for (int i = 0; i < clusters.size(); i++)
@@ -245,7 +266,9 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 		pipeline_objects.push_back(pipelineObject);
 	}
 
+	// take the fake table plane cloude & coefficients
 	table_pointcloud_ = segmentation_cloud_;
+  pipeline_data->coefficients_ = table_coefficients_;
 }
 
 bool Task4Segmenter::clusterPointcloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, PipelineData::Ptr &pipeline_data)
