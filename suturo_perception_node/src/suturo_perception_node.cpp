@@ -97,7 +97,7 @@ SuturoPerceptionNode::SuturoPerceptionNode(ros::NodeHandle &n, std::string image
 	{
 		task6_segmenter_ = new Task6Segmenter(nodeHandle_, nodeType_==GRIPPER, task_client_->getTaskDescription());
 	}
-  if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_4 && nodeType_==GRIPPER)
+	else
 	{
 		task4_segmenter_ = new Task4Segmenter(nodeHandle_, nodeType_==GRIPPER, task_client_->getTaskDescription());
 	}
@@ -150,11 +150,9 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
 	{
 		task6_segmenter_->updateConveyorCloud();
 	}
-	if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_4 && 
-			nodeType_ == GRIPPER)
+	else
 	{
 		task4_segmenter_->updateSegmentationCloud(pipelineData_);
-		timeout = 30;
 	}
   
 	ros::Subscriber sub = nodeHandle_.subscribe<sensor_msgs::PointCloud2>(cloudTopic_, 1, boost::bind(&SuturoPerceptionNode::receive_cloud,this, _1));
@@ -251,17 +249,13 @@ SuturoPerceptionNode::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in)
 	
 	switch (pipelineData_->task_.task_type)
 	{
+		case suturo_msgs::Task::TASK_1:
+		case suturo_msgs::Task::TASK_2:
+		case suturo_msgs::Task::TASK_3:
 		case suturo_msgs::Task::TASK_4:
-			if (nodeType_==GRIPPER)
-			{
-				logger.logInfo("Using task 4 segmenter");
-				segmenter = task4_segmenter_;
-			}
-			else
-			{
-				logger.logInfo("Using projection segmenter");
-				segmenter = new ProjectionSegmenter();
-			}
+		case suturo_msgs::Task::TASK_5:
+			logger.logInfo("Using task 4 segmenter");
+			segmenter = task4_segmenter_;
 		break;
 		case suturo_msgs::Task::TASK_6:
 			logger.logInfo("Using task 6 segmenter");
