@@ -25,9 +25,6 @@ namespace suturo_perception
 			void updateConveyorCloud(PipelineData::Ptr pipeline_data);
 
     protected:
-      bool clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, pcl::PointCloud<pcl::PointXYZRGB>::Ptr original_cloud, std::vector<int> *removed_indices_filtered, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &projected_clusters, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clustered_hulls,PipelineData::Ptr &pipeline_data);
-
-      bool clusterPointcloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, PipelineData::Ptr &pipeline_data);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_simple_conveyor_cloud();
 			
 			bool transform_success_;

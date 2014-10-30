@@ -104,11 +104,6 @@ void Task4Segmenter::updateSegmentationCloud(PipelineData::Ptr pipeline_data)
   table_coefficients_ = coefficients;
 }
 
-void
-Task4Segmenter::cloud_cb (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clusters, PipelineData::Ptr &pipeline_data)
-{
-}
-
 bool 
 Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, 
     PipelineData::Ptr &pipeline_data, 
@@ -166,7 +161,7 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 	
 	for (size_t i = 0; i < euclidean_label_indices.size (); i++)
 	{
-		if (euclidean_label_indices[i].indices.size () > pipeline_data->ecMinClusterSize)
+		if (euclidean_label_indices[i].indices.size () > pipeline_data->ecObjMinClusterSize)
 		{
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
 			pcl::copyPointCloud (*cloud,euclidean_label_indices[i].indices,*cluster);
