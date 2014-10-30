@@ -199,9 +199,6 @@ void ModelPoseEstimation::execute()
       continue;
     }
 
-    // Do the Pose estimation
-    // ICPFitter fitter(input_cloud, generated_models_->at(i), surface_normal_);
-
     // Workaround since the Point Types mismatch. We could win a ms here if we can avoid that
     pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
@@ -214,55 +211,37 @@ void ModelPoseEstimation::execute()
     fitter.setIAMethod(icp_fitter_ia_method_);
 
     fitAndEvaluate(fitter,i);
-    // boost::posix_time::ptime s_icp = boost::posix_time::microsec_clock::local_time();
-    // fitter.execute();
-    // boost::posix_time::ptime e_icp = boost::posix_time::microsec_clock::local_time();
-    // logger_.logTime(s_icp, e_icp, "Time for ICPFitter::execute()");
-
-    // if(fitter.getFitnessScore() < fitness_score_)
-    // {
-    //   fitness_score_ = fitter.getFitnessScore();
-    //   // Get the orientation of the aligned object.
-    //   Eigen::Quaternionf orientation = fitter.getOrientation(); 
-    //   // Get the origin of the aligned object.
-    //   pcl::PointXYZ origin = fitter.getOrigin(); 
-    //   // logger_.logInfo("pipeline_mode_ = true");
-    //   suturo_msgs::Object &o = objects_->at(i);
-    //   ss << "Model " << i << "("<< o.name <<") is below best fitness score. "; 
-    //   ss << "Pose: " << orientation.x() << " " << orientation.y() << " " << orientation.z() << " " << orientation.w() << " " << origin << ". Score: " << fitter.getFitnessScore() << std::endl;
-    //   logger_.logInfo(ss.str());
-    //   ss.str("");
-
-    //   estimated_pose_ = Eigen::VectorXf(7);
-    //   estimated_pose_[0] = origin.x;
-    //   estimated_pose_[1] = origin.y;
-    //   estimated_pose_[2] = origin.z;
-
-    //   estimated_pose_[3] = orientation.x();
-    //   estimated_pose_[4] = orientation.y();
-    //   estimated_pose_[5] = orientation.z();
-    //   estimated_pose_[6] = orientation.w();
-
-    //   best_fit_model_ = i;
-    // }
-    // 
-    // // Dump the pointclouds that ICPFitter generated during it's execution
-    // if(dump_icp_fitter_pointclouds_)
-    //   fitter.dumpPointClouds();
-
-    // Workaround for a strange error ... The ICPFitter behaves
-    // differently when you instantiate the standard ICP around it ...
-    // Be careful when you comment this in .....
-    // pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
-    //
-    //
-   
   }
 
-  // Use another IA method, if we fail and the mode is enabled
-  if(fallback_ia_ && !poseEstimationSuccessful())
+  // Use another IA method, if we fail and the mode is enabled and atleast one
+  // model of interest is given (otherwise, the process will decrease in speed
+  // dramatically
+  if(fallback_ia_ && modelsOfInteresetGiven() && !poseEstimationSuccessful())
   {
+    logger_.logInfo("Falling back to MINMAX Initial Alignment");
+    for (int i = 0; i < objects_->size(); i++) 
+    {
+      // Is the current index a "model of interest"?
+      if(models_of_interest_.size()!=0 &&
+          std::find(models_of_interest_.begin(), models_of_interest_.end(), i)==models_of_interest_.end())
+      {
+        logger_.logInfo("Skipping model on users demand");
+        continue;
+      }
 
+      // Workaround since the Point Types mismatch. We could win a ms here if we can avoid that
+      pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
+      pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
+      copyPointCloud(*input_cloud, *input_cloud_xyz);
+      copyPointCloud(*generated_models_->at(i), *model_cloud_xyz);
+      ICPFitter fitter(input_cloud_xyz, model_cloud_xyz, surface_normal_);
+      fitter.rotateModelUp(false);
+      fitter.setMaxICPIterations(max_icp_iterations_);
+      fitter.setCalculateModelCentroid(true);
+      fitter.setIAMethod(ICPFitter::IA_MINMAX);
+
+      fitAndEvaluate(fitter,i);
+    }
   }
   // Store the result
   if(pipeline_mode_)
