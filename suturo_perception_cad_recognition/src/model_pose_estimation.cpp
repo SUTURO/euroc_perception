@@ -54,6 +54,7 @@ void ModelPoseEstimation::initForPipelineCall()
   // to suturo_perception_cad_recognition/dumps
   // this->setVoxelSize(0.003f);
   this->setRemoveNaNs(true);
+  this->setFallbackInitialAlignmentEnabled(true);
 
 
   // Use the parameters from dynamic reconfigure
