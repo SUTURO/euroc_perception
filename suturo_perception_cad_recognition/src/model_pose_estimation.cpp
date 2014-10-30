@@ -86,6 +86,52 @@ void ModelPoseEstimation::initForPipelineCall()
   }
 }
 
+void ModelPoseEstimation::fitAndEvaluate(ICPFitter &fitter, int i)
+{
+  std::stringstream ss;
+  boost::posix_time::ptime s_icp = boost::posix_time::microsec_clock::local_time();
+  fitter.execute();
+  boost::posix_time::ptime e_icp = boost::posix_time::microsec_clock::local_time();
+  logger_.logTime(s_icp, e_icp, "Time for ICPFitter::execute()");
+
+  if(fitter.getFitnessScore() < fitness_score_)
+  {
+    fitness_score_ = fitter.getFitnessScore();
+    // Get the orientation of the aligned object.
+    Eigen::Quaternionf orientation = fitter.getOrientation(); 
+    // Get the origin of the aligned object.
+    pcl::PointXYZ origin = fitter.getOrigin(); 
+
+    suturo_msgs::Object &o = objects_->at(i);
+    ss << "Model " << i << "("<< o.name <<") is below best fitness score. "; 
+    ss << "Pose: " << orientation.x() << " " << orientation.y() << " " << orientation.z() << " " << orientation.w() << " " << origin << ". Score: " << fitter.getFitnessScore() << std::endl;
+    logger_.logInfo(ss.str());
+
+    estimated_pose_ = Eigen::VectorXf(7);
+    estimated_pose_[0] = origin.x;
+    estimated_pose_[1] = origin.y;
+    estimated_pose_[2] = origin.z;
+
+    estimated_pose_[3] = orientation.x();
+    estimated_pose_[4] = orientation.y();
+    estimated_pose_[5] = orientation.z();
+    estimated_pose_[6] = orientation.w();
+
+    best_fit_model_ = i;
+  }
+
+  // Dump the pointclouds that ICPFitter generated during it's execution
+  if(dump_icp_fitter_pointclouds_)
+    fitter.dumpPointClouds();
+
+  // Workaround for a strange error ... The ICPFitter behaves
+  // differently when you instantiate the standard ICP around it ...
+  // Be careful when you comment this in .....
+  // pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
+  //
+  //
+}
+
 void ModelPoseEstimation::execute()
 {
   std::stringstream ss;
@@ -161,51 +207,48 @@ void ModelPoseEstimation::execute()
     pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
     copyPointCloud(*input_cloud, *input_cloud_xyz);
     copyPointCloud(*generated_models_->at(i), *model_cloud_xyz);
-    // std::cout << "Copied Model Pointcloud has " << model_cloud_xyz->points.size() << "pts" << std::endl;
-    // std::cout << "Copied Object Pointcloud has " << input_cloud_xyz->points.size() << "pts" << std::endl;
-    // std::cout << "Using surface normal: " << surface_normal_ << std::endl;
     ICPFitter fitter(input_cloud_xyz, model_cloud_xyz, surface_normal_);
     fitter.rotateModelUp(false);
     fitter.setMaxICPIterations(max_icp_iterations_);
     fitter.setCalculateModelCentroid(true);
     fitter.setIAMethod(icp_fitter_ia_method_);
 
-    boost::posix_time::ptime s_icp = boost::posix_time::microsec_clock::local_time();
-    // pcl::PointCloud<pcl::PointXYZ>::Ptr model_fitted = ria.execute();
-    fitter.execute();
-    boost::posix_time::ptime e_icp = boost::posix_time::microsec_clock::local_time();
-    logger_.logTime(s_icp, e_icp, "Time for ICPFitter::execute()");
+    fitAndEvaluate(fitter,i);
+    // boost::posix_time::ptime s_icp = boost::posix_time::microsec_clock::local_time();
+    // fitter.execute();
+    // boost::posix_time::ptime e_icp = boost::posix_time::microsec_clock::local_time();
+    // logger_.logTime(s_icp, e_icp, "Time for ICPFitter::execute()");
 
-    if(fitter.getFitnessScore() < fitness_score_)
-    {
-      fitness_score_ = fitter.getFitnessScore();
-      // Get the orientation of the aligned object.
-      Eigen::Quaternionf orientation = fitter.getOrientation(); 
-      // Get the origin of the aligned object.
-      pcl::PointXYZ origin = fitter.getOrigin(); 
-      // logger_.logInfo("pipeline_mode_ = true");
-      suturo_msgs::Object &o = objects_->at(i);
-      ss << "Model " << i << "("<< o.name <<") is below best fitness score. "; 
-      ss << "Pose: " << orientation.x() << " " << orientation.y() << " " << orientation.z() << " " << orientation.w() << " " << origin << ". Score: " << fitter.getFitnessScore() << std::endl;
-      logger_.logInfo(ss.str());
-      ss.str("");
+    // if(fitter.getFitnessScore() < fitness_score_)
+    // {
+    //   fitness_score_ = fitter.getFitnessScore();
+    //   // Get the orientation of the aligned object.
+    //   Eigen::Quaternionf orientation = fitter.getOrientation(); 
+    //   // Get the origin of the aligned object.
+    //   pcl::PointXYZ origin = fitter.getOrigin(); 
+    //   // logger_.logInfo("pipeline_mode_ = true");
+    //   suturo_msgs::Object &o = objects_->at(i);
+    //   ss << "Model " << i << "("<< o.name <<") is below best fitness score. "; 
+    //   ss << "Pose: " << orientation.x() << " " << orientation.y() << " " << orientation.z() << " " << orientation.w() << " " << origin << ". Score: " << fitter.getFitnessScore() << std::endl;
+    //   logger_.logInfo(ss.str());
+    //   ss.str("");
 
-      estimated_pose_ = Eigen::VectorXf(7);
-      estimated_pose_[0] = origin.x;
-      estimated_pose_[1] = origin.y;
-      estimated_pose_[2] = origin.z;
+    //   estimated_pose_ = Eigen::VectorXf(7);
+    //   estimated_pose_[0] = origin.x;
+    //   estimated_pose_[1] = origin.y;
+    //   estimated_pose_[2] = origin.z;
 
-      estimated_pose_[3] = orientation.x();
-      estimated_pose_[4] = orientation.y();
-      estimated_pose_[5] = orientation.z();
-      estimated_pose_[6] = orientation.w();
+    //   estimated_pose_[3] = orientation.x();
+    //   estimated_pose_[4] = orientation.y();
+    //   estimated_pose_[5] = orientation.z();
+    //   estimated_pose_[6] = orientation.w();
 
-      best_fit_model_ = i;
-    }
-    
-    // Dump the pointclouds that ICPFitter generated during it's execution
-    if(dump_icp_fitter_pointclouds_)
-      fitter.dumpPointClouds();
+    //   best_fit_model_ = i;
+    // }
+    // 
+    // // Dump the pointclouds that ICPFitter generated during it's execution
+    // if(dump_icp_fitter_pointclouds_)
+    //   fitter.dumpPointClouds();
 
     // Workaround for a strange error ... The ICPFitter behaves
     // differently when you instantiate the standard ICP around it ...
@@ -216,6 +259,11 @@ void ModelPoseEstimation::execute()
    
   }
 
+  // Use another IA method, if we fail and the mode is enabled
+  if(fallback_ia_ && !poseEstimationSuccessful())
+  {
+
+  }
   // Store the result
   if(pipeline_mode_)
   {
