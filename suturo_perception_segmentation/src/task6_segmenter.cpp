@@ -121,7 +121,7 @@ Task6Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
   
 	// self made plane generation
 	// TODO: dynamic reconfigure
-	double max_plane_dist = 0.002; // 2mm
+	double max_plane_dist = pipeline_data->planeDistanceThreshold;
 	double max_object_dist = 0.1; // 10cm
 	
 	labels->points.resize(cloud->points.size());

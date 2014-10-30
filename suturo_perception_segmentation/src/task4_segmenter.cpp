@@ -119,8 +119,6 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 	pcl::PointCloud<pcl::Label>::Ptr labels (new pcl::PointCloud<pcl::Label>);
 	
 	// self made plane generation
-	double max_plane_dist = 0.005; // 5mm
-	
 	labels->points.resize(cloud->points.size());
 	// init height calculation
   float a,b,c,d,e;
@@ -138,7 +136,7 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 		double tmp = ( a * p->x + b * p->y + c * p->z + d ) / e;
     tmp = tmp < 0 ? -tmp : tmp; // abs
     
-    labels->points[i].label = tmp < max_plane_dist ? 0 : 1;
+    labels->points[i].label = tmp < pipeline_data->planeDistanceThreshold ? 0 : 1;
 	}
 	
 	//Segment Objects
