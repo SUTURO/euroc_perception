@@ -119,7 +119,7 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 	pcl::PointCloud<pcl::Label>::Ptr labels (new pcl::PointCloud<pcl::Label>);
 	
 	// self made plane generation
-	double max_plane_dist = 0.002; // 2mm
+	double max_plane_dist = 0.005; // 5mm
 	
 	labels->points.resize(cloud->points.size());
 	// init height calculation
@@ -151,7 +151,8 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 	euclidean_cluster_comparator_->setInputCloud (cloud);
 	euclidean_cluster_comparator_->setLabels (labels);
 	euclidean_cluster_comparator_->setExcludeLabels (plane_labels);
-	euclidean_cluster_comparator_->setDistanceThreshold (0.01f, false);
+	euclidean_cluster_comparator_->setDistanceThreshold (pipeline_data->ecObjClusterTolerance, false);
+	logger.logInfo((boost::format("euclidean_cluster_comparator->distanceThreshold = %s") % pipeline_data->ecObjClusterTolerance).str());
 	
 	pcl::PointCloud<pcl::Label> euclidean_labels;
 	std::vector<pcl::PointIndices> euclidean_label_indices;
