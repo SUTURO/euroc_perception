@@ -86,12 +86,11 @@ void Task4Segmenter::updateSegmentationCloud(PipelineData::Ptr pipeline_data)
   if (!transform_success_)
 	{
 		logger.logError("couldn't transform! segmentation won't work!");
+		return;
 	}
-	else
-	{
-		pcl::fromROSMsg(depth_pcl_pc2,*segmentation_cloud_);
-	}
-	
+
+	pcl::fromROSMsg(depth_pcl_pc2,*segmentation_cloud_);
+
 	// fit the table plane to get coefficients
 	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
   pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
@@ -115,6 +114,11 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
     PipelineData::Ptr &pipeline_data, 
     PipelineObject::VecPtr &pipeline_objects)
 {
+	if (!transform_success_)
+	{
+		logger.logError("Initialization failed! call updateSegmentationCloud! Can't segment");
+		return false;
+	}
   boost::posix_time::ptime mps_start = boost::posix_time::microsec_clock::local_time();
 	
 	pcl::PointCloud<pcl::Label>::Ptr labels (new pcl::PointCloud<pcl::Label>);

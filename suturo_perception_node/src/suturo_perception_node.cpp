@@ -149,7 +149,7 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
 	{
 		if (req.s.find("firstConveyorCall")!=std::string::npos)
 		{
-			task6_segmenter_->updateConveyorCloud();
+			task6_segmenter_->updateConveyorCloud(pipelineData_);
 		}
 	}
 	else
