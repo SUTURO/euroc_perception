@@ -14,7 +14,9 @@ namespace suturo_perception
     public:
       Task4Segmenter(ros::NodeHandle &node, bool isTcp, suturo_msgs::Task task);
 
+      bool segment_old(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, PipelineData::Ptr &pipeline_data, PipelineObject::VecPtr &pipeline_objects);
       bool segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, PipelineData::Ptr &pipeline_data, PipelineObject::VecPtr &pipeline_objects);
+			
       // Should be available after a successful segmentation
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr getTablePointCloud();
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr getDownsampledPointCloud();
@@ -22,16 +24,18 @@ namespace suturo_perception
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr getProjectedPoints();
       std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getProjectionClusters();
       std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getProjectionClusterHulls();
-			void updateSegmentationCloud();
+			void updateSegmentationCloud(PipelineData::Ptr pipeline_data);
 
     protected:
       bool clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, pcl::PointCloud<pcl::PointXYZRGB>::Ptr original_cloud, std::vector<int> *removed_indices_filtered, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &projected_clusters, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clustered_hulls,PipelineData::Ptr &pipeline_data);
 
       bool clusterPointcloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, PipelineData::Ptr &pipeline_data);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_simple_segmentation_cloud();
+			void cloud_cb (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clusters, PipelineData::Ptr &pipeline_data);
 			
 			bool transform_success_;
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr segmentation_cloud_;
+			pcl::ModelCoefficients::Ptr table_coefficients_;
 			bool isTcp_;
 			ros::NodeHandle nodeHandle_;
 			suturo_msgs::Task task_;

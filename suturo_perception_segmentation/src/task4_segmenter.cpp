@@ -1,12 +1,25 @@
 #include "suturo_perception_segmentation/task4_segmenter.h"
 
 #include <perception_utils/point_cloud_operations.h>
-#include <pcl/point_types.h>
-#include <pcl_ros/point_cloud.h>
 #include <sensor_msgs/PointCloud.h>
 #include <tf/transform_listener.h>
 #include <pcl_ros/impl/transforms.hpp>
 #include <cmath>
+
+#include <pcl/point_types.h>
+#include <pcl_ros/point_cloud.h>
+
+#include <pcl/segmentation/organized_multi_plane_segmentation.h>
+#include <pcl/segmentation/planar_polygon_fusion.h>
+#include <pcl/common/transforms.h>
+#include <pcl/segmentation/plane_coefficient_comparator.h>
+#include <pcl/segmentation/euclidean_plane_coefficient_comparator.h>
+#include <pcl/segmentation/rgb_plane_coefficient_comparator.h>
+#include <pcl/segmentation/edge_aware_plane_comparator.h>
+#include <pcl/segmentation/euclidean_cluster_comparator.h>
+#include <pcl/segmentation/organized_connected_component_segmentation.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/features/integral_image_normal.h>
 
 #define PI 3.14159265
 
@@ -18,10 +31,15 @@ Task4Segmenter::Task4Segmenter(ros::NodeHandle &node, bool isTcp, suturo_msgs::T
 {
 	logger = Logger("task4_segmenter");
 	
-	updateSegmentationCloud();
+	table_pointcloud_ = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
+	downsampled_pointcloud_ = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
+	points_above_table_ = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
+	projected_points_ = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
+	
+	updateSegmentationCloud(PipelineData::Ptr(new PipelineData()));
 }
 
-void Task4Segmenter::updateSegmentationCloud()
+void Task4Segmenter::updateSegmentationCloud(PipelineData::Ptr pipeline_data)
 {
 	logger.logInfo("generating segmentation cloud");
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr odom_segmentation_cloud = generate_simple_segmentation_cloud();
@@ -68,110 +86,13 @@ void Task4Segmenter::updateSegmentationCloud()
   if (!transform_success_)
 	{
 		logger.logError("couldn't transform! segmentation won't work!");
+		return;
 	}
-	else
-	{
-		pcl::fromROSMsg(depth_pcl_pc2,*segmentation_cloud_);
-	}
-}
 
-bool Task4Segmenter::clusterPointcloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices, PipelineData::Ptr &pipeline_data)
-{
+	pcl::fromROSMsg(depth_pcl_pc2,*segmentation_cloud_);
 
-  if(object_clusters->points.size() < 50)
-  {
-    logger.logError("clusterPointcloud: original_cloud has less than 50 points. Skipping ...");
-    return false;
-  }
-
-  boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
-
-  // Identify clusters in the input cloud
-  pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
-  tree->setInputCloud (object_clusters);
-
-  std::vector<pcl::PointIndices> cluster_indices;
-  pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
-  ec.setClusterTolerance (pipeline_data->ecObjClusterTolerance);
-  ec.setMinClusterSize (pipeline_data->ecObjMinClusterSize);
-  ec.setMaxClusterSize (pipeline_data->ecObjMaxClusterSize);
-  ec.setSearchMethod (tree);
-  ec.setInputCloud (object_clusters);
-  ec.extract(cluster_indices);
-  logger.logInfo((boost::format("Found %s clusters.") % cluster_indices.size()).str());
-
-  boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
-  logger.logTime(s, e, "filtering out objects above the plane");
-
-  int i=0;
-  // Iterate over the found clusters and extract single pointclouds
-  for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
-  {
-    if (it->indices.size() < 10)
-    {
-      logger.logError("Cloud cluster has less than 10 points, skipping...");
-      continue;
-    }
-    // Gather all points for a cluster into a single pointcloud
-    boost::posix_time::ptime s1 = boost::posix_time::microsec_clock::local_time();
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull (new pcl::PointCloud<pcl::PointXYZRGB>);
-    for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); pit++)
-      cloud_cluster->points.push_back (object_clusters->points[*pit]); //*
-
-    cloud_cluster->width = cloud_cluster->points.size ();
-    cloud_cluster->height = 1;
-    cloud_cluster->is_dense = true;
-
-    i++;
-    extracted_objects.push_back(cloud_cluster);
-     // TODO fill in object indices
-  }
-  return true;
-
-  boost::posix_time::ptime e2 = boost::posix_time::microsec_clock::local_time();
-  logger.logTime(s, e2, "clusterPointcloud");
-
-}
-bool 
-Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, 
-    PipelineData::Ptr &pipeline_data, 
-    PipelineObject::VecPtr &pipeline_objects)
-{
-	if (!transform_success_)
-	{
-		logger.logError("transform of segmentation cloud failed, segmentation won't work. Please restart the node");
-		return false;
-	}
-  boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
-
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>), 
-                                      cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGB>);
-
-  // Build a filter to filter on the Z Axis
-  pcl::PassThrough<pcl::PointXYZRGB> pass(true);
-  PointCloudOperations::filterZAxis(cloud_in, cloud_filtered, pass, pipeline_data->zAxisFilterMin, pipeline_data->zAxisFilterMax);
-  logger.logInfo((boost::format("PointCloud: %s data points") % cloud_in->points.size()).str());
-
-  std::vector<int> removed_indices_filtered;
-  removed_indices_filtered = *pass.getIndices();
-  boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
-  logger.logTime(s, e, "z-filter");
-  
-  logger.logInfo((boost::format("PointCloud after z-filter: %s data points") % cloud_filtered->points.size()).str());
-
-  //voxelizing cloud
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_downsampled (new pcl::PointCloud<pcl::PointXYZRGB>());
-  PointCloudOperations::downsample(cloud_filtered, cloud_downsampled, pipeline_data->downsampleLeafSize);
-  cloud_filtered = cloud_downsampled; // Use the downsampled cloud now
-  
-  logger.logInfo((boost::format("PointCloud after downsample: %s data points") % cloud_filtered->points.size()).str());
-  downsampled_pointcloud_ = cloud_filtered;
-  
-  logger.logInfo((boost::format("segmentation_cloud_ has %s points") % segmentation_cloud_->points.size()).str());
-
-  // Find the biggest table plane in the scene
-  pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+	// fit the table plane to get coefficients
+	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
   pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
   PointCloudOperations::fitPlanarModel(segmentation_cloud_, inliers, coefficients, pipeline_data->planeMaxIterations, pipeline_data->planeDistanceThreshold);
   logger.logInfo((boost::format("Table inlier count: %s") % inliers->indices.size ()).str());
@@ -180,41 +101,89 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
   {
     logger.logInfo((boost::format("  %s") % coefficients->values[i]).str());
   }
-  pipeline_data->coefficients_ = coefficients;
+  table_coefficients_ = coefficients;
+}
+
+void
+Task4Segmenter::cloud_cb (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clusters, PipelineData::Ptr &pipeline_data)
+{
+}
+
+bool 
+Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, 
+    PipelineData::Ptr &pipeline_data, 
+    PipelineObject::VecPtr &pipeline_objects)
+{
+	if (!transform_success_)
+	{
+		logger.logError("Initialization failed! call updateSegmentationCloud! Can't segment");
+		return false;
+	}
+  boost::posix_time::ptime mps_start = boost::posix_time::microsec_clock::local_time();
 	
-	// Extract all objects above
-	// the table plane
-	pcl::PointIndices::Ptr object_indices (new pcl::PointIndices);
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters (new pcl::PointCloud<pcl::PointXYZRGB>());
-
-	// Remove all NaNs from the PointCloud. Otherwise, we can't use Euclidean Clustering (KDTree)
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr nanles_cloud (new pcl::PointCloud<pcl::PointXYZRGB>()); // NEW
-	PointCloudOperations::removeNans(cloud_in, nanles_cloud); // NEW
-
-	PointCloudOperations::extractAllPointsAbovePointCloud(nanles_cloud, segmentation_cloud_, // New
-			object_clusters, object_indices, 2, pipeline_data->prismZMin, pipeline_data->prismZMax);
-	logger.logInfo((boost::format("After extractAllPointsAbovePointCloud: %s indices and %s object_cluster pts") % object_indices->indices.size() % object_clusters->points.size() ).str() );
-	points_above_table_ = object_clusters;
+	pcl::PointCloud<pcl::Label>::Ptr labels (new pcl::PointCloud<pcl::Label>);
 	
-	e = boost::posix_time::microsec_clock::local_time();
-	logger.logTime(s, e, "extractAllPointsAbovePointCloud");
-
-	std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> extractedObjects;
-	std::vector<pcl::PointIndices::Ptr> extractedIndices;
-	clusterPointcloud(object_clusters, extractedObjects, extractedIndices, pipeline_data); // NEW - Just cluster everything above the table - This is unfortunately slower then the projection method ...
-	logger.logInfo((boost::format(" - extractedObjects Vector size %s") % extractedObjects.size()).str());
-	logger.logInfo((boost::format(" - extractedIndices  Vector size %s") % extractedIndices.size()).str());
-
-	e = boost::posix_time::microsec_clock::local_time();
-	logger.logTime(s, e, "table from pointcloud");
+	// self made plane generation
+	double max_plane_dist = 0.002; // 2mm
+	
+	labels->points.resize(cloud->points.size());
+	// init height calculation
+  float a,b,c,d,e;
+  a = table_coefficients_->values[0];
+  b = table_coefficients_->values[1];
+  c = table_coefficients_->values[2];
+  d = table_coefficients_->values[3];
+  e = sqrt(a*a + b*b + c*c);
+	
+#pragma omp parallel for
+	for (int i = 0; i < cloud->points.size(); i++)
+	{
+		pcl::PointXYZRGB *p = &cloud->points[i];
+		// height calculation
+		double tmp = ( a * p->x + b * p->y + c * p->z + d ) / e;
+    tmp = tmp < 0 ? -tmp : tmp; // abs
+    
+    labels->points[i].label = tmp < max_plane_dist ? 0 : 1;
+	}
+	
+	//Segment Objects
+	std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clusters;
+	std::vector<bool> plane_labels;
+	plane_labels.push_back(true);
+	plane_labels.push_back(false);
+	
+	pcl::EuclideanClusterComparator<pcl::PointXYZRGB, pcl::Normal, pcl::Label>::Ptr  euclidean_cluster_comparator_ = pcl::EuclideanClusterComparator<pcl::PointXYZRGB, pcl::Normal, pcl::Label>::Ptr (new pcl::EuclideanClusterComparator<pcl::PointXYZRGB, pcl::Normal, pcl::Label> ());
+	euclidean_cluster_comparator_->setInputCloud (cloud);
+	euclidean_cluster_comparator_->setLabels (labels);
+	euclidean_cluster_comparator_->setExcludeLabels (plane_labels);
+	euclidean_cluster_comparator_->setDistanceThreshold (0.01f, false);
+	
+	pcl::PointCloud<pcl::Label> euclidean_labels;
+	std::vector<pcl::PointIndices> euclidean_label_indices;
+	pcl::OrganizedConnectedComponentSegmentation<pcl::PointXYZRGB,pcl::Label> euclidean_segmentation (euclidean_cluster_comparator_);
+	euclidean_segmentation.setInputCloud (cloud);
+	euclidean_segmentation.segment (euclidean_labels, euclidean_label_indices);
+	
+	for (size_t i = 0; i < euclidean_label_indices.size (); i++)
+	{
+		if (euclidean_label_indices[i].indices.size () > pipeline_data->ecMinClusterSize)
+		{
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
+			pcl::copyPointCloud (*cloud,euclidean_label_indices[i].indices,*cluster);
+			clusters.push_back (cluster);
+			logger.logInfo((boost::format("euclidean cluster %s has %s points!") % i % cluster->points.size()).str());
+		}
+	}
+	logger.logInfo((boost::format("Got %s euclidean clusters!") % clusters.size() ).str());
+	projection_clusters_ = clusters;
 
 	// publish the segmentation results
 	pipeline_objects.clear();
-	for (int i = 0; i < extractedObjects.size(); i++)
+	for (int i = 0; i < clusters.size(); i++)
 	{
 		PipelineObject::Ptr pipelineObject(new PipelineObject);
 
-		pcl::PointCloud<pcl::PointXYZRGB>::Ptr it = extractedObjects.at(i);
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr it = clusters.at(i);
 		logger.logInfo((boost::format("Cluster %i has %s points") % i % it->points.size()).str());
 
 		if(it->points.size()<50)
@@ -227,12 +196,12 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
 		pipeline_objects.push_back(pipelineObject);
 	}
 
+	// take the fake table plane cloude & coefficients
 	table_pointcloud_ = segmentation_cloud_;
+  pipeline_data->coefficients_ = table_coefficients_;
 	
-	e = boost::posix_time::microsec_clock::local_time();
-	logger.logTime(s, e, "full segmentation");
-
-  return true;
+  boost::posix_time::ptime mps_end = boost::posix_time::microsec_clock::local_time();
+	logger.logTime(mps_start, mps_end, "Segmentation took: ");
 }
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr

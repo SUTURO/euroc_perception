@@ -74,7 +74,7 @@ namespace suturo_perception
       
       void resetData()
       {
-        coefficients_ = pcl::ModelCoefficients::Ptr(new pcl::ModelCoefficients);
+        //coefficients_ = pcl::ModelCoefficients::Ptr(new pcl::ModelCoefficients);
       }
       
       void printConfig()

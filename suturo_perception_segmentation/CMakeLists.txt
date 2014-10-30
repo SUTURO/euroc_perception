@@ -11,8 +11,10 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   perception_utils
 )
-
-#set(CMAKE_BUILD_TYPE Debug)
+# enable openmp
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -march=native -mno-avx")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
+SET(CMAKE_BUILD_TYPE Release)	# Mandatory for openmp!
 
 find_package(PCL REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
