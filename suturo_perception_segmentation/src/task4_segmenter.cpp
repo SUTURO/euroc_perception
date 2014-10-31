@@ -104,11 +104,6 @@ void Task4Segmenter::updateSegmentationCloud(PipelineData::Ptr pipeline_data)
   table_coefficients_ = coefficients;
 }
 
-void
-Task4Segmenter::cloud_cb (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clusters, PipelineData::Ptr &pipeline_data)
-{
-}
-
 bool 
 Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, 
     PipelineData::Ptr &pipeline_data, 
@@ -124,8 +119,6 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 	pcl::PointCloud<pcl::Label>::Ptr labels (new pcl::PointCloud<pcl::Label>);
 	
 	// self made plane generation
-	double max_plane_dist = 0.002; // 2mm
-	
 	labels->points.resize(cloud->points.size());
 	// init height calculation
   float a,b,c,d,e;
@@ -143,7 +136,7 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 		double tmp = ( a * p->x + b * p->y + c * p->z + d ) / e;
     tmp = tmp < 0 ? -tmp : tmp; // abs
     
-    labels->points[i].label = tmp < max_plane_dist ? 0 : 1;
+    labels->points[i].label = tmp < pipeline_data->planeDistanceThreshold ? 0 : 1;
 	}
 	
 	//Segment Objects
@@ -156,7 +149,8 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 	euclidean_cluster_comparator_->setInputCloud (cloud);
 	euclidean_cluster_comparator_->setLabels (labels);
 	euclidean_cluster_comparator_->setExcludeLabels (plane_labels);
-	euclidean_cluster_comparator_->setDistanceThreshold (0.01f, false);
+	euclidean_cluster_comparator_->setDistanceThreshold (pipeline_data->ecObjClusterTolerance, false);
+	logger.logInfo((boost::format("euclidean_cluster_comparator->distanceThreshold = %s") % pipeline_data->ecObjClusterTolerance).str());
 	
 	pcl::PointCloud<pcl::Label> euclidean_labels;
 	std::vector<pcl::PointIndices> euclidean_label_indices;
@@ -166,7 +160,7 @@ Task4Segmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,
 	
 	for (size_t i = 0; i < euclidean_label_indices.size (); i++)
 	{
-		if (euclidean_label_indices[i].indices.size () > pipeline_data->ecMinClusterSize)
+		if (euclidean_label_indices[i].indices.size () > pipeline_data->ecObjMinClusterSize)
 		{
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
 			pcl::copyPointCloud (*cloud,euclidean_label_indices[i].indices,*cluster);
