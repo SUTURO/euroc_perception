@@ -6,7 +6,8 @@ Eigen::Matrix<float, 4, 4> IAMinMax::getTransformations()
 {
 
   Eigen::Matrix<float, 4, 4> final_transform =
-    rotations_.at(0) * translations_.at(0);
+    // rotations_.at(0) * translations_.at(0);
+    translations_.at(0) * rotations_.at(0);
     // Eigen::Matrix<float, 4, 4>::Identity();
   return final_transform;
 }
@@ -92,7 +93,7 @@ void IAMinMax::execute()
   pcl::transformPointCloud(*_result, *result_s2,transformationRotateDiagonal);
   pcl::transformPointCloud(*_result, *_result  ,transformationRotateDiagonal);
   pcl::transformPointCloud(*transformed_min_pt_object, *transformed_min_pt_object ,transformationRotateDiagonal);
-  rotations_.push_back(transform_min_pt.inverse() ); 
+  rotations_.push_back(transformationRotateDiagonal.transpose() ); 
   _object_transformation_steps.push_back(result_s2);
 
   // DEBUGGING 

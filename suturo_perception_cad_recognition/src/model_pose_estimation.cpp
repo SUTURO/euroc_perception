@@ -54,7 +54,10 @@ void ModelPoseEstimation::initForPipelineCall()
   // to suturo_perception_cad_recognition/dumps
   // this->setVoxelSize(0.003f);
   this->setRemoveNaNs(true);
+
   this->setFallbackInitialAlignmentEnabled(true);
+  // this->setInitialAlignmentMethod(ICPFitter::IA_MINMAX); // Use only minmax IA
+  // this->setInitialAlignmentMethod(ICPFitter::IA_CENTROID); // Use only minmax IA
 
 
   // Use the parameters from dynamic reconfigure
