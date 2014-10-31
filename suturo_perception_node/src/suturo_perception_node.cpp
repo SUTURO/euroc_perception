@@ -5,11 +5,14 @@
 #include <suturo_perception_pipeline/pipeline.h>
 #include <suturo_perception_msgs/EurocObject.h>
 #include <suturo_msgs/Task.h>
+#include <suturo_perception_classification/task6_classification.hpp>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
+
+#include <pcl/io/pcd_io.h>
 
 using namespace suturo_perception;
 SuturoPerceptionNode::SuturoPerceptionNode(ros::NodeHandle &n, std::string imageTopic, std::string depthTopic, NodeType nodeType) : 
@@ -158,7 +161,7 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
 	}
   
 	ros::Subscriber sub = nodeHandle_.subscribe<sensor_msgs::PointCloud2>(cloudTopic_, 1, boost::bind(&SuturoPerceptionNode::receive_cloud,this, _1));
-	
+
 	logger.logInfo((boost::format("Waiting for processed cloud for %s seconds") % timeout).str());
   ros::Rate r(20); // 20 hz
   // cancel service call, if no cloud is received after 20s
@@ -179,11 +182,12 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
 	if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_4 && 
 			nodeType_ == GRIPPER)
 	{
+		logger.logInfo("Segmenting without timeout (task4 gripper)");
 		segment(cloud_in_);
 	}
-	
+
   logger.logInfo("done with segmentation, starting pipeline");
-    
+
   /****************************************************************************/
   Pipeline::execute(pipelineData_, pipelineObjects_);
   /****************************************************************************/
@@ -191,6 +195,21 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
   logger.logInfo("done with perception pipeline, sending result");
   for (int i = 0; i < pipelineObjects_.size(); i++)
   {
+    if (pipelineObjects_.at(i) == NULL)
+    {
+      logger.logError("pipeline object is NULL! investigate this!");
+      continue;
+    }
+    suturo_perception_msgs::EurocObject euObj = pipelineObjects_[i]->toEurocObject();
+		if (pipelineData_->task_.task_type == suturo_msgs::Task::TASK_6)
+		{
+			logger.logInfo("Filtering the objects with Task6Classification");
+			if (!Task6Classification::validObject(pipelineObjects_[i], pipelineData_->task_))
+			{
+				logger.logInfo("skipping pipeline object! object won't be published!");
+				continue;
+			}
+		}
     std::stringstream ss;
     ss << "sending object ";
     ss << pipelineObjects_.at(i)->get_c_id();
@@ -198,12 +217,7 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
     ss << pipelineObjects_.at(i)->get_c_mpe_success();
     ss << ") END";
     logger.logInfo(ss.str());
-    if (pipelineObjects_.at(i) == NULL)
-    {
-      logger.logError("pipeline object is NULL! investigate this!");
-      continue;
-    }
-    suturo_perception_msgs::EurocObject euObj = pipelineObjects_[i]->toEurocObject();
+		
     euObj.frame_id = DEPTH_FRAME;
     euObj.c_id = objidx_;
     objidx_++;
@@ -333,7 +347,16 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
   
 	// remember time of cloud
   pipelineData_->stamp = inputCloud->header.stamp;
-	
+
+	logger.logInfo("writing cloud for debugging");
+	pcl::PCDWriter writer;
+	std::stringstream ss;
+	boost::posix_time::ptime t_cloud(boost::posix_time::microsec_clock::local_time());
+	ss << "/tmp/euroc_c2/cloud-" << pipelineData_->task_.task_name << "-" << boost::posix_time::to_iso_string(t_cloud) << ".pcd";
+	logger.logInfo((boost::format("Writing point cloud with %s points to %s") % cloud_in_->points.size() % ss.str()).str());
+	writer.writeBinaryCompressed(ss.str(), *cloud_in_);
+	logger.logInfo("writing cloud for debugging done");
+
 	if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_4 && 
 			nodeType_ == GRIPPER)
 	{

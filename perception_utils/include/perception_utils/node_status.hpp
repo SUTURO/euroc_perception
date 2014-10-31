@@ -45,11 +45,11 @@ namespace suturo_perception
 			switch (task)
 			{
 				case suturo_msgs::Task::TASK_4:
-					required_nodes.push_back(suturo_perception_msgs::PerceptionNodeStatus::NODE_ODOM_COMBINER);
 				case suturo_msgs::Task::TASK_1:
 				case suturo_msgs::Task::TASK_2:
 				case suturo_msgs::Task::TASK_3:
 				case suturo_msgs::Task::TASK_5:
+					required_nodes.push_back(suturo_perception_msgs::PerceptionNodeStatus::NODE_ODOM_COMBINER);
 					required_nodes.push_back(suturo_perception_msgs::PerceptionNodeStatus::NODE_CLOUD_SCENE);
 					required_nodes.push_back(suturo_perception_msgs::PerceptionNodeStatus::NODE_CLOUD_GRIPPER);
 					required_nodes.push_back(suturo_perception_msgs::PerceptionNodeStatus::NODE_SCENE);
