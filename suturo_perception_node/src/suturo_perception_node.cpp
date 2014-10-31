@@ -353,7 +353,11 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
 	pcl::PCDWriter writer;
 	std::stringstream ss;
 	boost::posix_time::ptime t_cloud(boost::posix_time::microsec_clock::local_time());
-	ss << "/tmp/euroc_c2/cloud-" << pipelineData_->task_.task_name << "-" << boost::posix_time::to_iso_string(t_cloud) << ".pcd";
+
+  // Take the taskname and remove any '/' chars
+  std::string taskname_to_write = pipelineData_->task_.task_name;
+  boost::algorithm::replace_all(taskname_to_write, "/", "--");
+	ss << "/tmp/euroc_c2/cloud-" << taskname_to_write << "-" << boost::posix_time::to_iso_string(t_cloud) << ".pcd";
 	logger.logInfo((boost::format("Writing point cloud with %s points to %s") % cloud_in_->points.size() % ss.str()).str());
 	writer.writeBinaryCompressed(ss.str(), *cloud_in_);
 	logger.logInfo("writing cloud for debugging done");
