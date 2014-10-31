@@ -71,6 +71,7 @@ namespace suturo_perception
       double mpeSuccessThreshold;
       double mpeVoxelSize;
       bool mpeDumpICPFitterPointClouds;
+      double segMaxObjectDistanz;
       
       void resetData()
       {

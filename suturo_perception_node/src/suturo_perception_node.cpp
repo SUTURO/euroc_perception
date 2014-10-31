@@ -130,7 +130,8 @@ void SuturoPerceptionNode::reconfigureCallback(suturo_perception_node::SuturoPer
   pipelineData_->mpeSuccessThreshold = config.mpeSuccessThreshold;
   pipelineData_->mpeVoxelSize = config.mpeVoxelSize;
   pipelineData_->mpeDumpICPFitterPointClouds = config.mpeDumpICPFitterPointClouds;
-  
+  pipelineData_->segMaxObjectDistanz = config.segMaxObjectDistanz;
+
   pipelineData_->printConfig();
 }
 
