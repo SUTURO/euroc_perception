@@ -5,6 +5,7 @@
 #include <suturo_perception_pipeline/pipeline.h>
 #include <suturo_perception_msgs/EurocObject.h>
 #include <suturo_msgs/Task.h>
+#include <suturo_perception_classification/task6_classification.hpp>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
@@ -195,6 +196,21 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
   logger.logInfo("done with perception pipeline, sending result");
   for (int i = 0; i < pipelineObjects_.size(); i++)
   {
+    if (pipelineObjects_.at(i) == NULL)
+    {
+      logger.logError("pipeline object is NULL! investigate this!");
+      continue;
+    }
+    suturo_perception_msgs::EurocObject euObj = pipelineObjects_[i]->toEurocObject();
+		if (pipelineData_->task_.task_type == suturo_msgs::Task::TASK_6)
+		{
+			logger.logInfo("Filtering the objects with Task6Classification");
+			if (!Task6Classification::validObject(pipelineObjects_[i], pipelineData_->task_))
+			{
+				logger.logInfo("skipping pipeline object! object won't be published!");
+				continue;
+			}
+		}
     std::stringstream ss;
     ss << "sending object ";
     ss << pipelineObjects_.at(i)->get_c_id();
@@ -202,12 +218,7 @@ SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &re
     ss << pipelineObjects_.at(i)->get_c_mpe_success();
     ss << ") END";
     logger.logInfo(ss.str());
-    if (pipelineObjects_.at(i) == NULL)
-    {
-      logger.logError("pipeline object is NULL! investigate this!");
-      continue;
-    }
-    suturo_perception_msgs::EurocObject euObj = pipelineObjects_[i]->toEurocObject();
+		
     euObj.frame_id = DEPTH_FRAME;
     euObj.c_id = objidx_;
     objidx_++;

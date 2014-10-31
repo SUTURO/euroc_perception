@@ -208,12 +208,20 @@ ColorAnalysis::getNearestRGBColor(HSVColor c)
   // Check saturation first. if it's below 40, not much of the color is left
   if(s < 0.80)
   {
+    std::stringstream ss;
+    ss << "HSV: ";
+    ss << h << " " << s << " " << v;
+    logger.logInfo(ss.str());
     logger.logInfo("Saturation too low for color_class");
     return "unknown";
   }
 
   if(v < 0.40)
   {
+    std::stringstream ss;
+    ss << "HSV: ";
+    ss << h << " " << s << " " << v;
+    logger.logInfo(ss.str());
     logger.logInfo("Value too low for color_class");
     return "unknown";
   }

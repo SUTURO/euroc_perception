@@ -30,6 +30,8 @@ tf::TransformListener *tfListener;
 ros::NodeHandle *node_handle;
 ros::Publisher pub;
 
+sensor_msgs::PointCloud2 latest_scene_sensor_msg, latest_tcp_sensor_msg;
+
 // Safe the timestamps for the latest clouds
 ros::Time time_tcp_cloud;
 ros::Time time_scene_cloud;

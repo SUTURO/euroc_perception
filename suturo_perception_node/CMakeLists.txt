@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   suturo_perception_msgs
   suturo_perception_segmentation
   suturo_perception_pipeline
+  suturo_perception_classification
 )
 
 find_package(PCL REQUIRED)
@@ -28,7 +29,7 @@ generate_dynamic_reconfigure_options(
 )
 
 catkin_package(
-  CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils suturo_perception_msgs suturo_perception_segmentation suturo_perception_pipeline
+  CATKIN_DEPENDS cv_bridge euroc_c2_msgs roscpp rospy std_msgs perception_utils suturo_perception_msgs suturo_perception_segmentation suturo_perception_pipeline suturo_perception_classification
   DEPENDS opencv pcl
 )
 include_directories(

@@ -12,6 +12,8 @@ namespace suturo_perception{
     }
       
     void execute();
+
+    Eigen::Matrix<float, 4, 4> getTransformations();
   };
 }
 #endif

@@ -79,6 +79,8 @@ public:
     dump_icp_fitter_pointclouds_ = false;
     remove_nans_ = false;
     max_icp_iterations_ = 60;
+    icp_fitter_ia_method_ = ICPFitter::IA_CENTROID;
+    fallback_ia_ = false;
   }
 
   //  This should be the observed pointcloud
@@ -124,7 +126,15 @@ public:
   // Please see the documentation of ModelTransformMode for more details on the different modes
   void setTransformModelsOnFail(ModelTransformMode m);
 
+  // Sets the desired INITIAL ALIGNMENT method that should be
+  // used during ICPFitter::execute()
+  void setInitialAlignmentMethod(ICPFitter::IAMethod m)
+  {
+    icp_fitter_ia_method_ = m;
+  }
 
+  // Is atleast one model of interest given?
+  bool modelsOfInteresetGiven(){ return models_of_interest_.size() > 0; }
 
   void execute();
 
@@ -146,6 +156,9 @@ public:
   // Get the fitness score of the best match
   // Available after execute()
   double getFitnessScore();
+
+  // Should we try other IA method, if the MPE fails wenn atleast one model of intereset is given?
+  void setFallbackInitialAlignmentEnabled(bool enabled){ fallback_ia_ = enabled; }
 
   // Get the pose (x,y,z, quaternion.x, quaternion.y, quaternion.z, quaternion.w ) as a 7-dimensional vector.
   // The pose will be the one of the best matching model
@@ -178,8 +191,12 @@ private:
   bool pipeline_mode_;
   bool remove_nans_;
   int max_icp_iterations_;
+  ICPFitter::IAMethod icp_fitter_ia_method_;
+  bool fallback_ia_;
 
   std::vector<int> parseRequestArgs(std::string req);
+  // Use the ICPFitter, evaluate the result and dump the pointclouds, if desired
+  void fitAndEvaluate(ICPFitter &f, int i);
 
 };
 #endif

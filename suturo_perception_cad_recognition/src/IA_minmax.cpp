@@ -1,12 +1,13 @@
-#include <suturo_perception_cad_recognition/IA_centroid.h>
+#include <suturo_perception_cad_recognition/IA_minmax.h>
 
 using namespace suturo_perception;
 
-Eigen::Matrix<float, 4, 4> IACentroid::getTransformations()
+Eigen::Matrix<float, 4, 4> IAMinMax::getTransformations()
 {
 
   Eigen::Matrix<float, 4, 4> final_transform =
-    rotations_.at(0) * translations_.at(1) * translations_.at(0);
+    rotations_.at(0) * translations_.at(0);
+    // Eigen::Matrix<float, 4, 4>::Identity();
   return final_transform;
 }
 // pcl::PointXYZ IACentroid::getOrigin()
@@ -27,13 +28,78 @@ Eigen::Matrix<float, 4, 4> IACentroid::getTransformations()
 //   return origin->points.at(0);
 // }
 
-void IACentroid::execute()
+void IAMinMax::execute()
 {
   pcl::PointCloud<pcl::PointXYZ>::Ptr result_s1 (new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr result_s2 (new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr result_s3 (new pcl::PointCloud<pcl::PointXYZ>);
-  std::cout << "Doing the classic IA method" << std::endl;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_min_pt_object (new pcl::PointCloud<pcl::PointXYZ>);
+  std::cout << "Doing the minmax IA method" << std::endl;
 
+  // Create a bogus point so pcd_write doesnt throw an exception for now.
+  // TODO: remove
+  // pcl::PointXYZ a(0,0,0);
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr origin (new pcl::PointCloud<pcl::PointXYZ>);
+  // result->push_back(a);
+
+  // TODO Minmax before or after table normal alignment?
+
+  pcl::PointXYZ min_pt_model, max_pt_model, min_pt_object, max_pt_object;
+  pcl::getMinMax3D(*_model_cloud, min_pt_model, max_pt_model);
+  pcl::getMinMax3D(*_cloud_in, min_pt_object, max_pt_object);
+
+  // Add these points for debugging
+  result_s3->push_back(min_pt_model);
+  result_s3->push_back(max_pt_model);
+  result_s3->push_back(min_pt_object);
+  result_s3->push_back(max_pt_object);
+  transformed_min_pt_object->push_back(min_pt_object);
+  transformed_min_pt_object->push_back(max_pt_object);
+
+  // Convert the points to eigen vectors
+  Eigen::Vector3f v_min_pt_model = min_pt_model.getVector3fMap();
+  Eigen::Vector3f v_max_pt_model = max_pt_model.getVector3fMap();
+  Eigen::Vector3f v_min_pt_object = min_pt_object.getVector3fMap();
+  Eigen::Vector3f v_max_pt_object = max_pt_object.getVector3fMap();
+  // Calculate the diagonal through the min/max points (e.g. through the object)
+  Eigen::Vector3f diagonal_model  = v_max_pt_model -  v_min_pt_model;
+  Eigen::Vector3f diagonal_object = v_max_pt_object - v_min_pt_object;
+
+  // Step 1
+  // Translate the object to the model by the min_pts of both.
+  Eigen::Vector3f diff_of_min_pts = v_min_pt_model - v_min_pt_object;
+  
+  Eigen::Matrix< float, 4, 4 > transform_min_pt = 
+    getTranslationMatrix(
+        diff_of_min_pts[0],
+        diff_of_min_pts[1],
+        diff_of_min_pts[2]);
+
+  pcl::transformPointCloud(*_cloud_in, *result_s1,transform_min_pt);
+  pcl::transformPointCloud(*_cloud_in, *_result  ,transform_min_pt);
+  pcl::transformPointCloud(*transformed_min_pt_object, *transformed_min_pt_object ,transform_min_pt);
+  translations_.push_back(transform_min_pt.inverse() ); 
+  _object_transformation_steps.push_back(result_s1);
+
+  // Step 2
+  // Rotate the diagonal of the object into the diagonal of the
+  // model
+
+  // TODO: Is it safe to always use *-1 on diagonal_object? 
+  // Maybe it's better to calculate the diagonal first
+  Eigen::Matrix< float, 4, 4 > transformationRotateDiagonal = 
+    rotateAroundCrossProductOfNormals(diagonal_model, diagonal_object * -1);
+  pcl::transformPointCloud(*_result, *result_s2,transformationRotateDiagonal);
+  pcl::transformPointCloud(*_result, *_result  ,transformationRotateDiagonal);
+  pcl::transformPointCloud(*transformed_min_pt_object, *transformed_min_pt_object ,transformationRotateDiagonal);
+  rotations_.push_back(transform_min_pt.inverse() ); 
+  _object_transformation_steps.push_back(result_s2);
+
+  // DEBUGGING 
+  _object_transformation_steps.push_back(result_s3);
+  // Add transformed min_pt_model
+  _object_transformation_steps.push_back(transformed_min_pt_object);
+  /*
   // Step 1: Rotate the object with the table normal
   Eigen::Vector3f table_normal(
       _table_normal[0],
@@ -133,5 +199,7 @@ void IACentroid::execute()
   // for (int i = 0; i < translations_.size(); i++) {
   //   std::cout << "idx: " << i << " " << translations_.at(i) << std::endl;
   // }
+  */
+
 }
 

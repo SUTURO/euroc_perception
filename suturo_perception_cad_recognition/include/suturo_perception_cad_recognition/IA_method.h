@@ -29,6 +29,7 @@ namespace suturo_perception
 		public:
       IAMethod(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in, pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud, Eigen::Vector4f table_normal) : _cloud_in(cloud_in), _model_cloud(model_cloud), _table_normal(table_normal)
       {
+        _result = pcl::PointCloud<pcl::PointXYZ>::Ptr (new pcl::PointCloud<pcl::PointXYZ>);
       }
       
 			boost::posix_time::time_duration getExecutionTime()
@@ -37,6 +38,10 @@ namespace suturo_perception
 			}
 
 			virtual void execute() = 0;
+
+
+      // A transformation matrix with all the applied transformations
+      virtual Eigen::Matrix<float, 4, 4>  getTransformations() = 0;
 
       Eigen::Matrix< float, 4, 4 > rotateAroundCrossProductOfNormals(
           Eigen::Vector3f base_normal,
@@ -57,6 +62,8 @@ namespace suturo_perception
       std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> getObjectTransformationSteps(){ return _object_transformation_steps; }
       // Get the resultant pointcloud after the IA process
       pcl::PointCloud<pcl::PointXYZ>::Ptr getResult(){ return _result; }
+
+      void setModelCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr m){ _model_cloud = m; };
       
       // FIX eigen stuff
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
