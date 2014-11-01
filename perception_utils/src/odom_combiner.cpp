@@ -175,6 +175,11 @@ receive_tcp_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
 {
   // std::cout << "tcp cloud incoming..." << std::endl;
 
+  mutex_tcp.lock();
+  latest_tcp_sensor_msg = *inputCloud;
+  mutex_tcp.unlock();
+
+  /*
   sensor_msgs::PointCloud2 transformedCloud;
   pcl_ros::transformPointCloud("/odom_combined", *inputCloud, transformedCloud, *tfListener);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZRGB>());
@@ -190,6 +195,7 @@ receive_tcp_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
   latest_tcp_cloud = voxeled_cloud;
   time_tcp_cloud = inputCloud->header.stamp;
   mutex_tcp.unlock();
+  */
   // std::cout << "pts after voxeling: " << latest_tcp_cloud->points.size() << std::endl;
 }
 
@@ -197,7 +203,12 @@ void
 receive_scene_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
 {
   // std::cout << "scene cloud incoming..." << std::endl;
-  // boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
+  mutex_scene.lock();
+  latest_scene_sensor_msg = *inputCloud;
+  mutex_scene.unlock();
+
+  // boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();S
+  /*
   sensor_msgs::PointCloud2 transformedCloud;
   pcl_ros::transformPointCloud("/odom_combined", *inputCloud, transformedCloud, *tfListener);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZRGB>());
@@ -213,6 +224,7 @@ receive_scene_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud)
   latest_scene_cloud = voxeled_cloud;
   time_scene_cloud = inputCloud->header.stamp;
   mutex_scene.unlock();
+  */
   // std::cout << "pts after voxeling: " << latest_scene_cloud->points.size() << std::endl;
 }
 
@@ -220,29 +232,60 @@ bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
          suturo_perception_msgs::GetPointArray::Response &res)
 {
   // std::cout << "Service called" << std::endl;
+  // sensor_msgs::PointCloud2 transformedCloud;
+  // pcl_ros::transformPointCloud("/odom_combined", *inputCloud, transformedCloud, *tfListener);
+  // pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZRGB>());
+  // pcl::PointCloud<pcl::PointXYZRGB>::Ptr voxeled_cloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+  // pcl::fromROSMsg(transformedCloud,*cloud_in);
+	
+  // pcl::VoxelGrid<pcl::PointXYZRGB> sor;
+  // sor.setInputCloud (cloud_in);
+  // sor.setLeafSize (0.003f, 0.003f, 0.003f);
+  // sor.filter (*voxeled_cloud);
 
-  if(latest_scene_cloud == NULL or latest_tcp_cloud == NULL)
-  return false;
+  // mutex_scene.lock();
+  // latest_scene_cloud = voxeled_cloud;
+  // time_scene_cloud = inputCloud->header.stamp;
+  // mutex_scene.unlock();
+
+  // if(latest_scene_cloud == NULL or latest_tcp_cloud == NULL)
+  // return false;
 
 
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
   if(req.pointCloudName == suturo_perception_msgs::GetPointArrayRequest::TCP)
   {
      mutex_tcp.lock();
-     for (int i = 0; i < latest_tcp_cloud->points.size(); i++) {
-       res.pointArray.push_back(latest_tcp_cloud->points.at(i).x);
-       res.pointArray.push_back(latest_tcp_cloud->points.at(i).y);
-       res.pointArray.push_back(latest_tcp_cloud->points.at(i).z);
-       HSVColor c = convertRGBToHSV(latest_tcp_cloud->points.at(i).r,
-       latest_tcp_cloud->points.at(i).g, latest_tcp_cloud->points.at(i).b);
+     sensor_msgs::PointCloud2 transformedCloud;
+     pcl_ros::transformPointCloud("/odom_combined", latest_tcp_sensor_msg, transformedCloud, *tfListener);
+     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZRGB>());
+     pcl::PointCloud<pcl::PointXYZRGB>::Ptr voxeled_cloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+     pcl::fromROSMsg(transformedCloud,*cloud_in);
+
+     pcl::VoxelGrid<pcl::PointXYZRGB> sor;
+     sor.setInputCloud (cloud_in);
+     sor.setLeafSize (0.003f, 0.003f, 0.003f);
+     sor.filter (*voxeled_cloud);
+
+     // mutex_scene.lock();
+     // latest_scene_cloud = voxeled_cloud;
+     // time_scene_cloud = inputCloud->header.stamp;
+     // mutex_scene.unlock();
+     for (int i = 0; i < voxeled_cloud->points.size(); i++) {
+       res.pointArray.push_back(voxeled_cloud->points.at(i).x);
+       res.pointArray.push_back(voxeled_cloud->points.at(i).y);
+       res.pointArray.push_back(voxeled_cloud->points.at(i).z);
+       HSVColor c = convertRGBToHSV(voxeled_cloud->points.at(i).r,
+       voxeled_cloud->points.at(i).g, voxeled_cloud->points.at(i).b);
        res.pointArray.push_back( getNearestRGBColor(c) );
      }
      if(req.publishToPlanningScene)
      {
        sensor_msgs::PointCloud2 pub_message;
-       pcl::toROSMsg(*latest_tcp_cloud, pub_message );
+       pcl::toROSMsg(*voxeled_cloud, pub_message );
        pub_message.header.frame_id = "/odom_combined";
-       pub_message.header.stamp = time_tcp_cloud;
+       // pub_message.header.stamp = time_tcp_cloud;
+       pub_message.header.stamp = latest_tcp_sensor_msg.header.stamp;
        pub.publish(pub_message);
      }
      mutex_tcp.unlock();
@@ -251,20 +294,31 @@ bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
   {
      // res.pointArray 
      mutex_scene.lock();
-     for (int i = 0; i < latest_scene_cloud->points.size(); i++) {
-       res.pointArray.push_back(latest_scene_cloud->points.at(i).x);
-       res.pointArray.push_back(latest_scene_cloud->points.at(i).y);
-       res.pointArray.push_back(latest_scene_cloud->points.at(i).z);
-       HSVColor c = convertRGBToHSV(latest_scene_cloud->points.at(i).r,
-       latest_scene_cloud->points.at(i).g, latest_scene_cloud->points.at(i).b);
+     sensor_msgs::PointCloud2 transformedCloud;
+     pcl_ros::transformPointCloud("/odom_combined", latest_scene_sensor_msg, transformedCloud, *tfListener);
+     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZRGB>());
+     pcl::PointCloud<pcl::PointXYZRGB>::Ptr voxeled_cloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+     pcl::fromROSMsg(transformedCloud,*cloud_in);
+
+     pcl::VoxelGrid<pcl::PointXYZRGB> sor;
+     sor.setInputCloud (cloud_in);
+     sor.setLeafSize (0.003f, 0.003f, 0.003f);
+     sor.filter (*voxeled_cloud);
+     for (int i = 0; i < voxeled_cloud->points.size(); i++) {
+       res.pointArray.push_back(voxeled_cloud->points.at(i).x);
+       res.pointArray.push_back(voxeled_cloud->points.at(i).y);
+       res.pointArray.push_back(voxeled_cloud->points.at(i).z);
+       HSVColor c = convertRGBToHSV(voxeled_cloud->points.at(i).r,
+       voxeled_cloud->points.at(i).g, voxeled_cloud->points.at(i).b);
        res.pointArray.push_back( getNearestRGBColor(c) );
      }
      if(req.publishToPlanningScene)
      {
        sensor_msgs::PointCloud2 pub_message;
-       pcl::toROSMsg(*latest_scene_cloud, pub_message );
+       pcl::toROSMsg(*voxeled_cloud, pub_message );
        pub_message.header.frame_id = "/odom_combined";
-       pub_message.header.stamp = time_scene_cloud;
+       // pub_message.header.stamp = time_scene_cloud;
+       pub_message.header.stamp = latest_scene_sensor_msg.header.stamp;
        pub.publish(pub_message);
      }
      mutex_scene.unlock();
@@ -312,7 +366,14 @@ int main(int argc, char **argv)
 	suturo_perception::NodeStatus node_status(n);
 	node_status.nodeStarted(suturo_perception_msgs::PerceptionNodeStatus::NODE_ODOM_COMBINER);
 	
-  ros::spin();
+  ros::spin(); 
+
+  // ros::Rate r(10); // 10 hz
+  // while(ros::ok())
+  // {
+  //   ros::spinOnce();
+  //   r.sleep();
+  // }
 
   return 0;
 }
