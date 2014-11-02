@@ -33,7 +33,7 @@ class Classifier(object):
 
     def __init__(self, task, logging):
         self.logging = logging
-        if self.logging >= 1: print(">>>> Classifier will be initialized for task %s with log_lvl %s" % (task, logging))
+        if self.logging >= 1: rospy.loginfo(">>>> Classifier will be initialized for task %s with log_lvl %s" % (task, logging))
         rospy.Subscriber("/suturo/yaml_pars0r", Task, self.set_yaml_infos)
         self.marker_publisher = rospy.Publisher("/suturo/obstacle_classifier_marker", Marker)
         self.marker_id = 0
@@ -43,9 +43,9 @@ class Classifier(object):
         objects = data.objects
         self.original_objects = objects
         if self.logging >= 1:
-            print(">>>> Receiving Objects from YAML")
+            rospy.loginfo(">>>> Receiving Objects from YAML")
         if self.logging >= 2:
-            print("Objects Received from YAML: \r\n %s" % objects)
+            rospy.loginfo("Objects Received from YAML: \r\n %s" % objects)
         pars = Parser()
         parsed = pars.convert_yaml_objects(objects, self.selected_attributes)
 
@@ -61,7 +61,7 @@ class Classifier(object):
             self.classifier_list[each.name] = self.create_classifier_for_object(each, data + rnd_data,
                                                                                 labels + rnd_labels)
         if self.logging >= 3:
-            print("All Data + Labels \r\n %s  \r\n %s" % ((labels + rnd_labels), (data + rnd_data)))
+            rospy.loginfo("All Data + Labels \r\n %s  \r\n %s" % ((labels + rnd_labels), (data + rnd_data)))
         self.clf.fit(data + rnd_data, labels + rnd_labels)
         if self.logging >= 3:
             tree.export_graphviz(self.clf, out_file='tree.dot', feature_names=['h', 's', 'v', 'site'])
@@ -180,7 +180,7 @@ class Classifier(object):
         # load object
         unclassified_object = cobject.unclassifiedObject
         if self.logging >= 2:
-            print("Got Object to Classify: \r\n %s" % unclassified_object)
+            rospy.loginfo("Got Object to Classify: \r\n %s" % unclassified_object)
         height = unclassified_object.c_height
         h = unclassified_object.c_avg_col_h
         s = unclassified_object.c_avg_col_s
@@ -212,7 +212,7 @@ class Classifier(object):
             classifyable_unclassified_object += [r, g, b]
 
         if self.logging >= 1:
-            print("Object to Classify: \r\n %s" % classifyable_unclassified_object)
+            rospy.loginfo("Object to Classify: \r\n %s" % classifyable_unclassified_object)
         class_name = 'unknown'
         c_type = EurocObject.OBSTACLE
         for each in self.classifier_list:
@@ -228,7 +228,7 @@ class Classifier(object):
         resp = ClassifierResponse()
         resp.classifiedObject = unclassified_object
         if self.logging >= 1:
-            print("Classified Object as: %s" % class_name)
+            rospy.loginfo("Classified Object as: %s" % class_name)
         self.publish_marker_for_object(unclassified_object, unclassified_object.object.id + "\nheight: " + str(height))
         return resp
 
