@@ -1,6 +1,7 @@
 #include "perception_utils/get_euroc_task_description.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/format.hpp>
 
 using namespace suturo_perception;
 
@@ -13,6 +14,17 @@ EurocTaskClient::EurocTaskClient(ros::NodeHandle &n)
 }
 
 bool EurocTaskClient::requestTaskDescription()
+{
+	int i = 1;
+	while (!requestTaskDescriptionSingle())
+	{
+		logger.logError((boost::format("requesting task description failed! trying again... attempt %s") % i).str());
+		i++;
+	}
+	return true;
+}
+
+bool EurocTaskClient::requestTaskDescriptionSingle()
 {
   ros::Subscriber sub = nodeHandle_.subscribe<suturo_msgs::Task>(
     YAML_PARS0R_TOPIC, 

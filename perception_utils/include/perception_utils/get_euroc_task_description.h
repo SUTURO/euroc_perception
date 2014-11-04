@@ -13,6 +13,7 @@ namespace suturo_perception
     EurocTaskClient(ros::NodeHandle &n);
     suturo_msgs::Task getTaskDescription();
     bool requestTaskDescription();
+    bool requestTaskDescriptionSingle();
     void receiveTaskDescription(const boost::shared_ptr<const suturo_msgs::Task> task);
     
   protected:
