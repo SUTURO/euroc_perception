@@ -127,21 +127,21 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
   threadpool.join_all();
   
   // Deinitialize Capabilities
-	std::stringstream capabilityExecutionTimes;
-	capabilityExecutionTimes << "~~~" << std::endl;
+	//std::stringstream capabilityExecutionTimes;
+	//capabilityExecutionTimes << "~~~" << std::endl;
   for (int i = 0; i < object_cnt; i++) 
   {
-		capabilityExecutionTimes << "Object " << i << std::endl;
+		//capabilityExecutionTimes << "Object " << i << std::endl;
     for (int j = 0; j < avail_capabilities; j++)
     {
-			capabilityExecutionTimes << "  Time for " << capabilities[i][j]->getName() << ": " << capabilities[i][j]->getExecutionTime() << std::endl;
+			//capabilityExecutionTimes << "  Time for " << capabilities[i][j]->getName() << ": " << capabilities[i][j]->getExecutionTime() << std::endl;
       delete capabilities[i][j];
     }
   }
-  std::ofstream capExecTimeFile;
-	capExecTimeFile.open("/tmp/perception_pipeline_execution_times", std::ios::out | std::ios::app);
-	capExecTimeFile << capabilityExecutionTimes.str();
-	capExecTimeFile.close();
+  //std::ofstream capExecTimeFile;
+	//capExecTimeFile.open("/tmp/perception_pipeline_execution_times", std::ios::out | std::ios::app);
+	//capExecTimeFile << capabilityExecutionTimes.str();
+	//capExecTimeFile.close();
 }
 
 int

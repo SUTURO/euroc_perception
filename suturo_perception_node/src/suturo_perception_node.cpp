@@ -349,6 +349,7 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
 	// remember time of cloud
   pipelineData_->stamp = inputCloud->header.stamp;
 
+	/*
 	logger.logInfo("writing cloud for debugging");
 	pcl::PCDWriter writer;
 	std::stringstream ss;
@@ -361,6 +362,7 @@ SuturoPerceptionNode::receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inpu
 	logger.logInfo((boost::format("Writing point cloud with %s points to %s") % cloud_in_->points.size() % ss.str()).str());
 	writer.writeBinaryCompressed(ss.str(), *cloud_in_);
 	logger.logInfo("writing cloud for debugging done");
+	*/
 
 	if (task_client_->getTaskDescription().task_type == suturo_msgs::Task::TASK_4 && 
 			nodeType_ == GRIPPER)
