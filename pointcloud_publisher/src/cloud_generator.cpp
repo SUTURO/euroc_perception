@@ -97,9 +97,27 @@ void CloudGenerator::receive_depth_and_rgb_image(
 
 	cv::Mat resized_img;
 	cv::Mat resized_depth;
-
-  resized_img = img_ptr->image.clone();
-  resized_depth = depth_ptr->image.clone();
+	
+	cv::Size expected_size(640,480);
+	
+	if (img_ptr->image.size() == expected_size)
+	{
+		resized_img = img_ptr->image.clone();
+	}
+	else
+	{
+		std::cout << "WARNING: incoming rgb image doesn't have expected size, resizing from " << img_ptr->image.size().width << "x" << img_ptr->image.size().height << " to " << expected_size.width << "x" << expected_size.height << std::endl;
+		cv::resize(img_ptr->image, resized_img, expected_size);
+	}
+	if (depth_ptr->image.size() == expected_size)
+	{
+		resized_depth = depth_ptr->image.clone();
+	}
+	else
+	{
+		std::cout << "WARNING: incoming depth image doesn't have expected size, resizing from " << depth_ptr->image.size().width << "x" << depth_ptr->image.size().height << " to " << expected_size.width << "x" << expected_size.height << std::endl;
+		cv::resize(depth_ptr->image, resized_depth, expected_size);
+	}
 
 	std::string frame, frame_rgb;
 	if(isTcp)
