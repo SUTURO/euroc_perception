@@ -29,6 +29,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr latest_scene_cloud,
 tf::TransformListener *tfListener;
 ros::NodeHandle *node_handle;
 ros::Publisher pub;
+const int max_wait_count = 100; // Wait 100 * 100msec
 
 sensor_msgs::PointCloud2 latest_scene_sensor_msg, latest_tcp_sensor_msg;
 
@@ -251,8 +252,43 @@ bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
   // if(latest_scene_cloud == NULL or latest_tcp_cloud == NULL)
   // return false;
 
-
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
+  int wait_count = 0;
+  while(wait_count < max_wait_count)
+  {
+    std::cout << wait_count << std::endl;
+    if(req.pointCloudName == suturo_perception_msgs::GetPointArrayRequest::TCP)
+    {
+      std::cout << latest_tcp_sensor_msg.header.stamp;
+      std::cout << " vs. ";
+      std::cout << req.minPointCloudTimeStamp;
+      std::cout << std::endl;
+
+      if(latest_tcp_sensor_msg.header.stamp > req.minPointCloudTimeStamp)
+        break;
+    }
+    else if(req.pointCloudName == suturo_perception_msgs::GetPointArrayRequest::SCENE)
+    {
+      if(latest_scene_sensor_msg.header.stamp > req.minPointCloudTimeStamp)
+        break;
+    }
+    else
+    {
+      ROS_INFO("Invalid pointCloudName given");
+      return false;
+    }
+    wait_count++;
+    ros::Rate r(10);
+    r.sleep();
+    ros::spinOnce(); 
+  }
+  if(wait_count >= max_wait_count)
+  {
+      ROS_INFO("Couldn't get a pointcloud after the given time");
+      return false;
+  }
+
+
   if(req.pointCloudName == suturo_perception_msgs::GetPointArrayRequest::TCP)
   {
      mutex_tcp.lock();
