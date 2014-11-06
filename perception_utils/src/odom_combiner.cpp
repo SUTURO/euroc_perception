@@ -278,6 +278,7 @@ bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
        HSVColor c = convertRGBToHSV(voxeled_cloud->points.at(i).r,
        voxeled_cloud->points.at(i).g, voxeled_cloud->points.at(i).b);
        res.pointArray.push_back( getNearestRGBColor(c) );
+       res.header.stamp = latest_tcp_sensor_msg.header.stamp;
      }
      if(req.publishToPlanningScene)
      {
@@ -311,6 +312,7 @@ bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
        HSVColor c = convertRGBToHSV(voxeled_cloud->points.at(i).r,
        voxeled_cloud->points.at(i).g, voxeled_cloud->points.at(i).b);
        res.pointArray.push_back( getNearestRGBColor(c) );
+       res.header.stamp = latest_scene_sensor_msg.header.stamp;
      }
      if(req.publishToPlanningScene)
      {
