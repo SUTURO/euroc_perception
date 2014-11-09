@@ -217,7 +217,8 @@ class SceneClassifier(object):
         class_dict = {'red_cube': 1, 'green_cylinder': 2, 'blue_handle': 0, 'obstacle': 0}
         # load object
         unclassified_object = object.unclassifiedObject
-        if self.logging >= 2 : print("Got Object to Classify: \r\n %s" %unclassified_object)
+        if self.logging >= 2:
+            print("Got Object to Classify: \r\n %s" %unclassified_object)
         height = unclassified_object.c_height
         volume = unclassified_object.c_volume
         h = unclassified_object.c_avg_col_h
@@ -238,17 +239,19 @@ class SceneClassifier(object):
             edges.sort()
         #build classifyable object and classify it
         classifyable_unclassified_object = [h, s, v, height]# + edges
-        if self.logging >= 1: print("Object to Classify: \r\n %s"%classifyable_unclassified_object)
+        if self.logging >= 1:
+            print("Object to Classify: \r\n %s"%classifyable_unclassified_object)
         class_name = self.clf.predict(classifyable_unclassified_object)
         # print class_name
         # class_name = self.lolloosed(r,g,b)
         if (volume > 0.0001) or (height > (self.max_height + self.max_height*0.05)):
-          class_name[0] = 'obstacle'
+            class_name[0] = 'obstacle'
         unclassified_object.c_shape = class_dict[class_name[0]]
         unclassified_object.object.id = class_name[0]
         resp = ClassifierResponse()
         resp.classifiedObject = unclassified_object
-        if self.logging >= 1: print("Classified Object as: %s"%class_name)
+        if self.logging >= 1:
+            print("Classified Object as: %s"%class_name)
         self.publish_marker_for_object(unclassified_object, class_name[0] + "\nheight: " + str(height))
         return resp
 
