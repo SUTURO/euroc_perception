@@ -115,7 +115,7 @@ getNearestRGBColor(HSVColor c)
 
 
   // Check saturation first. if it's below 40, not much of the color is left
-  if(s < 0.80)
+  if(s < 0.70)
   {
     // logger.logInfo("Saturation too low for color_class");
     return -1;
