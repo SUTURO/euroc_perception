@@ -145,6 +145,16 @@ bool PointCloudOperations::extractBiggestCluster(const pcl::PointCloud<pcl::Poin
   if(old_inliers != NULL && new_inliers != NULL)
     map_indices = true;
 
+	if (!cloud_in)
+	{
+		logger.logError("cloud_in is null");
+		return false;
+	}
+	if (!cloud_out)
+	{
+		logger.logError("cloud_out is null");
+		return false;
+	}
   if(cloud_in->points.size() == 0)
   {
     logger.logError("Could not extract biggest cluster. input cloud empty");
@@ -190,6 +200,87 @@ bool PointCloudOperations::extractBiggestCluster(const pcl::PointCloud<pcl::Poin
   cloud_out->width = cloud_out->points.size ();
   cloud_out->height = 1;
   cloud_out->is_dense = true;
+
+  // logger.logError("New Inliers calculated: " << new_inliers->indices.size());
+
+  // if(writer_pcd) writer.write ("cloud_out.pcd", *cloud_out, false);
+
+  boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
+  logger.logTime(s, e, "extractBiggestCluster()");
+  return true;
+}
+
+/* Extract the biggest clusters in PointCloud cloud_in
+* The method returns true, if a cluster has been found.
+* If no Cluster could be extracted, or an error occured, the method returns false.
+* To map the original inliers (which correspond to the input cloud_in), you pass in a Pointer to the old inliers and receive the new inliers after the clustering in new_inliers_vec.
+*
+* ecObjClusterTolerance sets the ClusterTolance in pcl::EuclideanClusterExtraction.
+* ecMinClusterSize ist the minimum size of a cluster, while ecMaxClusterSize is the maximum size of the cluster.
+*/
+bool PointCloudOperations::extractBiggestClusters(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clouds_out, const pcl::PointIndices::Ptr old_inliers, std::vector<pcl::PointIndices::Ptr> &new_inliers_vec,
+    double ecClusterTolerance,
+    int ecMinClusterSize,
+    int ecMaxClusterSize)
+{
+  Logger logger("point_cloud_operations");
+  boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
+  // Should we map the extracted points to the inliers in the input cloud?
+  bool map_indices=false;
+  if(old_inliers != NULL )
+    map_indices = true;
+
+  if(cloud_in->points.size() == 0)
+  {
+    logger.logError("Could not extract biggest cluster. input cloud empty");
+    return false;
+  }
+
+  // Use cluster extraction to get rid of the outliers of the segmented table
+  pcl::search::KdTree<pcl::PointXYZRGB>::Ptr treeTable (new pcl::search::KdTree<pcl::PointXYZRGB>);
+  treeTable->setInputCloud (cloud_in);  
+  std::vector<pcl::PointIndices> cluster_indices;
+  pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ecTable;
+  ecTable.setClusterTolerance (ecClusterTolerance); // 2cm
+  ecTable.setMinClusterSize (ecMinClusterSize);
+  ecTable.setMaxClusterSize (ecMaxClusterSize);
+  ecTable.setSearchMethod (treeTable);
+  ecTable.setInputCloud (cloud_in);
+  ecTable.extract (cluster_indices);
+
+  std::vector<int> cluster_get_indices;
+  cluster_get_indices = *ecTable.getIndices();
+
+  logger.logInfo((boost::format("cluster_indices vector size: %s") % cluster_indices.size()).str());
+
+  if(cluster_indices.size() == 0)
+  {
+    logger.logError("No suitable cluster found for extraction. Skip ...");
+    return false;
+  }
+
+
+  // Extract the biggest cluster (e.g. the table) in the plane cloud
+  for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end(); it++)
+	{
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out(new pcl::PointCloud<pcl::PointXYZRGB>);
+		pcl::PointIndices::Ptr new_inliers(new pcl::PointIndices);
+		for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); pit++){
+			cloud_out->points.push_back (cloud_in->points[*pit]); 
+
+			if(map_indices)
+				new_inliers->indices.push_back(cluster_get_indices.at(*pit)); // Map the indices
+																																		// from the cluster extraction
+																																		// to a proper PointIndicies
+																																		// instance relative to our
+																																		// original plane
+		}
+		cloud_out->width = cloud_out->points.size ();
+		cloud_out->height = 1;
+		cloud_out->is_dense = true;
+		clouds_out.push_back(cloud_out);
+		new_inliers_vec.push_back(new_inliers);
+	}
 
   // logger.logError("New Inliers calculated: " << new_inliers->indices.size());
 

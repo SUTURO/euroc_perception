@@ -7,6 +7,8 @@
 #include <suturo_perception_cad_recognition/model_pose_estimation.h>
 #include <suturo_perception_height_calculation/height_calculation.h>
 
+#include <iostream>
+#include <fstream>
 #include <boost/asio.hpp>
 
 using namespace suturo_perception;
@@ -113,7 +115,7 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
     for (int j = 0; j < avail_capabilities; j++)
     {
       if (capabilities[i][j]->isEnabled())
-        ioService.post(boost::bind(&Capability::execute, capabilities[i][j]));
+        ioService.post(boost::bind(&Capability::pipelineExecute, capabilities[i][j]));
     }
   }
   
@@ -125,13 +127,21 @@ Pipeline::execute(PipelineData::Ptr pipeline_data, PipelineObject::VecPtr pipeli
   threadpool.join_all();
   
   // Deinitialize Capabilities
+	//std::stringstream capabilityExecutionTimes;
+	//capabilityExecutionTimes << "~~~" << std::endl;
   for (int i = 0; i < object_cnt; i++) 
   {
+		//capabilityExecutionTimes << "Object " << i << std::endl;
     for (int j = 0; j < avail_capabilities; j++)
     {
+			//capabilityExecutionTimes << "  Time for " << capabilities[i][j]->getName() << ": " << capabilities[i][j]->getExecutionTime() << std::endl;
       delete capabilities[i][j];
     }
   }
+  //std::ofstream capExecTimeFile;
+	//capExecTimeFile.open("/tmp/perception_pipeline_execution_times", std::ios::out | std::ios::app);
+	//capExecTimeFile << capabilityExecutionTimes.str();
+	//capExecTimeFile.close();
 }
 
 int

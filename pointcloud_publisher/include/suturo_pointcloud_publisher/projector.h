@@ -26,7 +26,7 @@ namespace suturo_perception {
     static bool getTransform(const ros::NodeHandle &node, const std::string &frame_from, const std::string &frame_to, tf::StampedTransform &transform_);
     static void printTransform(const tf::StampedTransform &transform);
     
-    static pcl::PointCloud<pcl::PointXYZRGB>::Ptr depthProject(const cv::Mat &depth_image_in, const cv::Mat &rgb_image, const tf::StampedTransform &transform);
+    static pcl::PointCloud<pcl::PointXYZRGB>::Ptr depthProject(const cv::Mat &depth_image_in, const cv::Mat &rgb_image, const tf::StampedTransform &transform, const bool projectColors);
     static ROI getCloudROI(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in, const tf::StampedTransform &transform);
   };
 }

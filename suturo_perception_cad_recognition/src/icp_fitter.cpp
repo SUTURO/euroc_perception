@@ -173,7 +173,29 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
     _model_transformation_steps.push_back(_upwards_model);
   }
 
+  // Prepare and execute initial alignment
+  _initial_alignment->setModelCloud(_upwards_model);
+  _initial_alignment->execute();
+  std::cout << "IA::execute() done" << std::endl;
+  /*
+  // Copy results from IA execution
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> ia_obj_transformations = _initial_alignment->getObjectTransformationSteps();
+  _object_transformation_steps.insert(_object_transformation_steps.end(),
+      ia_obj_transformations.begin(),
+      ia_obj_transformations.end());
+  std::cout << "transformation pcs copied" << std::endl;
 
+  translations_ = _initial_alignment->getTranslations();
+  std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > > ia_rotations =  _initial_alignment->getRotations();
+  rotations_.insert( rotations_.end(),
+      ia_rotations.begin(), ia_rotations.end());
+
+  _upwards_object = _initial_alignment->getResult();
+  std::cout << "IA done" << std::endl;
+  */
+
+
+  /*
   // Get the (square) dimensions with min max 3d
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr corner_points (new pcl::PointCloud<pcl::PointXYZRGB>);
   computeCuboidCornersWithMinMax3D(_upwards_model, corner_points);
@@ -211,6 +233,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
     rotation_base_vector[1] = 1;
   }
 
+  // INITIAL ALIGNMENT OF THE OBJECT 
   Eigen::Matrix< float, 4, 4 > transformationRotateObject = 
     rotateAroundCrossProductOfNormals(rotation_base_vector, table_normal);
   pcl::transformPointCloud (*_cloud_in, *_upwards_object, transformationRotateObject);   
@@ -222,12 +245,23 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
     model_cloud_centroid, diff_of_centroids;
   pcl::compute3DCentroid(*_cloud_in, input_cloud_centroid); 
   pcl::compute3DCentroid(*_upwards_object, rotated_input_cloud_centroid); 
-  diff_of_centroids = Eigen::Vector4f(0,0,0,0) - rotated_input_cloud_centroid;
+  if(!_calc_model_centroid)
+  {
+    diff_of_centroids = Eigen::Vector4f(0,0,0,0) - rotated_input_cloud_centroid;
+  }
+  else
+  {
+    pcl::compute3DCentroid(*_upwards_model, model_cloud_centroid); 
+    diff_of_centroids = model_cloud_centroid - rotated_input_cloud_centroid;
+    std::cout << "ModelCentroid is at " << model_cloud_centroid << "." << "Diff of centroids:" << diff_of_centroids;
+  }
   Eigen::Matrix< float, 4, 4 > transform = 
     getTranslationMatrix(
         diff_of_centroids[0],
         diff_of_centroids[1],
         diff_of_centroids[2]);
+  std::cout << "Resulting centroid shift transform" << transform << std::endl;
+  std::cout << "Resulting centroid shift transform INVERSE" << transform.inverse() << std::endl;
   pcl::transformPointCloud(*_upwards_object, *_upwards_object_s2,transform);
   pcl::transformPointCloud(*_upwards_object, *_upwards_object,transform);
   _object_transformation_steps.push_back(_upwards_object_s2);
@@ -247,20 +281,65 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
 
   // Translate the object to align it with the top of the model
   float translate_upwards = model_height - object_height;
+  std::cout << "Translating upwards by " << translate_upwards * 100 << "=" << model_height * 100 << "-" << object_height * 100 << std::endl;
   Eigen::Matrix< float, 4, 4 > transformUpwards = 
     getTranslationMatrix(0,translate_upwards,0);
+  std::cout << "Upward translation matrix: " << transformUpwards << std::endl;
+  std::cout << "Upward translation matrix INVERSE: " << transformUpwards.inverse() << std::endl;
   pcl::transformPointCloud(*_upwards_object, *_upwards_object_s3, transformUpwards);
   pcl::transformPointCloud(*_upwards_object, *_upwards_object, transformUpwards);
   _object_transformation_steps.push_back(_upwards_object_s3);
+  */
 
   // Store the transposed matrix of the height-fitting transformation
   // std::cout << "Height Adjustment:" << std::endl; 
   // std::cout << transformUpwards << std::endl; 
-  translations_.push_back(transformUpwards.inverse() ); 
+  // translations_.push_back(transformUpwards.inverse() ); 
   // Store the transposed matrix of the centroid alignment
-  translations_.push_back(transform.inverse());
+  // translations_.push_back(transform.inverse());
   // Store the transposed matrix of the rotation to fit the table normal
-  rotations_.push_back(transformationRotateObject.transpose() ); 
+  // rotations_.push_back(transformationRotateObject.transpose() ); 
+
+  //      INITIAL ALIGNMENT DONE
+ //  std::cout << "Showing translations: " << std::endl;
+ //  for (int i = 0; i < translations_.size(); i++) {
+ //    std::cout << "idx: " << i << " " << translations_.at(i) << std::endl;
+ //  }
+ //  std::cout << "Showing rotations: " << std::endl;
+ //  for (int i = 0; i < rotations_.size(); i++) {
+ //    std::cout << "idx: " << i << " " << rotations_.at(i) << std::endl;
+ //  }
+ //  std::cout << "Vs." << std::endl;
+ // std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > >  ia_rot
+ //    = _initial_alignment->getRotations();
+
+ // std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > >  ia_trans
+ //    = _initial_alignment->getTranslations();
+
+ //  std::cout << "Showing translations: " << std::endl;
+ //  for (int i = 0; i < ia_trans.size(); i++) {
+ //    std::cout << "idx: " << i << " " << ia_trans.at(i) << std::endl;
+ //  }
+ //  std::cout << "Showing rotations: " << std::endl;
+ //  for (int i = 0; i < ia_rot.size(); i++) {
+ //    std::cout << "idx: " << i << " " << ia_rot.at(i) << std::endl;
+ //  }
+
+  // Copy results from IA execution
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> ia_obj_transformations = _initial_alignment->getObjectTransformationSteps();
+  _object_transformation_steps.insert(_object_transformation_steps.end(),
+      ia_obj_transformations.begin(),
+      ia_obj_transformations.end());
+  std::cout << "transformation pcs copied" << std::endl;
+
+  translations_ = _initial_alignment->getTranslations();
+  std::vector<Eigen::Matrix< float, 4, 4 >, Eigen::aligned_allocator<Eigen::Matrix< float, 4, 4> > > ia_rotations =  _initial_alignment->getRotations();
+  rotations_.insert( rotations_.end(),
+      ia_rotations.begin(), ia_rotations.end());
+
+  _upwards_object = _initial_alignment->getResult();
+  std::cout << "IA done" << std::endl;
+  
 
   // Use ICP for the final alignment, after the object has been initially aligned.
   pcl::IterativeClosestPointNonLinear<pcl::PointXYZ, pcl::PointXYZ> icp;
@@ -288,19 +367,23 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ICPFitter::execute()
 
   // Rotate the model first
   pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud (new pcl::PointCloud<pcl::PointXYZ>);
-  Eigen::Matrix< float, 4, 4 > rotationBox = 
-    rotateAroundCrossProductOfNormals(table_normal, Eigen::Vector3f(0,0,1));
+  //      WARN: The following code will break the cad_recognition visualization.
+  //      Nevertheless, we don't need it for
+  //      our newer software modules
+  //
+  // Eigen::Matrix< float, 4, 4 > rotationBox = 
+  //   rotateAroundCrossProductOfNormals(table_normal, Eigen::Vector3f(0,0,1));
 
-  pcl::transformPointCloud (*_model_cloud, *transformed_cloud, rotationBox);   
+  // pcl::transformPointCloud (*_model_cloud, *transformed_cloud, rotationBox);   
 
-  // Compute the centroids of both clouds and bring them closer together
-  // for an rough initial alignment.
-  pcl::compute3DCentroid(*transformed_cloud, model_cloud_centroid); 
-  diff_of_centroids = input_cloud_centroid - model_cloud_centroid;
-  Eigen::Affine3f transformC = pcl::getTransformation(diff_of_centroids[0],
-      diff_of_centroids[1], diff_of_centroids[2],0,0,0);
+  // // Compute the centroids of both clouds and bring them closer together
+  // // for an rough initial alignment.
+  // pcl::compute3DCentroid(*transformed_cloud, model_cloud_centroid); 
+  // diff_of_centroids = input_cloud_centroid - model_cloud_centroid;
+  // Eigen::Affine3f transformC = pcl::getTransformation(diff_of_centroids[0],
+  //     diff_of_centroids[1], diff_of_centroids[2],0,0,0);
 
-  pcl::transformPointCloud(*transformed_cloud, *transformed_cloud,transformC);
+  // pcl::transformPointCloud(*transformed_cloud, *transformed_cloud,transformC);
 
   return transformed_cloud;
 }
@@ -353,21 +436,22 @@ Eigen::Matrix< float, 3, 3 > ICPFitter::removeTranslationVectorFromMatrix(Eigen:
 Eigen::Quaternionf ICPFitter::getOrientation()
 {
   Eigen::Matrix<float, 4, 4> final_transform =
-    rotations_.at(1) * translations_.at(1) * translations_.at(0) * _icp_transform_inverse * rotations_.at(0);
+    _initial_alignment->getTransformations() * _icp_transform_inverse * rotations_.at(0);
   Eigen::Quaternionf q(removeTranslationVectorFromMatrix( final_transform ) );
   return q;
 }
 
 pcl::PointXYZ ICPFitter::getOrigin()
 {
-
   // Transform object center
   pcl::PointXYZ a(0,0,0);
   pcl::PointCloud<pcl::PointXYZ>::Ptr origin (new pcl::PointCloud<pcl::PointXYZ>);
   origin->push_back(a);
   pcl::transformPointCloud(*origin, *origin, 
-      rotations_.at(1) *
-      translations_.at(1) * translations_.at(0) * _icp_transform_inverse * rotations_.at(0) );
+       _initial_alignment->getTransformations() * 
+_icp_transform_inverse * rotations_.at(0) );
+  return origin->points.at(0); 
+
   return origin->points.at(0);
 
 }
@@ -415,5 +499,24 @@ void ICPFitter::dumpPointClouds()
     ss << package_path << dump_folder << t << "_model_s_"<< i << ".pcd";
     writer.write(ss.str(), *_model_transformation_steps.at(i));
     // std::cerr << "Saved " << output_cloud_->points.size () << " data points" << std::endl;
+  }
+}
+
+
+void ICPFitter::setCalculateModelCentroid(bool b)
+{
+  _calc_model_centroid = b;
+}
+
+
+void ICPFitter::setIAMethod(ICPFitter::IAMethod m)
+{
+  if(m == ICPFitter::IA_CENTROID)
+  {
+      _initial_alignment = boost::shared_ptr<suturo_perception::IAMethod> (new suturo_perception::IACentroid(_cloud_in, _model_cloud, _table_normal));
+  }
+  else if(m == ICPFitter::IA_MINMAX)
+  {
+      _initial_alignment = boost::shared_ptr<suturo_perception::IAMethod> (new suturo_perception::IAMinMax(_cloud_in, _model_cloud, _table_normal));
   }
 }

@@ -110,6 +110,9 @@ include_directories(
 ## Declare a cpp library
 add_library(suturo_perception_icp_fitter
    src/icp_fitter.cpp
+   src/IA_method.cpp
+   src/IA_centroid.cpp
+   src/IA_minmax.cpp
 	 #	 src/model_pose_estimation.cpp
 	 #	 src/generate_pc_model.cpp
 )

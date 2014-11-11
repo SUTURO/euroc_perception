@@ -9,7 +9,7 @@
 
 namespace suturo_perception
 {
-  class ProjectionSegmenter : Segmenter
+  class ProjectionSegmenter : public Segmenter
   {
     public:
       ProjectionSegmenter() : Segmenter()

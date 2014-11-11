@@ -20,22 +20,27 @@ namespace suturo_perception
     public:
       
       template<typename PointT>
-      static void computeConvexHull(boost::shared_ptr<pcl::PointCloud<PointT> > cloud_in, boost::shared_ptr<pcl::PointCloud<PointT> > hull_points)
+      static double computeConvexHull(boost::shared_ptr<pcl::PointCloud<PointT> > cloud_in, boost::shared_ptr<pcl::PointCloud<PointT> > hull_points, bool computeAreaVolume = false)
       {
+        double volume = 0.0;
         static boost::signals2::mutex mutex;
         mutex.lock(); // Lock this method, since libqull is NOT threadsafe
 
         if(cloud_in == NULL || cloud_in->points.size() == 0)
         {
           std::cerr << "ThreadsafeHull::computeConvexHull with empty cloud called" << std::endl;
-          return;
+          return volume;
         }
 
         pcl::ConvexHull<PointT> hull;
         hull.setInputCloud(cloud_in);
         hull.setDimension(3);
+        hull.setComputeAreaVolume(computeAreaVolume);
         hull.reconstruct (*hull_points);
+        volume = hull.getTotalVolume();
         mutex.unlock();
+        
+        return volume;
       }
 	};
 }

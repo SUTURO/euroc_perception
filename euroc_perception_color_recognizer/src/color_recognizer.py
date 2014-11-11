@@ -13,6 +13,8 @@ from suturo_perception_msgs.srv import RecognizeOoI, RecognizeOoIResponse
 from suturo_perception_msgs.msg import ObjectOfInterest
 from geometry_msgs.msg import PoseStamped, Pose, Point
 from std_msgs.msg import Header, ColorRGBA
+from suturo_perception_msgs.msg import PerceptionNodeStatus
+import time
 
 
 def rgb_to_hsv(color):
@@ -137,6 +139,10 @@ def main():
     # Create the service
     rospy.loginfo("Starting ColorDetector")
     rospy.Service("/suturo/RecognizeOoI", RecognizeOoI, colorDetector.detect)
+    # Started
+    startpub = rospy.Publisher("/suturo/perception_node_status", PerceptionNodeStatus, latch=True)
+    statusmsg = PerceptionNodeStatus(PerceptionNodeStatus.NODE_COLOR_RECOGNIZER, [])
+    startpub.publish(statusmsg)
     # spin the wheel
     rospy.spin()
 

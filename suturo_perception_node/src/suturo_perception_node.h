@@ -9,7 +9,14 @@
 #include "perception_utils/pipeline_data.hpp"
 #include "perception_utils/publisher_helper.h"
 #include "suturo_perception_msgs/GetGripper.h"
+#include <suturo_perception_msgs/PerceptionNodeStatus.h>
+#include <perception_utils/node_status.hpp>
 #include "suturo_perception_node/SuturoPerceptionConfig.h"
+#include <perception_utils/get_euroc_task_description.h>
+#include <suturo_perception_segmentation/segmenter.h>
+#include <suturo_perception_segmentation/projection_segmenter.h>
+#include <suturo_perception_segmentation/task6_segmenter.h>
+#include <suturo_perception_segmentation/task4_segmenter.h>
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_cloud.h>
@@ -25,7 +32,7 @@ class SuturoPerceptionNode
     bool getGripper(suturo_perception_msgs::GetGripper::Request &req, suturo_perception_msgs::GetGripper::Response &res);
 
     void receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud);
-    void clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, pcl::PointCloud<pcl::PointXYZRGB>::Ptr original_cloud, std::vector<int> *removed_indices_filtered, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices);
+		void segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in);
   private:
     std::string OBJECT_CLOUD_PREFIX_TOPIC;
     std::string TABLE_TOPIC;
@@ -40,6 +47,7 @@ class SuturoPerceptionNode
     std::string DEPTH_FRAME;
 
     NodeType nodeType_; // true = gripper, false = scene
+    boost::shared_ptr<suturo_perception::NodeStatus> node_status;
 
     ros::NodeHandle nodeHandle_;
     ros::ServiceServer clusterService_;
@@ -49,7 +57,11 @@ class SuturoPerceptionNode
 		int idx_;
     int objidx_;
 		bool processing_;
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in_;
     suturo_perception::PublisherHelper ph_;
+		suturo_perception::EurocTaskClient *task_client_;
+		suturo_perception::Task6Segmenter *task6_segmenter_;
+		suturo_perception::Task4Segmenter *task4_segmenter_;
 
     ros::Publisher markerPublisher_;
     int maxMarkerId_;

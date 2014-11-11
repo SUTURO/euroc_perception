@@ -74,7 +74,8 @@ ProjectionSegmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
                                       cloud_filtered (new pcl::PointCloud<pcl::PointXYZRGB>), 
                                       cloud_projected (new pcl::PointCloud<pcl::PointXYZRGB>),
                                       objects_cloud_projected (new pcl::PointCloud<pcl::PointXYZRGB>),
-                                      cloud_plane (new pcl::PointCloud<pcl::PointXYZRGB>);
+                                      cloud_plane (new pcl::PointCloud<pcl::PointXYZRGB>),
+                                      cloud_without_plane (new pcl::PointCloud<pcl::PointXYZRGB>);
 
   // Build a filter to filter on the Z Axis
   pcl::PassThrough<pcl::PointXYZRGB> pass(true);
@@ -107,7 +108,27 @@ ProjectionSegmenter::segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in,
     logger.logInfo((boost::format("  %s") % coefficients->values[i]).str());
   }
   pipeline_data->coefficients_ = coefficients;
-  
+	/*
+	logger.logWarn((boost::format("task_type = %d") % pipeline_data->task_.task_type).str());
+	logger.logWarn((boost::format("task_name = %s") % pipeline_data->task_.task_name).str());
+  if (pipeline_data->task_.task_type == 5)
+	{
+		logger.logWarn("Doing special stuff for task 6...");
+		PointCloudOperations::extractInliersFromPointCloud(cloud_filtered, inliers, cloud_without_plane, true);
+		// Find the second biggest table plane in the scene
+		//pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+		//pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+		PointCloudOperations::fitPlanarModel(cloud_without_plane, inliers, coefficients, pipeline_data->planeMaxIterations, pipeline_data->planeDistanceThreshold);
+		logger.logInfo((boost::format("Second Table inlier count: %s") % inliers->indices.size ()).str());
+		logger.logInfo((boost::format("pcl::ModelCoefficients of second plane: %s") % coefficients->values.size()).str());
+		for (int i = 0; i < coefficients->values.size(); i++)
+		{
+			logger.logInfo((boost::format("  %s") % coefficients->values[i]).str());
+		}
+		pipeline_data->coefficients_ = coefficients;
+	}
+	*/
+
   // Extract the plane as a PointCloud from the calculated inliers
   PointCloudOperations::extractInliersFromPointCloud(cloud_filtered, inliers, cloud_plane, false);
 

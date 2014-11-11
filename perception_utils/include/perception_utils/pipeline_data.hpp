@@ -22,6 +22,9 @@ namespace suturo_perception
       
       // euroc task description
       suturo_msgs::Task task_;
+			
+			// call time
+			ros::Time stamp;
       
       
       PipelineData()
@@ -31,11 +34,11 @@ namespace suturo_perception
         // Set default parameters
         zAxisFilterMin = 0.0f;
         zAxisFilterMax = 1.5f;
-        downsampleLeafSize = 0.005f; // [pcl::VoxelGrid::applyFilter] Leaf size is too small for the input dataset. Integer indices would overflow
+        downsampleLeafSize = 0.01f; // [pcl::VoxelGrid::applyFilter] Leaf size is too small for the input dataset. Integer indices would overflow
         planeMaxIterations = 1000;
-        planeDistanceThreshold = 0.001f; 
-        ecClusterTolerance = 0.02f; // 2cm
-        ecMinClusterSize = 1000;
+        planeDistanceThreshold = 0.005f; 
+        ecClusterTolerance = 0.01f; // 1cm
+        ecMinClusterSize = 3000;
         ecMaxClusterSize = 200000;  
         prismZMin = 0.003f;
         prismZMax = 0.50f; // cutoff 50 cm above plane
@@ -68,10 +71,11 @@ namespace suturo_perception
       double mpeSuccessThreshold;
       double mpeVoxelSize;
       bool mpeDumpICPFitterPointClouds;
+      double segMaxObjectDistanz;
       
       void resetData()
       {
-        coefficients_ = pcl::ModelCoefficients::Ptr(new pcl::ModelCoefficients);
+        //coefficients_ = pcl::ModelCoefficients::Ptr(new pcl::ModelCoefficients);
       }
       
       void printConfig()

@@ -9,6 +9,10 @@ ColorAnalysis::ColorAnalysis(PipelineData::Ptr data, PipelineObject::Ptr obj) : 
   s_upper_threshold = 1.0;
   v_lower_threshold = 0.0;
   v_upper_threshold = 1.0;
+  // s_lower_threshold = 0.6;
+  // s_upper_threshold = 1.0;
+  // v_lower_threshold = 0.3;
+  // v_upper_threshold = 1.0;
 }
 
 HSVColor
@@ -34,13 +38,13 @@ ColorAnalysis::getAverageColorHSV(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr c
     uint32_t rgb = *reinterpret_cast<int*>(&cloud_in->points[i].rgb);
     HSVColor hsv_col = convertRGBToHSV(rgb);
 
-    /*
+    
     if (!inHSVThreshold(hsv_col))
     {
-      points_dropped++;
-      //continue;
+      // points_dropped++;
+      continue;
     }
-    */
+    
 
     avg_col_h += hsv_col.h / (double)cloud_in->points.size();
     avg_col.s += hsv_col.s / (double)cloud_in->points.size();
@@ -192,7 +196,7 @@ ColorAnalysis::getNearestRGBColor(HSVColor c)
   uint32_t &h = c.h;
   double &s   = c.s;
   double &v   = c.v;
-  const int hue_tolerance = 6; // 4 is enough for tasks 1,3-6. 6 is required for task 2
+  const int hue_tolerance = 20; // 4 is enough for tasks 1,3-6. 6 is required for task 2 // 15 is a better choice if we use the scene cam ...
   const int hue_blue    = 240;
   const int hue_green   = 120;
   const int hue_cyan    = 180;
@@ -202,9 +206,23 @@ ColorAnalysis::getNearestRGBColor(HSVColor c)
 
 
   // Check saturation first. if it's below 40, not much of the color is left
-  if(s < 0.40)
+  if(s < 0.80)
   {
+    std::stringstream ss;
+    ss << "HSV: ";
+    ss << h << " " << s << " " << v;
+    logger.logInfo(ss.str());
     logger.logInfo("Saturation too low for color_class");
+    return "unknown";
+  }
+
+  if(v < 0.40)
+  {
+    std::stringstream ss;
+    ss << "HSV: ";
+    ss << h << " " << s << " " << v;
+    logger.logInfo(ss.str());
+    logger.logInfo("Value too low for color_class");
     return "unknown";
   }
 
@@ -242,6 +260,13 @@ ColorAnalysis::getNearestRGBColor(HSVColor c)
   }
 
   // No rule matched - return unknown
+  std::stringstream hsv;
+  hsv << "No rule matched for HSV: ";
+  hsv << h << " ";
+  hsv << s << " ";
+  hsv << v << " ";
+
+  logger.logInfo(hsv.str());
   return "unknown";
   
 }
@@ -267,7 +292,7 @@ ColorAnalysis::inHSVThreshold(HSVColor col)
   if (col.s >= s_lower_threshold && 
       col.s <= s_upper_threshold &&
       col.v >= v_lower_threshold &&
-      col.v <= v_lower_threshold)
+      col.v <= v_upper_threshold)
   {
     return true;
   }

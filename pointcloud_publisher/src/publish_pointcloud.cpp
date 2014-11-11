@@ -24,6 +24,7 @@
 #include <boost/program_options.hpp>
 
 #include <perception_utils/logger.h>
+#include <perception_utils/node_status.hpp>
 
 #include "suturo_pointcloud_publisher/projector.h"
 
@@ -44,8 +45,9 @@ std::string rgb_topic = "";
 std::string frame = "";
 std::string frame_rgb = "";
 std::string output_topic = "";
+unsigned char status_node_type;
 bool verbose = false;
-
+tf::StampedTransform transform_rgb_depth;
 
 
 
@@ -55,7 +57,8 @@ bool verbose = false;
 void receive_depth_and_rgb_image(
     const ros::NodeHandle &nodeHandle,
     const sensor_msgs::ImageConstPtr& depthImage,
-		const sensor_msgs::ImageConstPtr& inputImage)
+		const sensor_msgs::ImageConstPtr& inputImage,
+		const bool projectColors)
 {
   boost::posix_time::ptime s = boost::posix_time::microsec_clock::local_time();
   if(verbose)
@@ -72,19 +75,38 @@ void receive_depth_and_rgb_image(
   if(verbose)
     std::cout << "Received depth image" << std::endl;
 	
-
+  // std::cout << "RGB.timestamp - Depth.timestamp = " << inputImage->header.stamp - depthImage->header.stamp << std::endl;
 	cv::Mat resized_img;
 	cv::Mat resized_depth;
 
-  resized_img = img_ptr->image.clone();
-  resized_depth = depth_ptr->image.clone();
+  cv::Size expected_size(640,480);
+	
+	if (img_ptr->image.size() == expected_size)
+	{
+		resized_img = img_ptr->image.clone();
+	}
+	else
+	{
+		std::cout << "WARNING: incoming rgb image doesn't have expected size, resizing from " << img_ptr->image.size().width << "x" << img_ptr->image.size().height << " to " << expected_size.width << "x" << expected_size.height << std::endl;
+		cv::resize(img_ptr->image, resized_img, expected_size);
+	}
+	if (depth_ptr->image.size() == expected_size)
+	{
+		resized_depth = depth_ptr->image.clone();
+	}
+	else
+	{
+		std::cout << "WARNING: incoming depth image doesn't have expected size, resizing from " << depth_ptr->image.size().width << "x" << depth_ptr->image.size().height << " to " << expected_size.width << "x" << expected_size.height << std::endl;
+		cv::resize(depth_ptr->image, resized_depth, expected_size);
+	}
 
   tf::StampedTransform transform;
-  CloudProjector::getTransform(nodeHandle, frame_rgb, frame, transform);
-  if (verbose)
-    CloudProjector::printTransform(transform);
+	if (projectColors)
+	{
+    transform = transform_rgb_depth;
+  }
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_out = 
-    CloudProjector::depthProject(resized_depth, resized_img, transform);
+    CloudProjector::depthProject(resized_depth, resized_img, transform, projectColors);
 
 	// write pcd
   // pcl::PCDWriter writer;
@@ -104,11 +126,12 @@ void receive_depth_and_rgb_image(
   pub_cloud.publish(pub_message);
   
   boost::posix_time::ptime e = boost::posix_time::microsec_clock::local_time();
-  // Commented by PM. Generates a huge amount of output that interferes
-  // with the pipeline output
-  // std::stringstream ss;
-  // ss << "generate pointcloud on " << output_topic;
-  // logger.logTime(s, e, ss.str());
+  if (verbose)
+	{
+		std::stringstream ss;
+		ss << "generate " << (projectColors?"":"fast ") << "pointcloud on " << output_topic;
+		logger.logTime(s, e, ss.str());
+	}
 }
 
 int main (int argc, char** argv)
@@ -118,6 +141,8 @@ int main (int argc, char** argv)
   frame = "/sdepth_pcl";
   output_topic = "/suturo/euroc_scene_cloud";
   std::string desired_cam = "scene";
+	status_node_type = suturo_perception_msgs::PerceptionNodeStatus::NODE_CLOUD_SCENE;
+	bool project_colors = true;
 
   // "HashMap" for program parameters
   po::variables_map vm;
@@ -128,6 +153,7 @@ int main (int argc, char** argv)
     desc.add_options()
       ("help", "produce help message")
       ("cam,c", po::value<std::string>(&desired_cam)->required(), "Specify the camera for which the pointclouds should be generated. Allowed values: scene or tcp")
+      ("rgb,s", po::value<bool>(&project_colors), "Dis/Enable colored pointclouds. Allowed values: 0 or 1")
       ("verbose,v", po::value<bool>()->zero_tokens(), "Verbose output")
     ;
 
@@ -171,7 +197,11 @@ int main (int argc, char** argv)
     rgb_topic = "/euroc_interface_node/cameras/scene_rgb_cam";
     frame = "/sdepth_pcl";
     frame_rgb = "/srgb";
-    output_topic = "/suturo/euroc_scene_cloud";
+		//if (project_colors)
+			output_topic = "/suturo/euroc_scene_cloud";
+		//else
+		//	output_topic = "/suturo/euroc_scene_cloud_fast";
+		status_node_type = suturo_perception_msgs::PerceptionNodeStatus::NODE_CLOUD_SCENE;
   }
   else if(desired_cam == "tcp")
   {
@@ -179,7 +209,11 @@ int main (int argc, char** argv)
     rgb_topic = "/euroc_interface_node/cameras/tcp_rgb_cam";
     frame = "/tdepth_pcl";
     frame_rgb = "/trgb";
-    output_topic = "/suturo/euroc_tcp_cloud";
+		//if (project_colors)
+			output_topic = "/suturo/euroc_tcp_cloud";
+		//else
+		//	output_topic = "/suturo/euroc_gripper_cloud_fast";
+		status_node_type = suturo_perception_msgs::PerceptionNodeStatus::NODE_CLOUD_GRIPPER;
   }
   else
   {
@@ -194,16 +228,29 @@ int main (int argc, char** argv)
 	ros::init(argc, argv, ss.str());
 	ros::NodeHandle n;
 
+	if (project_colors)
+	{
+    logger.logInfo("Waiting for tf to come up");
+    sleep(6);
+    logger.logInfo("Getting RGB<->Depth transform once...");
+		CloudProjector::getTransform(n, frame_rgb, frame, transform_rgb_depth);
+		if (verbose)
+			CloudProjector::printTransform(transform_rgb_depth);
+	}
+
   message_filters::Subscriber<sensor_msgs::Image> depth_sub(n, depth_topic, 1);
   message_filters::Subscriber<sensor_msgs::Image> image_sub(n, rgb_topic, 1);
 
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> MySyncPolicy;
   message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), depth_sub, image_sub);
 
-  sync.registerCallback(boost::bind(&receive_depth_and_rgb_image, n, _1, _2));
+  sync.registerCallback(boost::bind(&receive_depth_and_rgb_image, n, _1, _2, project_colors));
+  logger.logInfo("Subscribed to image and depth topic");
 
   pub_cloud = n.advertise<sensor_msgs::PointCloud2> (output_topic, 1);
 
+	NodeStatus node_status(n);
+	node_status.nodeStarted(status_node_type);
 
 	ros::Rate loop_rate(10);
 	while (ros::ok())

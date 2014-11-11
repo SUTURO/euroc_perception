@@ -56,21 +56,33 @@ set(perception_utils_files
 	include/perception_utils/point.hpp
 	include/perception_utils/shape.hpp
   include/perception_utils/get_euroc_task_description.h
+  include/perception_utils/node_status.hpp
 )
 
 add_library(perception_utils ${perception_utils_files})
 target_link_libraries(perception_utils ${PCL_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV_LIBS} ${catkin_LIBRARIES})      
-add_dependencies(perception_utils suturo_perception_msgs_generate_messages_cpp suturo_msgs_generate_messages_cpp)
+add_dependencies(perception_utils suturo_perception_msgs_generate_messages_cpp suturo_msgs_generate_messages_cpp suturo_perception_msgs_gencpp)
+
 
 add_library(threadsafe_hull src/threadsafe_hull.cpp)
 target_link_libraries(threadsafe_hull ${catkin_LIBRARIES})      
 
 add_executable(get_min_max_3d 
-	src/basic_io_pcd.cpp
+  src/basic_io_pcd.cpp
   src/get_min_max_3d.cpp)
 target_link_libraries(get_min_max_3d ${catkin_LIBRARIES})      
 
-## Declare a cpp executable
+add_executable(publish_required_nodes 
+	src/logger.cpp 
+	src/node_status.cpp
+  include/perception_utils/logger.h
+  include/perception_utils/node_status.hpp) 
+target_link_libraries(publish_required_nodes
+  ${catkin_LIBRARIES} 
+  ${PCL_LIBRARIES}
+)
+add_dependencies(publish_required_nodes perception_utils suturo_perception_msgs_generate_messages_cpp suturo_msgs_generate_messages_cpp suturo_perception_msgs_gencpp)
+
 add_executable(region_growing 
   src/region_growing.cpp
   src/basic_io_pcd.cpp)
@@ -79,9 +91,16 @@ add_executable(corner_detector
   src/corner_detector.cpp
   src/basic_io_pcd.cpp)
 
+add_executable(odom_combiner 
+  src/odom_combiner.cpp)
+
+add_dependencies(odom_combiner suturo_perception_msgs_generate_messages_cpp suturo_msgs_generate_messages_cpp suturo_perception_msgs_gencpp)
+
 add_executable(cropbox_cloud 
   src/cropbox_cloud.cpp
   src/basic_io_pcd.cpp)
+
+add_dependencies(odom_combiner suturo_perception_msgs_generate_messages_cpp suturo_msgs_generate_messages_cpp suturo_perception_msgs_gencpp)
 
 target_link_libraries(region_growing
   ${catkin_LIBRARIES} 
@@ -104,6 +123,12 @@ add_executable(downsample_cloud
 	src/basic_io_pcd.cpp
 )
 target_link_libraries(downsample_cloud
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
+
+target_link_libraries(odom_combiner
+	perception_utils
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )

@@ -222,6 +222,7 @@ namespace suturo_perception
         obj.c_centroid.x = centroid.x;
         obj.c_centroid.y = centroid.y;
         obj.c_centroid.z = centroid.z;
+        obj.c_volume = c_volume;
         obj.c_type = suturo_perception_msgs::EurocObject::UNKNOWN; 
         
         // cuboid
