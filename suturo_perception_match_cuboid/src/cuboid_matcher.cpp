@@ -439,6 +439,9 @@ void CuboidMatcher::execute()
 bool CuboidMatcher::execute(Cuboid::Ptr c)
 {
   std::cout << "[cuboid_matcher] execute, input cloud size = " << input_cloud_->points.size() << std::endl;
+
+  // Find the two biggest planes (if mode_ == CUBOID_MATCHER_MODE_WITHOUT_COEFFICIENTS) 
+  // or the single biggest plane (if mode_ == CUBOID_MATCHER_MODE_WITH_COEFFICIENTS)
   segmentPlanes();
   // TODO check pointsize of the detected planes
  
@@ -465,9 +468,9 @@ bool CuboidMatcher::execute(Cuboid::Ptr c)
   pcl::copyPointCloud<pcl::PointXYZRGB, pcl::PointXYZRGB>(*input_cloud_, *rotated_cloud);
 
 
-  // rotate until two axis are aligned
-  //   TODO: use the face with the smallest angle to the x-y plane
-
+  // rotate the pointcloud until two axis are aligned 
+  // with the frame in the origin
+  //
   // M
   Eigen::Vector3f plane_normal;
   if(mode_ == CUBOID_MATCHER_MODE_WITH_COEFFICIENTS)
