@@ -256,21 +256,22 @@ bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
   int wait_count = 0;
   while(wait_count < max_wait_count)
   {
-    std::cout << wait_count << std::endl;
     if(req.pointCloudName == suturo_perception_msgs::GetPointArrayRequest::TCP)
     {
-      std::cout << latest_tcp_sensor_msg.header.stamp;
-      std::cout << " vs. ";
-      std::cout << req.minPointCloudTimeStamp;
-      std::cout << std::endl;
 
       if(latest_tcp_sensor_msg.header.stamp > req.minPointCloudTimeStamp)
+      {
+        ROS_INFO("Found valid tcp_sensor_msgs for tcp");
         break;
+      }
     }
     else if(req.pointCloudName == suturo_perception_msgs::GetPointArrayRequest::SCENE)
     {
       if(latest_scene_sensor_msg.header.stamp > req.minPointCloudTimeStamp)
+      {
+        ROS_INFO("Found valid tcp_sensor_msgs for scene");
         break;
+      }
     }
     else
     {
@@ -285,6 +286,7 @@ bool execute(suturo_perception_msgs::GetPointArray::Request  &req,
   if(wait_count >= max_wait_count)
   {
       ROS_INFO("Couldn't get a pointcloud after the given time");
+      ROS_INFO("%d.%d vs %d.%d \n" ,latest_tcp_sensor_msg.header.stamp.sec,latest_tcp_sensor_msg.header.stamp.nsec,req.minPointCloudTimeStamp.sec,req.minPointCloudTimeStamp.nsec);
       return false;
   }
 
