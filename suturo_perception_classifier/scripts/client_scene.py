@@ -7,20 +7,20 @@ __author__ = 'smurpheus'
 import rospy
 
 from suturo_perception_msgs.srv import Classifier
-from suturo_perception_msgs.srv import GetScene
+from suturo_perception_msgs.srv import GetCameraPerception
 
 
 
 if __name__ == "__main__":
     s = 'height,centroid,color'
-    rospy.wait_for_service('suturo/GetScene')
+    rospy.wait_for_service('suturo/perception/GetScene')
     try:
-        perceived_objects = rospy.ServiceProxy('suturo/GetScene', GetScene)
+        perceived_objects = rospy.ServiceProxy('suturo/perception/GetScene', GetCameraPerception)
         object =  perceived_objects(s).objects
         print object
-        rospy.wait_for_service('suturo/SceneClassifier')
+        rospy.wait_for_service('suturo/perception/SceneClassifier')
         try:
-            classified = rospy.ServiceProxy('suturo/SceneClassifier', Classifier)
+            classified = rospy.ServiceProxy('suturo/perception/SceneClassifier', Classifier)
             for each in object:
                 classified_object =  classified(each).classifiedObject
                 print classified_object

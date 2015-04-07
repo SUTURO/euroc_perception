@@ -8,7 +8,7 @@
 #include "perception_utils/pipeline_object.hpp"
 #include "perception_utils/pipeline_data.hpp"
 #include "perception_utils/publisher_helper.h"
-#include "suturo_perception_msgs/GetGripper.h"
+#include "suturo_perception_msgs/GetCameraPerception.h"
 #include "suturo_perception_gripper_node/SuturoPerceptionConfig.h"
 
 #include <pcl_ros/point_cloud.h>
@@ -20,7 +20,7 @@ class SuturoGripperNode
   public:
     SuturoGripperNode(ros::NodeHandle &nodeHandle, std::string imageTopic, std::string depthTopic);
     void reconfigureCallback(suturo_perception_gripper_node::SuturoPerceptionConfig &config, uint32_t level);
-    bool getGripper(suturo_perception_msgs::GetGripper::Request &req, suturo_perception_msgs::GetGripper::Response &res);
+    bool getGripper(suturo_perception_msgs::GetCameraPerception::Request &req, suturo_perception_msgs::GetCameraPerception::Response &res);
 
     void receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud);
     void clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, pcl::PointCloud<pcl::PointXYZRGB>::Ptr original_cloud, std::vector<int> *removed_indices_filtered, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices);

@@ -14,8 +14,8 @@ namespace enc = sensor_msgs::image_encodings;
 CloudGenerator::CloudGenerator(ros::NodeHandle &nodeHandle, bool verbose) : nodeHandle_(nodeHandle), verbose_(verbose)
 {
 	logger = Logger("CloudGenerator");
-  pub_cloud_scene = nodeHandle_.advertise<sensor_msgs::PointCloud2> ("/suturo/euroc_scene_cloud", 1);
-  pub_cloud_gripper = nodeHandle_.advertise<sensor_msgs::PointCloud2> ("/suturo/euroc_tcp_cloud", 1);
+  pub_cloud_scene = nodeHandle_.advertise<sensor_msgs::PointCloud2> ("/suturo/perception/euroc_scene_cloud", 1);
+  pub_cloud_gripper = nodeHandle_.advertise<sensor_msgs::PointCloud2> ("/suturo/perception/euroc_tcp_cloud", 1);
 }
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr CloudGenerator::generateCloud(const bool isTcp, const bool projectColors)

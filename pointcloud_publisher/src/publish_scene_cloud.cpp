@@ -32,9 +32,9 @@ using namespace suturo_perception;
 Logger logger("publish_scene_cloud");
 
 
-std::string publish_cloud_topic = "/suturo/euroc_scene_cloud";
+std::string publish_cloud_topic = "/suturo/perception/euroc_scene_cloud";
 std::string publish_cloud_frame = "sdepth";
-std::string publish_image_topic = "/suturo/euroc_scene_image";
+std::string publish_image_topic = "/suturo/perception/euroc_scene_image";
 std::string publish_image_frame = "simg";
 
 int cloud_idx = 0;
@@ -198,8 +198,8 @@ int main (int argc, char** argv)
 
   sync.registerCallback(boost::bind(&receive_depth_and_rgb_image, _1, _2));
 
-  cloud_publisher = n.advertise<sensor_msgs::PointCloud2> ("/suturo/euroc_scene_cloud", 1);
-  image_publisher = n.advertise<sensor_msgs::Image> ("/suturo/euroc_scene_image", 1);
+  cloud_publisher = n.advertise<sensor_msgs::PointCloud2> ("/suturo/perception/euroc_scene_cloud", 1);
+  image_publisher = n.advertise<sensor_msgs::Image> ("/suturo/perception/euroc_scene_image", 1);
 	//publisher.advertise<sensor_msgs::PointCloud2>(publish_cloud_topic);
 	//publisher.advertise<sensor_msgs::Image>(publish_image_topic);
 

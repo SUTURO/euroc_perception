@@ -56,15 +56,15 @@ int main (int argc, char** argv)
 
   if (node_type == "gripper")
   {
-    imageTopic = "/suturo/euroc_tcp_image";
-    cloudTopic = "/suturo/euroc_tcp_cloud";
+    imageTopic = "/suturo/perception/euroc_tcp_image";
+    cloudTopic = "/suturo/perception/euroc_tcp_cloud";
     node_type_enum = SuturoPerceptionNode::GRIPPER;
   }
   else
   if (node_type == "scene")
   {
-    imageTopic = "/suturo/euroc_scene_image";
-    cloudTopic = "/suturo/euroc_scene_cloud";
+    imageTopic = "/suturo/perception/euroc_scene_image";
+    cloudTopic = "/suturo/perception/euroc_scene_cloud";
     node_type_enum = SuturoPerceptionNode::SCENE;
   }
   else

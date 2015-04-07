@@ -14,13 +14,13 @@
 
 using namespace suturo_perception;
 
-const std::string SuturoGripperNode::OBJECT_CLOUD_PREFIX_TOPIC= "/suturo/object_cluster_cloud/";
-const std::string SuturoGripperNode::TABLE_TOPIC= "/suturo/tcp_table/";
-const std::string SuturoGripperNode::DOWNSAMPLED_CLOUD= "/suturo/tcp_downsampled_cloud/";
-const std::string SuturoGripperNode::POINTS_ABOVE_TABLE_CLOUD= "/suturo/tcp/points_above_table/";
-const std::string SuturoGripperNode::PROJECTED_POINTS_TOPIC= "/suturo/tcp/projected_points/";
-const std::string SuturoGripperNode::PROJECTED_CLUSTERS_PREFIX_TOPIC= "/suturo/tcp/projected_point_clusters/";
-const std::string SuturoGripperNode::PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC= "/suturo/tcp/projected_point_hulls/";
+const std::string SuturoGripperNode::OBJECT_CLOUD_PREFIX_TOPIC= "/suturo/perception/object_cluster_cloud";
+const std::string SuturoGripperNode::TABLE_TOPIC= "/suturo/perception/tcp_table";
+const std::string SuturoGripperNode::DOWNSAMPLED_CLOUD= "/suturo/perception/tcp_downsampled_cloud";
+const std::string SuturoGripperNode::POINTS_ABOVE_TABLE_CLOUD= "/suturo/perception/tcp_points_above_table";
+const std::string SuturoGripperNode::PROJECTED_POINTS_TOPIC= "/suturo/perception/tcp_projected_points";
+const std::string SuturoGripperNode::PROJECTED_CLUSTERS_PREFIX_TOPIC= "/suturo/perception/tcp_projected_point_clusters";
+const std::string SuturoGripperNode::PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC= "/suturo/perception/tcp_projected_point_hulls";
 
 SuturoGripperNode::SuturoGripperNode(ros::NodeHandle &n, std::string imageTopic, std::string depthTopic) : 
   nodeHandle_(n), 
@@ -29,12 +29,12 @@ SuturoGripperNode::SuturoGripperNode(ros::NodeHandle &n, std::string imageTopic,
   ph_(n)
 {
 	logger = Logger("SuturoPerceptionGripperNode");
-  clusterService_ = nodeHandle_.advertiseService("/suturo/GetGripper", 
+  clusterService_ = nodeHandle_.advertiseService("/suturo/perception/GetGripper", 
     &SuturoGripperNode::getGripper, this);
 	idx_ = 0;
   objidx_ = 0;
 
-  markerPublisher_ = nodeHandle_.advertise<visualization_msgs::Marker>("/suturo/cuboid_markers_gripper", 0);
+  markerPublisher_ = nodeHandle_.advertise<visualization_msgs::Marker>("/suturo/perception/tcp_cuboid_markers_gripper", 0);
   maxMarkerId_ = 0;
 
   // Add additional topics for debugging purposes
@@ -88,7 +88,7 @@ void SuturoGripperNode::reconfigureCallback(suturo_perception_gripper_node::Sutu
 }
 
 bool
-SuturoGripperNode::getGripper(suturo_perception_msgs::GetGripper::Request &req, suturo_perception_msgs::GetGripper::Response &res)
+SuturoGripperNode::getGripper(suturo_perception_msgs::GetCameraPerception::Request &req, suturo_perception_msgs::GetCameraPerception::Response &res)
 {
 	res.id = idx_;
 	idx_++;

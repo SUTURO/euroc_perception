@@ -25,8 +25,8 @@ class ObstacleClassifier(object):
     def __init__(self, task, logging):
         self.logging = logging
         if self.logging >= 1: print(">>>> Classifier will be initialized for task %s" %task)
-        rospy.Subscriber("/suturo/yaml_pars0r", Task, self.set_yaml_infos)
-        self.marker_publisher = rospy.Publisher("/suturo/obstacle_classifier_marker", Marker)
+        rospy.Subscriber("/suturo/startup/yaml_pars0r", Task, self.set_yaml_infos)
+        self.marker_publisher = rospy.Publisher("/suturo/perception/obstacle_classifier_marker", Marker)
         self.marker_id = 0
 
     def publish_marker_for_object(self, object, txt):

@@ -170,7 +170,7 @@ int main (int argc, char** argv)
 
   sync.registerCallback(boost::bind(&receive_depth_and_rgb_image, _1, _2));
 
-  pub_cloud = n.advertise<sensor_msgs::PointCloud2> ("/suturo/euroc_gripper_cloud", 1);
+  pub_cloud = n.advertise<sensor_msgs::PointCloud2> ("/suturo/perception/euroc_gripper_cloud", 1);
 
 	ros::Rate loop_rate(10);
 	while (ros::ok())

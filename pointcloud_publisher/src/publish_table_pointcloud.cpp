@@ -112,7 +112,7 @@ void publish_table_cloud(const ros::NodeHandle &nodeHandle)
 int main (int argc, char** argv)
 {
   frame = "/odom_combined";
-  output_topic = "/suturo/euroc_table_cloud";
+  output_topic = "/suturo/perception/euroc_table_cloud";
 
 	ros::init(argc, argv, "publish_table_pointcloud");
 	ros::NodeHandle n;

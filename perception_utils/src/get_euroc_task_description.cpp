@@ -5,7 +5,7 @@
 
 using namespace suturo_perception;
 
-const std::string EurocTaskClient::YAML_PARS0R_TOPIC= "/suturo/yaml_pars0r";
+const std::string EurocTaskClient::YAML_PARS0R_TOPIC= "/suturo/startup/yaml_pars0r";
 
 EurocTaskClient::EurocTaskClient(ros::NodeHandle &n)
 {

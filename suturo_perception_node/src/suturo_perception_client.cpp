@@ -1,6 +1,6 @@
 #include "ros/ros.h"
-#include "suturo_perception_msgs/GetGripper.h"
-#include "suturo_perception_msgs/GetScene.h"
+#include "suturo_perception_msgs/GetCameraPerception.h"
+#include "suturo_perception_msgs/GetCameraPerception.h"
 #include <cstdlib>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/thread/thread.hpp> 
@@ -118,8 +118,8 @@ int main(int argc, char **argv)
   {
     ros::init(argc, argv, "perception_gripper_client");
     ros::NodeHandle n;
-    ros::ServiceClient clusterClient = n.serviceClient<suturo_perception_msgs::GetGripper>("/suturo/GetGripper");
-    suturo_perception_msgs::GetGripper gripperSrv;
+    ros::ServiceClient clusterClient = n.serviceClient<suturo_perception_msgs::GetCameraPerception>("/suturo/perception/GetGripper");
+    suturo_perception_msgs::GetCameraPerception gripperSrv;
     gripperSrv.request.s = request_s;
     ROS_INFO_STREAM("GripperServiceClient initialized");
     // run until service gets shut down
@@ -143,7 +143,7 @@ int main(int argc, char **argv)
       }
       else
       {
-        ROS_ERROR("Failed to call service /suturo/GetGripper");
+        ROS_ERROR("Failed to call service /suturo/perception/GetGripper");
         return 1;
       }
       boost::this_thread::sleep(boost::posix_time::seconds(1));
@@ -154,8 +154,8 @@ int main(int argc, char **argv)
   {
     ros::init(argc, argv, "perception_scene_client");
     ros::NodeHandle n;
-    ros::ServiceClient clusterClient = n.serviceClient<suturo_perception_msgs::GetScene>("/suturo/GetScene");
-    suturo_perception_msgs::GetScene srv;
+    ros::ServiceClient clusterClient = n.serviceClient<suturo_perception_msgs::GetCameraPerception>("/suturo/perception/GetScene");
+    suturo_perception_msgs::GetCameraPerception srv;
     srv.request.s = request_s;
     ROS_INFO_STREAM("SceneServiceClient initialized");
     // run until service gets shut down
@@ -178,7 +178,7 @@ int main(int argc, char **argv)
       }
       else
       {
-        ROS_ERROR("Failed to call service /suturo/GetScene");
+        ROS_ERROR("Failed to call service /suturo/perception/GetScene");
         return 1;
       }
       boost::this_thread::sleep(boost::posix_time::seconds(1));

@@ -146,7 +146,7 @@ int main (int argc, char** argv)
 	cv::namedWindow(WINDOW, CV_WINDOW_AUTOSIZE);
 	cv::destroyWindow(WINDOW);
 
-  pub_cloud = n.advertise<sensor_msgs::PointCloud2> ("/suturo/euroc_scene_cloud", 1);
+  pub_cloud = n.advertise<sensor_msgs::PointCloud2> ("/suturo/perception/euroc_scene_cloud", 1);
 
 
 	ros::Rate loop_rate(10);

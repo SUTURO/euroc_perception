@@ -8,8 +8,8 @@
 #include "perception_utils/pipeline_object.hpp"
 #include "perception_utils/pipeline_data.hpp"
 #include "perception_utils/publisher_helper.h"
-#include "suturo_perception_msgs/GetGripper.h"
-#include <suturo_perception_msgs/PerceptionNodeStatus.h>
+#include "suturo_perception_msgs/GetCameraPerception.h"
+#include <suturo_startup_msgs/PerceptionNodeStatus.h>
 #include <perception_utils/node_status.hpp>
 #include "suturo_perception_node/SuturoPerceptionConfig.h"
 #include <perception_utils/get_euroc_task_description.h>
@@ -29,7 +29,7 @@ class SuturoPerceptionNode
 
     SuturoPerceptionNode(ros::NodeHandle &nodeHandle, std::string imageTopic, std::string depthTopic, SuturoPerceptionNode::NodeType nodeType);
     void reconfigureCallback(suturo_perception_node::SuturoPerceptionConfig &config, uint32_t level);
-    bool getGripper(suturo_perception_msgs::GetGripper::Request &req, suturo_perception_msgs::GetGripper::Response &res);
+    bool getGripper(suturo_perception_msgs::GetCameraPerception::Request &req, suturo_perception_msgs::GetCameraPerception::Response &res);
 
     void receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud);
 		void segment(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_in);

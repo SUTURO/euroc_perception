@@ -28,8 +28,8 @@ class SceneClassifier(object):
     def __init__(self, task, logging):
         self.logging = logging
         if self.logging >= 1: print(">>>> Classifier will be initialized for task %s" %task)
-        rospy.Subscriber("/suturo/yaml_pars0r", Task, self.set_yaml_infos)
-        self.marker_publisher = rospy.Publisher("/suturo/classifier_marker", Marker)
+        rospy.Subscriber("/suturo/startup/yaml_pars0r", Task, self.set_yaml_infos)
+        self.marker_publisher = rospy.Publisher("/suturo/perception/classifier_marker", Marker)
         self.clf = tree.DecisionTreeClassifier()
         self.marker_id = 0
         self.max_height = 0
