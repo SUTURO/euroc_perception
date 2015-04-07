@@ -35,6 +35,6 @@ done
 
 echo Starting ...
 trap 'kill $(jobs -p)' EXIT
-rosbag record /tf /suturo/object_cluster_cloud/0 /suturo/object_cluster_cloud/1 /suturo/object_cluster_cloud/2 /suturo/object_cluster_cloud/3 /suturo/object_cluster_cloud/5  /suturo/object_cluster_cloud/6 /suturo/euroc_tcp_cloud -O /tmp/mpe_debug_output.bag &
+rosbag record /tf /suturo/perception/object_cluster_cloud/0 /suturo/perception/object_cluster_cloud/1 /suturo/perception/object_cluster_cloud/2 /suturo/perception/object_cluster_cloud/3 /suturo/perception/object_cluster_cloud/5  /suturo/perception/object_cluster_cloud/6 /suturo/perception/euroc_tcp_cloud -O /tmp/mpe_debug_output.bag &
 rosrun suturo_manipulation_tools perception_to_planningscene &
 wait

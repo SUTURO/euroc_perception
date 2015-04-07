@@ -13,7 +13,7 @@ def main(task, logging):
     rospy.init_node("SceneClassifier", anonymous=True)
     # Create the service
     rospy.loginfo("Starting Scene Classifier")
-    rospy.Service("/suturo/SceneClassifier", Classifier, c.classify_object)
+    rospy.Service("/suturo/perception/SceneClassifier", Classifier, c.classify_object)
     # spin the wheel
     print("Started Scene Classifier Service")
     rospy.spin()

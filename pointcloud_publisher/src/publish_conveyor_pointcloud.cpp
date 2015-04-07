@@ -210,7 +210,7 @@ void publish_conveyor_cloud(const ros::NodeHandle &nodeHandle)
 int main (int argc, char** argv)
 {
   frame = "/odom_combined";
-  output_topic = "/suturo/euroc_conveyor_cloud";
+  output_topic = "/suturo/perception/euroc_conveyor_cloud";
 
 	ros::init(argc, argv, "publish_conveyor_pointcloud");
 	ros::NodeHandle n;

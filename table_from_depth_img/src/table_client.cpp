@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n;
 
-  ros::ServiceClient clusterClient = n.serviceClient<suturo_perception_msgs::GetTable>("/suturo/GetTable");
+  ros::ServiceClient clusterClient = n.serviceClient<suturo_perception_msgs::GetTable>("/suturo/perception/GetTable");
   suturo_perception_msgs::GetTable tableSrv;
   tableSrv.request.s = "get";
   ROS_INFO_STREAM("ServiceClient initialized");
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     }
     else
     {
-      ROS_ERROR("Failed to call service /suturo/GetTable");
+      ROS_ERROR("Failed to call service /suturo/perception/GetTable");
       return 1;
     }
     boost::this_thread::sleep(boost::posix_time::seconds(1));

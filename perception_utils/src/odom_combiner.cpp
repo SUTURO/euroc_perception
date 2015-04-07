@@ -390,21 +390,21 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   node_handle = &n;
 
-  pub = node_handle->advertise<sensor_msgs::PointCloud2>("/suturo/octomap", 1000);
+  pub = node_handle->advertise<sensor_msgs::PointCloud2>("/suturo/perception/octomap", 1000);
   tfListener = new tf::TransformListener();
 
   std::cout << "[odom_combiner] Waiting for tf to come up..." << std::endl;
   sleep(6);
 
-	ros::Subscriber scene_sub = n.subscribe<sensor_msgs::PointCloud2>("/suturo/euroc_scene_cloud", 1, boost::bind(&receive_scene_cloud, _1));
+	ros::Subscriber scene_sub = n.subscribe<sensor_msgs::PointCloud2>("/suturo/perception/euroc_scene_cloud", 1, boost::bind(&receive_scene_cloud, _1));
 
-	ros::Subscriber tcp_sub = n.subscribe<sensor_msgs::PointCloud2>("/suturo/euroc_tcp_cloud", 1, boost::bind(&receive_tcp_cloud, _1));
+	ros::Subscriber tcp_sub = n.subscribe<sensor_msgs::PointCloud2>("/suturo/perception/euroc_tcp_cloud", 1, boost::bind(&receive_tcp_cloud, _1));
 
   std::cout << "[odom_combiner] Subscribed to topics" << std::endl;
-  ros::ServiceServer service = n.advertiseService("/suturo/GetPointArray", execute);
+  ros::ServiceServer service = n.advertiseService("/suturo/perception/GetPointArray", execute);
 	
 	suturo_perception::NodeStatus node_status(n);
-	node_status.nodeStarted(suturo_perception_msgs::PerceptionNodeStatus::NODE_ODOM_COMBINER);
+	node_status.nodeStarted(suturo_startup_msgs::PerceptionNodeStatus::NODE_ODOM_COMBINER);
 	
   ros::spin(); 
 

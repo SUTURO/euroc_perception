@@ -139,9 +139,9 @@ int main (int argc, char** argv)
   depth_topic = "/euroc_interface_node/cameras/scene_depth_cam";
   rgb_topic = "/euroc_interface_node/cameras/scene_rgb_cam";
   frame = "/sdepth_pcl";
-  output_topic = "/suturo/euroc_scene_cloud";
+  output_topic = "/suturo/perception/euroc_scene_cloud";
   std::string desired_cam = "scene";
-	status_node_type = suturo_perception_msgs::PerceptionNodeStatus::NODE_CLOUD_SCENE;
+	status_node_type = suturo_startup_msgs::PerceptionNodeStatus::NODE_CLOUD_SCENE;
 	bool project_colors = true;
 
   // "HashMap" for program parameters
@@ -198,10 +198,10 @@ int main (int argc, char** argv)
     frame = "/sdepth_pcl";
     frame_rgb = "/srgb";
 		//if (project_colors)
-			output_topic = "/suturo/euroc_scene_cloud";
+			output_topic = "/suturo/perception/euroc_scene_cloud";
 		//else
 		//	output_topic = "/suturo/euroc_scene_cloud_fast";
-		status_node_type = suturo_perception_msgs::PerceptionNodeStatus::NODE_CLOUD_SCENE;
+		status_node_type = suturo_startup_msgs::PerceptionNodeStatus::NODE_CLOUD_SCENE;
   }
   else if(desired_cam == "tcp")
   {
@@ -210,10 +210,10 @@ int main (int argc, char** argv)
     frame = "/tdepth_pcl";
     frame_rgb = "/trgb";
 		//if (project_colors)
-			output_topic = "/suturo/euroc_tcp_cloud";
+			output_topic = "/suturo/perception/euroc_tcp_cloud";
 		//else
 		//	output_topic = "/suturo/euroc_gripper_cloud_fast";
-		status_node_type = suturo_perception_msgs::PerceptionNodeStatus::NODE_CLOUD_GRIPPER;
+		status_node_type = suturo_startup_msgs::PerceptionNodeStatus::NODE_CLOUD_GRIPPER;
   }
   else
   {

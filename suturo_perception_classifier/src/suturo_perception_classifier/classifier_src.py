@@ -34,8 +34,8 @@ class Classifier(object):
         self.logging = logging
         if self.logging >= 1:
             rospy.loginfo(">>>> Classifier will be initialized for task %s with log_lvl %s" % (task, logging))
-        rospy.Subscriber("/suturo/yaml_pars0r", Task, self.__set_yaml_infos)
-        self.marker_publisher = rospy.Publisher("/suturo/obstacle_classifier_marker", Marker)
+        rospy.Subscriber("/suturo/startup/yaml_pars0r", Task, self.__set_yaml_infos)
+        self.marker_publisher = rospy.Publisher("/suturo/perception/obstacle_classifier_marker", Marker)
         self.marker_id = 0
 
     def __set_yaml_infos(self, data):

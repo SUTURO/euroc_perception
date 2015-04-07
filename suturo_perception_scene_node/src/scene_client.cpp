@@ -1,5 +1,5 @@
 #include "ros/ros.h"
-#include "suturo_perception_msgs/GetScene.h"
+#include "suturo_perception_msgs/GetCameraPerception.h"
 #include <cstdlib>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/thread/thread.hpp> 
@@ -12,8 +12,8 @@ int main(int argc, char **argv)
 
   ros::NodeHandle n;
 
-  ros::ServiceClient clusterClient = n.serviceClient<suturo_perception_msgs::GetScene>("/suturo/GetScene");
-  suturo_perception_msgs::GetScene sceneSrv;
+  ros::ServiceClient clusterClient = n.serviceClient<suturo_perception_msgs::GetCameraPerception>("/suturo/perception/GetScene");
+  suturo_perception_msgs::GetCameraPerception sceneSrv;
   sceneSrv.request.s = "get";
   ROS_INFO_STREAM("ServiceClient initialized");
   // run until service gets shut down
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     }
     else
     {
-      ROS_ERROR("Failed to call service /suturo/GetScene");
+      ROS_ERROR("Failed to call service /suturo/perception/GetScene");
       return 1;
     }
     boost::this_thread::sleep(boost::posix_time::seconds(1));

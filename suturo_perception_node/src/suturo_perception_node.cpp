@@ -26,32 +26,32 @@ SuturoPerceptionNode::SuturoPerceptionNode(ros::NodeHandle &n, std::string image
   switch (nodeType_) 
   {
     case GRIPPER:
-      OBJECT_CLOUD_PREFIX_TOPIC= "/suturo/tcp/object_cluster_cloud/";
-      TABLE_TOPIC= "/suturo/tcp/table/";
-      DOWNSAMPLED_CLOUD= "/suturo/tcp/downsampled_cloud/";
-      POINTS_ABOVE_TABLE_CLOUD= "/suturo/tcp/points_above_table/";
-      PROJECTED_POINTS_TOPIC= "/suturo/tcp/projected_points/";
-      PROJECTED_CLUSTERS_PREFIX_TOPIC= "/suturo/tcp/projected_point_clusters/";
-      PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC= "/suturo/tcp/projected_point_hulls/";
+      OBJECT_CLOUD_PREFIX_TOPIC= "/suturo/perception/object_cluster_cloud";
+      TABLE_TOPIC= "/suturo/perception/tcp_table";
+      DOWNSAMPLED_CLOUD= "/suturo/perception/tcp_downsampled_cloud";
+      POINTS_ABOVE_TABLE_CLOUD= "/suturo/perception/tcp_points_above_table";
+      PROJECTED_POINTS_TOPIC= "/suturo/perception/tcp_projected_points";
+      PROJECTED_CLUSTERS_PREFIX_TOPIC= "/suturo/perception/tcp_projected_point_clusters";
+      PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC= "/suturo/perception/tcp_projected_point_hulls";
       LOGGER_NAME = "SuturoPerceptionGripperNode";
-      SERVICE_NAME = "/suturo/GetGripper";
-      MARKER_TOPIC = "/suturo/tcp/cuboid_markers_gripper";
+      SERVICE_NAME = "/suturo/perception/GetGripper";
+      MARKER_TOPIC = "/suturo/perception/tcp_cuboid_markers_gripper";
       DEPTH_FRAME = "/tdepth_pcl";
-			status_node_type = suturo_perception_msgs::PerceptionNodeStatus::NODE_GRIPPER;
+			status_node_type = suturo_startup_msgs::PerceptionNodeStatus::NODE_GRIPPER;
     break;
     case SCENE:
-      OBJECT_CLOUD_PREFIX_TOPIC= "/suturo/scene/object_cluster_cloud/";
-      TABLE_TOPIC= "/suturo/scene/table/";
-      DOWNSAMPLED_CLOUD= "/suturo/scene/downsampled_cloud/";
-      POINTS_ABOVE_TABLE_CLOUD= "/suturo/scene/points_above_table/";
-      PROJECTED_POINTS_TOPIC= "/suturo/scene/projected_points/";
-      PROJECTED_CLUSTERS_PREFIX_TOPIC= "/suturo/scene/projected_point_clusters/";
-      PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC= "/suturo/scene/projected_point_hulls/";
+      OBJECT_CLOUD_PREFIX_TOPIC= "/suturo/perception/scene_object_cluster_cloud";
+      TABLE_TOPIC= "/suturo/perception/scene_table";
+      DOWNSAMPLED_CLOUD= "/suturo/perception/scene_downsampled_cloud";
+      POINTS_ABOVE_TABLE_CLOUD= "/suturo/perception/scene_points_above_table";
+      PROJECTED_POINTS_TOPIC= "/suturo/perception/scene_projected_points";
+      PROJECTED_CLUSTERS_PREFIX_TOPIC= "/suturo/perception/scene_projected_point_clusters";
+      PROJECTED_CLUSTER_HULLS_PREFIX_TOPIC= "/suturo/perception/scene_projected_point_hulls";
       LOGGER_NAME = "SuturoPerceptionSceneNode";
-      SERVICE_NAME = "/suturo/GetScene";
-      MARKER_TOPIC = "/suturo/scene/cuboid_markers_gripper";
+      SERVICE_NAME = "/suturo/perception/GetScene";
+      MARKER_TOPIC = "/suturo/perception/scene_cuboid_markers_gripper";
       DEPTH_FRAME = "/sdepth_pcl";
-			status_node_type = suturo_perception_msgs::PerceptionNodeStatus::NODE_SCENE;
+			status_node_type = suturo_startup_msgs::PerceptionNodeStatus::NODE_SCENE;
     break;
   }
 
@@ -137,7 +137,7 @@ void SuturoPerceptionNode::reconfigureCallback(suturo_perception_node::SuturoPer
 }
 
 bool
-SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetGripper::Request &req, suturo_perception_msgs::GetGripper::Response &res)
+SuturoPerceptionNode::getGripper(suturo_perception_msgs::GetCameraPerception::Request &req, suturo_perception_msgs::GetCameraPerception::Response &res)
 {
 	int timeout = 10;
 	

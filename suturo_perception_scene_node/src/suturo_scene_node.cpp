@@ -19,18 +19,18 @@ SuturoSceneNode::SuturoSceneNode(ros::NodeHandle &n, std::string imageTopic, std
   cloudTopic_(depthTopic)
 {
 	logger = Logger("SuturoPerceptionSceneNode");
-  clusterService_ = nodeHandle_.advertiseService("/suturo/GetScene", 
+  clusterService_ = nodeHandle_.advertiseService("/suturo/perception/GetScene", 
     &SuturoSceneNode::getScene, this);
 	idx_ = 0;
   objidx_ = 0;
 
-  markerPublisher_ = nodeHandle_.advertise<visualization_msgs::Marker>("/suturo/cuboid_markers", 0);
+  markerPublisher_ = nodeHandle_.advertise<visualization_msgs::Marker>("/suturo/perception/cuboid_markers", 0);
   maxMarkerId_ = 0;
 
 }
 
 bool
-SuturoSceneNode::getScene(suturo_perception_msgs::GetScene::Request &req, suturo_perception_msgs::GetScene::Response &res)
+SuturoSceneNode::getScene(suturo_perception_msgs::GetCameraPerception::Request &req, suturo_perception_msgs::GetCameraPerception::Response &res)
 {
 	res.id = idx_;
 	idx_++;

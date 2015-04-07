@@ -6,7 +6,7 @@
 #include "perception_utils/logger.h"
 #include "perception_utils/pipeline_object.hpp"
 #include "perception_utils/pipeline_data.hpp"
-#include "suturo_perception_msgs/GetScene.h"
+#include "suturo_perception_msgs/GetCameraPerception.h"
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_cloud.h>
@@ -16,7 +16,7 @@ class SuturoSceneNode
 {
   public:
     SuturoSceneNode(ros::NodeHandle &nodeHandle, std::string imageTopic, std::string depthTopic);
-    bool getScene(suturo_perception_msgs::GetScene::Request &req, suturo_perception_msgs::GetScene::Response &res);
+    bool getScene(suturo_perception_msgs::GetCameraPerception::Request &req, suturo_perception_msgs::GetCameraPerception::Response &res);
 
     void receive_cloud(const sensor_msgs::PointCloud2ConstPtr& inputCloud);
     void clusterFromProjection(pcl::PointCloud<pcl::PointXYZRGB>::Ptr object_clusters, pcl::PointCloud<pcl::PointXYZRGB>::Ptr original_cloud, std::vector<int> *removed_indices_filtered, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &extracted_objects, std::vector<pcl::PointIndices::Ptr> &original_indices);
